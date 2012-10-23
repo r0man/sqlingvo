@@ -2,6 +2,12 @@
   (:refer-clojure :exclude [replace])
   (:require [clojure.string :refer [replace]]))
 
+(def ^:dynamic *column-regex*
+  #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?")
+
+(def ^:dynamic *table-regex*
+  #"(([^./]+)\.)?([^./]+)(/(.+))?")
+
 (defn qualified-name
   "Returns the qualified name of `k`."
   [k] (replace (str k) #"^:" ""))
@@ -10,7 +16,7 @@
   "Parse `s` as a column identifier and return a map
   with :op, :schema, :name and :as keys."
   [s]
-  (if-let [matches (re-matches #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?" (qualified-name s))]
+  (if-let [matches (re-matches *column-regex* (qualified-name s))]
     (let [[_ _ schema _ table name _ as] matches]
       {:op :column
        :schema (if (and schema table) (keyword schema))
@@ -22,7 +28,7 @@
   "Parse `s` as a table identifier and return a map
   with :op, :schema, :name and :as keys."
   [s]
-  (if-let [matches (re-matches #"(([^./]+)\.)?([^./]+)(/(.+))?" (qualified-name s))]
+  (if-let [matches (re-matches *table-regex* (qualified-name s))]
     {:op :table
      :schema (keyword (nth matches 2))
      :name (keyword (nth matches 3))
