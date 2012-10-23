@@ -44,12 +44,10 @@
     (let [node (second (:from node))]
       (is (= :table (:op node)))
       (is (= :countries (:name node)))))
-  ;; (let [node (:from (from (select 1 2 3)))]
-  ;;   (println node)
-  ;;   (is (= :from (:op node)))
-  ;;   (is (= (select [1 2 3]) (first (:from node)))))
-
-  )
+  (let [node (:from (from {} (select 1 2 3)))]
+    (is (= :from (:op node)))
+    (let [node (first (:from node))]
+      (is (= :select (:op node))))))
 
 (deftest test-offset
   (is (= {:offset {:op :offset :start 1}} (offset {} 1))))
