@@ -26,7 +26,9 @@
        (drop-table [:continents :countries])
        ["DROP TABLE continents, countries"]
        (drop-table :continents :if-exists true :restrict true)
-       ["DROP TABLE IF EXISTS continents RESTRICT"]))
+       ["DROP TABLE IF EXISTS continents RESTRICT"]
+       (drop-table [:continents :countries] :if-exists true :restrict true)
+       ["DROP TABLE IF EXISTS continents, countries RESTRICT"]))
 
 (deftest test-from
   (let [node (:from (from {} :continents))]
@@ -163,4 +165,6 @@
        (truncate [:continents :countries])
        ["TRUNCATE TABLE continents, countries"]
        (truncate :continents :cascade true :continue-identity true :restart-identity true :restrict true)
-       ["TRUNCATE TABLE continents RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
+       ["TRUNCATE TABLE continents RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]
+       (truncate [:continents :countries] :cascade true :continue-identity true :restart-identity true :restrict true)
+       ["TRUNCATE TABLE continents, countries RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
