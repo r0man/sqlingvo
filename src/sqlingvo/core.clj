@@ -5,15 +5,6 @@
             [sqlingvo.compiler :refer [compile-sql]]
             [sqlingvo.util :refer [parse-expr parse-exprs parse-table]]))
 
-(defn make-column
-  "Make a database column."
-  [table name type & {:as options}]
-  (assoc  options
-    :schema (:schema table)
-    :table (:name table)
-    :name name
-    :type type))
-
 (defn- parse-from [forms]
   (cond
    (keyword? forms)
