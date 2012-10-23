@@ -1,4 +1,4 @@
-# SQLingvo
+# SQLingvo [![Build Status](https://travis-ci.org/r0man/sqlingvo.png)](https://travis-ci.org/r0man/sqlingvo)
 
 A SQL compiler and DSL in Clojure.
 
