@@ -4,20 +4,6 @@
   (:use clojure.test
         sqlingvo.core))
 
-(deftest test-group-by
-  (let [node (:group-by (group-by {} :name :created-at))]
-    (is (= :group-by (:op node)))
-    (let [exprs (:exprs node)]
-      (let [node (first (:children exprs))]
-        (is (= :column (:op node)))
-        (is (= :name (:name node))))
-      (let [node (second (:children exprs))]
-        (is (= :column (:op node)))
-        (is (= :created-at (:name node)))))))
-
-(deftest test-limit
-  (is (= {:limit {:op :limit :count 1}} (limit {} 1))))
-
 (deftest test-drop-table
   (are [stmt expected]
        (is (= expected (sql stmt)))
@@ -48,6 +34,20 @@
     (is (= :from (:op node)))
     (let [node (first (:from node))]
       (is (= :select (:op node))))))
+
+(deftest test-group-by
+  (let [node (:group-by (group-by {} :name :created-at))]
+    (is (= :group-by (:op node)))
+    (let [exprs (:exprs node)]
+      (let [node (first (:children exprs))]
+        (is (= :column (:op node)))
+        (is (= :name (:name node))))
+      (let [node (second (:children exprs))]
+        (is (= :column (:op node)))
+        (is (= :created-at (:name node)))))))
+
+(deftest test-limit
+  (is (= {:limit {:op :limit :count 1}} (limit {} 1))))
 
 (deftest test-offset
   (is (= {:offset {:op :offset :start 1}} (offset {} 1))))
