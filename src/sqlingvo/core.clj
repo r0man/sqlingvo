@@ -5,6 +5,68 @@
             [sqlingvo.compiler :refer [compile-sql]]
             [sqlingvo.util :refer [parse-expr parse-exprs parse-table]]))
 
+(deftype Node [content]
+
+  clojure.lang.IPersistentMap
+  (assoc [_ k v]
+    (Node. (.assoc content k v)))
+
+  (assocEx [_ k v]
+    (Node. (.assocEx content k v)))
+
+  (without [_ k]
+    (Node. (.without content k)))
+
+  java.lang.Iterable
+  (iterator [this]
+    (.iterator content))
+
+  clojure.lang.Associative
+  (containsKey [_ k]
+    (.containsKey content k))
+
+  (entryAt [_ k]
+    (.entryAt content k))
+
+  clojure.lang.IPersistentCollection
+  (count [this]
+    (jdbc/with-query-results results
+      (let [exprs [(parse-expr '(count *))]]
+        (compile-sql (assoc this :exprs {:op :exprs :children exprs})))
+      (:count (first results))))
+
+  (equiv [this other]
+    (and (isa? (class other) Node)
+         (= (. this content)
+            (. other content))))
+
+  clojure.lang.Seqable
+  (seq [this]
+    (jdbc/with-query-results results
+      (compile-sql this)
+      (doall results)))
+
+  clojure.lang.ILookup
+  (valAt [_ k]
+    (.valAt content k))
+
+  (valAt [_ k not-found]
+    (.valAt content k not-found))
+
+  (toString [this]
+    (first (compile-sql this))))
+
+(defmethod print-method Node [node writer]
+  (print-dup (compile-sql node) writer))
+
+(defmethod print-dup Node [node writer]
+  (print-dup (compile-sql node) writer))
+
+(defn node
+  "Make a new AST node for `op`."
+  [op & {:as opts}]
+  (assoc (Node. (or opts {})) :op op))
+
 (defn- parse-from [forms]
   (cond
    (keyword? forms)
