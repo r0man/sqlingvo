@@ -60,7 +60,7 @@
    (= 2 (count args))
    (let [[[s1 & a1] [s2 & a2]] (map compile-sql args)]
      (cons (str "(" s1 " " (core/name name) " " s2 ")")
-           (apply concat a1 a2)))
+           (concat a1 a2)))
    :else
    (apply join-stmt " AND "
           (map #(compile-2-ary (assoc node :args %1))

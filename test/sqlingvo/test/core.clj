@@ -153,7 +153,9 @@
        (except (select 1) (select 2))
        ["SELECT 1 EXCEPT (SELECT 2)"]
        (except (select 1) (select 2) :all true)
-       ["SELECT 1 EXCEPT ALL (SELECT 2)"]))
+       ["SELECT 1 EXCEPT ALL (SELECT 2)"]
+       (-> (select *) (from :continents) (where '(= :name "Europe")))
+       ["SELECT * FROM continents WHERE (name = ?)" "Europe"]))
 
 (deftest test-truncate
   (are [stmt expected]

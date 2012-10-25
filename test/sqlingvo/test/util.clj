@@ -36,7 +36,9 @@
        '(= 1 1)
        {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}
        `(= 1 1)
-       {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}))
+       {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}
+       '(= :name "Europe")
+       {:op :fn :name := :args [{:op :column :schema nil :table nil :name :name :as nil} {:op :constant :form "Europe"}]}))
 
 (deftest test-qualified-name
   (are [arg expected]
