@@ -174,9 +174,12 @@
        ["TRUNCATE TABLE continents, countries RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
 
 (deftest test-stmt-deftype
+  (is (= (select 1)
+         (merge (select 1) {})))
+  (is (= (.content (select 1))
+         (merge {} (select 1))))
+  (is (= "SELECT 1" (str (select 1))))
+  (is (= "[\"SELECT 1\"]\n" (prn-str (select 1))))
   (with-database
-    (is (= "SELECT 1" (str (select 1))))
-    (is (= "[\"SELECT 1\"]\n" (prn-str (select 1))))
-    (is (= 1 (count (select 1))))
-    (is (= [{:1 1}] (seq (select 1))))
-    (is (= [{:a 1}] (seq (select (as 1 :a)))))))
+    (is (= [{:1 1}] (deref (select 1))))
+    (is (= [{:a 1}] (deref (select (as 1 :a)))))))

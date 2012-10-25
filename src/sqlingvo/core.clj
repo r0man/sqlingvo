@@ -45,10 +45,17 @@
   (entryAt [_ k]
     (.entryAt content k))
 
+  clojure.lang.IDeref
+  (deref [this]
+    (run this))
+
   clojure.lang.IPersistentCollection
-  (count [this]
-    (let [exprs [(assoc (parse-expr '(count *)) :as :count)]]
-      (:count (first (run (assoc this :exprs {:op :exprs :children exprs}))))))
+  (count [_]
+    (.count content))
+  (cons [_ o]
+    (Stmt. (.cons content o)))
+  (empty [_]
+    (.empty content))
 
   (equiv [this other]
     (and (isa? (class other) Stmt)
@@ -56,10 +63,8 @@
             (. other content))))
 
   clojure.lang.Seqable
-  (seq [this]
-    (jdbc/with-query-results results
-      (sql this)
-      (doall results)))
+  (seq [_]
+    (.seq content))
 
   clojure.lang.ILookup
   (valAt [_ k]
