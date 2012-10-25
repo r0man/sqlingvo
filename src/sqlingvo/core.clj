@@ -98,3 +98,15 @@
     :condition
     {:op :condition
      :condition (parse-expr condition)}))
+
+(defmulti run
+  "Run the SQL statement `stmt`."
+  (fn [stmt] (:op stmt)))
+
+(defmethod run :select [stmt]
+  (jdbc/with-query-results  results
+    (sql stmt)
+    (doall results)))
+
+(defmethod run :default [stmt]
+  (apply jdbc/do-prepared (sql stmt)))
