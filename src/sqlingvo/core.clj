@@ -22,28 +22,28 @@
 (defmethod run :default [stmt]
   (apply jdbc/do-prepared (sql stmt)))
 
-(deftype Stmt [content]
+(deftype Stmt [node]
 
   clojure.lang.IPersistentMap
   (assoc [_ k v]
-    (Stmt. (.assoc content k v)))
+    (Stmt. (.assoc node k v)))
 
   (assocEx [_ k v]
-    (Stmt. (.assocEx content k v)))
+    (Stmt. (.assocEx node k v)))
 
   (without [_ k]
-    (Stmt. (.without content k)))
+    (Stmt. (.without node k)))
 
   java.lang.Iterable
   (iterator [this]
-    (.iterator content))
+    (.iterator node))
 
   clojure.lang.Associative
   (containsKey [_ k]
-    (.containsKey content k))
+    (.containsKey node k))
 
   (entryAt [_ k]
-    (.entryAt content k))
+    (.entryAt node k))
 
   clojure.lang.IDeref
   (deref [this]
@@ -51,27 +51,27 @@
 
   clojure.lang.IPersistentCollection
   (count [_]
-    (.count content))
+    (.count node))
   (cons [_ o]
-    (Stmt. (.cons content o)))
+    (Stmt. (.cons node o)))
   (empty [_]
-    (.empty content))
+    (.empty node))
 
   (equiv [this other]
     (and (isa? (class other) Stmt)
-         (= (. this content)
-            (. other content))))
+         (= (. this node)
+            (. other node))))
 
   clojure.lang.Seqable
   (seq [_]
-    (.seq content))
+    (.seq node))
 
   clojure.lang.ILookup
   (valAt [_ k]
-    (.valAt content k))
+    (.valAt node k))
 
   (valAt [_ k not-found]
-    (.valAt content k not-found))
+    (.valAt node k not-found))
 
   (toString [this]
     (first (sql this))))
@@ -84,6 +84,12 @@
 
 (defn map->Stmt
   [m] (Stmt. (or m {})))
+
+(defn- node [op & {:as opts}]
+  (assoc opts :op op))
+
+(defn- assoc-op [stmt op & {:as opts}]
+  (assoc stmt op (assoc opts :op op)))
 
 (defn- parse-from [forms]
   (cond
@@ -104,68 +110,59 @@
 (defn except
   "Select the SQL set difference between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (map->Stmt {:op :except :children [stmt-1 stmt-2] :all all}))
+  (map->Stmt (node :except :children [stmt-1 stmt-2] :all all)))
 
 (defn drop-table
   "Drop the database `tables`."
   [tables & {:as opts}]
-  (map->Stmt (merge opts {:op :drop-table :tables (map parse-table (wrap-seq tables))})))
+  (map->Stmt (merge opts (node :drop-table :tables (map parse-table (wrap-seq tables))))))
 
 (defn from
   "Add the FROM item to the SQL statement."
   [stmt & from]
-  (assoc stmt
-    :from {:op :from :from (map parse-from from)}))
+  (assoc-op stmt :from :from (map parse-from from)))
 
 (defn group-by
   "Add the GROUP BY clause to the SQL statement."
   [stmt & exprs]
-  (assoc stmt
-    :group-by {:op :group-by :exprs (parse-exprs exprs)}))
+  (assoc-op stmt :group-by :exprs (parse-exprs exprs)))
 
 (defn intersect
   "Select the SQL set intersection between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (map->Stmt {:op :intersect :children [stmt-1 stmt-2] :all all}))
+  (map->Stmt (node :intersect :children [stmt-1 stmt-2] :all all)))
 
 (defn limit
   "Add the LIMIT clause to the SQL statement."
   [stmt count]
-  (assoc stmt :limit {:op :limit :count count}))
+  (assoc-op stmt :limit :count count))
 
 (defn offset
   "Add the OFFSET clause to the SQL statement."
   [stmt start]
-  (assoc stmt :offset {:op :offset :start start}))
+  (assoc-op stmt :offset :start start))
 
 (defn order-by
   "Add the ORDER BY clause to the SQL statement."
   [stmt exprs & {:as opts}]
-  (assoc stmt
-    :order-by
-    (assoc opts
-      :op :order-by
-      :exprs (parse-exprs (wrap-seq exprs)))))
+  (assoc stmt :order-by (merge opts (node :order-by :exprs (parse-exprs (wrap-seq exprs))))))
 
 (defn select
   "Select `exprs` from the database."
   [& exprs]
-  (map->Stmt {:op :select :exprs (parse-exprs exprs)}))
+  (map->Stmt (node :select :exprs (parse-exprs exprs))))
 
 (defn truncate
   "Truncate the database `tables`."
   [tables & {:as opts}]
-  (map->Stmt (merge opts {:op :truncate :tables (map parse-table (wrap-seq tables))})))
+  (map->Stmt (merge opts (node :truncate :tables (map parse-table (wrap-seq tables))))))
 
 (defn union
   "Select the SQL set union between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (map->Stmt {:op :union :children [stmt-1 stmt-2] :all all}))
+  (map->Stmt (node :union :children [stmt-1 stmt-2] :all all)))
 
 (defn where
   "Add the WHERE `condition` to the SQL statement."
   [stmt condition]
-  (assoc stmt
-    :condition
-    {:op :condition
-     :condition (parse-expr condition)}))
+  (assoc-op stmt :condition :condition (parse-expr condition)))

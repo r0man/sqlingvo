@@ -176,7 +176,7 @@
 (deftest test-stmt-deftype
   (is (= (select 1)
          (merge (select 1) {})))
-  (is (= (.content (select 1))
+  (is (= (.node (select 1))
          (merge {} (select 1))))
   (is (= "SELECT 1" (str (select 1))))
   (is (= "[\"SELECT 1\"]\n" (prn-str (select 1))))
