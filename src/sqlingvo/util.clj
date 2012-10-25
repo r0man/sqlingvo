@@ -38,7 +38,7 @@
 
 (defn parse-fn-expr [expr]
   {:op :fn
-   :name (first expr)
+   :name (keyword (name (first expr)))
    :args (map parse-expr (rest expr))})
 
 (defmethod parse-expr nil [expr]

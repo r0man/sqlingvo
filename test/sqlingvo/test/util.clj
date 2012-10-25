@@ -7,15 +7,15 @@
        (do (is (= expected (parse-column table)))
            (is (= expected (parse-column table))))
        :id
-       {:op :column, :schema nil, :table nil, :name :id, :as nil}
+       {:op :column :schema nil :table nil :name :id :as nil}
        :continents.id
-       {:op :column, :schema nil, :table :continents, :name :id, :as nil}
+       {:op :column :schema nil :table :continents :name :id :as nil}
        :continents.id/i
-       {:op :column, :schema nil, :table :continents, :name :id, :as :i}
+       {:op :column :schema nil :table :continents :name :id :as :i}
        :public.continents.id
-       {:op :column, :schema :public, :table :continents, :name :id, :as nil}
+       {:op :column :schema :public :table :continents :name :id :as nil}
        :public.continents.id/i
-       {:op :column, :schema :public, :table :continents, :name :id, :as :i}))
+       {:op :column :schema :public :table :continents :name :id :as :i}))
 
 (deftest test-parse-table
   (are [table expected]
@@ -29,6 +29,14 @@
        {:op :table :schema :public :name :continents :as nil}
        :public.continents/c
        {:op :table :schema :public :name :continents :as :c}))
+
+(deftest test-parse-expr
+  (are [expr expected]
+       (is (= expected (parse-expr expr)))
+       '(= 1 1)
+       {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}
+       `(= 1 1)
+       {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}))
 
 (deftest test-qualified-name
   (are [arg expected]

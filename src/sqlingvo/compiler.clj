@@ -1,6 +1,7 @@
 (ns sqlingvo.compiler
   (:refer-clojure :exclude [replace])
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clojure.core :as core]
+            [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [blank? join replace upper-case]]))
 
 (defmulti compile-sql :op)
@@ -58,7 +59,7 @@
    (throw (IllegalArgumentException. "More than 1 arg needed."))
    (= 2 (count args))
    (let [[[s1 & a1] [s2 & a2]] (map compile-sql args)]
-     (cons (str "(" s1 " " name " " s2 ")")
+     (cons (str "(" s1 " " (core/name name) " " s2 ")")
            (apply concat a1 a2)))
    :else
    (apply join-stmt " AND "
@@ -69,7 +70,7 @@
   "Compile a SQL infix function node into a SQL statement."
   [{:keys [as args name]}]
   (let [args (map compile-sql args)]
-    (cons (str "(" (join (str " " name " ") (map first args)) ")"
+    (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
                (if as (str " AS " (jdbc/as-identifier as))))
           (apply concat (map rest args)))))
 
@@ -79,7 +80,7 @@
 
 (defmethod compile-fn :default [{:keys [as args name]}]
   (let [args (map compile-sql args)]
-    (cons (str name "(" (join ", " (map first args)) ")"
+    (cons (str (core/name name) "(" (join ", " (map first args)) ")"
                (if as (str " AS " (jdbc/as-identifier as))))
           (apply concat (map rest args)))))
 
