@@ -124,11 +124,9 @@
        ["SELECT * FROM continents ORDER BY created-at NULLS LAST"]
        (-> (select *) (from :continents) (order-by [:name :created-at] :direction :asc))
        ["SELECT * FROM continents ORDER BY name, created-at ASC"]
-       (-> (select *)
-           (from (as (select 1 2 3) :x)))
+       (-> (select *) (from (as (select 1 2 3) :x)))
        ["SELECT * FROM (SELECT 1, 2, 3) AS x"]
-       (-> (select *)
-           (from (as (select 1) :x) (as (select 2) :y)))
+       (-> (select *) (from (as (select 1) :x) (as (select 2) :y)))
        ["SELECT * FROM (SELECT 1) AS x, (SELECT 2) AS y"]
        (-> (select *) (from :continents) (group-by :created-at))
        ["SELECT * FROM continents GROUP BY created-at"]
@@ -173,13 +171,53 @@
        (truncate [:continents :countries] :cascade true :continue-identity true :restart-identity true :restrict true)
        ["TRUNCATE TABLE continents, countries RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
 
-(deftest test-stmt-deftype
-  (is (= (select 1)
-         (merge (select 1) {})))
-  (is (= (.node (select 1))
-         (merge {} (select 1))))
-  (is (= "SELECT 1" (str (select 1))))
-  (is (= "[\"SELECT 1\"]\n" (prn-str (select 1))))
+(deftest test-run
   (with-database
-    (is (= [{:1 1}] (deref (select 1))))
-    (is (= [{:a 1}] (deref (select (as 1 :a)))))))
+    (are [stmt expected]
+         (is (= expected (run stmt)))
+         (select 1)
+         [{:1 1}]
+         (select (as 1 :n))
+         [{:n 1}]
+         (select (as "s" :s))
+         [{:s "s"}]
+         (select 1 2 3)
+         [{:1 1 :2 2 :3 3}]
+         (select (as 1 :a) (as 2 :b) (as 3 :c))
+         [{:a 1 :b 2 :c 3}]
+         (select '(lower "X"))
+         [(assoc nil (keyword "lower(?)") "x")]
+         (-> (select *) (from (as (select 1 2 3) :x)))
+         [{:1 1 :2 2 :3 3}]
+         (-> (select *) (from (as (select 1) :x) (as (select 2) :y)))
+         [{:1 1 :2 2}]
+         (-> (select 1) (where '(= 1 1)))
+         [{:1 1}]
+         (-> (select 1) (where '(!= 1 1)))
+         nil
+         (-> (select 1) (where '(= 1 2 3)))
+         nil
+         (-> (select 1) (where '(< 1 2)))
+         [{:1 1}]
+         (-> (select 1) (where '(< 1 2 3)))
+         [{:1 1}]
+         (select (select 1))
+         [(assoc nil (keyword "(select 1)") 1)]
+         (select (select 1) (select "x"))
+         [(assoc nil
+            (keyword "(select 1)") 1
+            (keyword "(select ?)") "x")]
+         ;; TODO: Valid SQL?
+         ;; (union (select 1) (select 2))
+         ;; ["SELECT 1 UNION (SELECT 2)"]
+         ;; (union (select 1) (select 2) :all true)
+         ;; ["SELECT 1 UNION ALL (SELECT 2)"]
+         ;; (intersect (select 1) (select 2))
+         ;; ["SELECT 1 INTERSECT (SELECT 2)"]
+         ;; (intersect (select 1) (select 2) :all true)
+         ;; ["SELECT 1 INTERSECT ALL (SELECT 2)"]
+         ;; (except (select 1) (select 2))
+         ;; ["SELECT 1 EXCEPT (SELECT 2)"]
+         ;; (except (select 1) (select 2) :all true)
+         ;; ["SELECT 1 EXCEPT ALL (SELECT 2)"]
+         )))
