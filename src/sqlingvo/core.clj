@@ -82,10 +82,8 @@
 (defmethod print-dup Stmt [node writer]
   (print-dup (sql node) writer))
 
-(defn make-stmt
-  "Make a new AST node for `op`."
-  [op & {:as opts}]
-  (assoc (Stmt. (or opts {})) :op op))
+(defn map->Stmt
+  [m] (Stmt. (or m {})))
 
 (defn- parse-from [forms]
   (cond
@@ -106,12 +104,12 @@
 (defn except
   "Select the SQL set difference between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (make-stmt :except :children [stmt-1 stmt-2] :all all))
+  (map->Stmt {:op :except :children [stmt-1 stmt-2] :all all}))
 
 (defn drop-table
   "Drop the database `tables`."
   [tables & {:as opts}]
-  (Stmt. (merge opts {:op :drop-table :tables (map parse-table (wrap-seq tables))})))
+  (map->Stmt (merge opts {:op :drop-table :tables (map parse-table (wrap-seq tables))})))
 
 (defn from
   "Add the FROM item to the SQL statement."
@@ -128,7 +126,7 @@
 (defn intersect
   "Select the SQL set intersection between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (make-stmt :intersect :children [stmt-1 stmt-2] :all all))
+  (map->Stmt {:op :intersect :children [stmt-1 stmt-2] :all all}))
 
 (defn limit
   "Add the LIMIT clause to the SQL statement."
@@ -152,17 +150,17 @@
 (defn select
   "Select `exprs` from the database."
   [& exprs]
-  (make-stmt :select :exprs (parse-exprs exprs)))
+  (map->Stmt {:op :select :exprs (parse-exprs exprs)}))
 
 (defn truncate
   "Truncate the database `tables`."
   [tables & {:as opts}]
-  (Stmt. (merge opts {:op :truncate :tables (map parse-table (wrap-seq tables))})))
+  (map->Stmt (merge opts {:op :truncate :tables (map parse-table (wrap-seq tables))})))
 
 (defn union
   "Select the SQL set union between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (make-stmt :union :children [stmt-1 stmt-2] :all all))
+  (map->Stmt {:op :union :children [stmt-1 stmt-2] :all all}))
 
 (defn where
   "Add the WHERE `condition` to the SQL statement."
