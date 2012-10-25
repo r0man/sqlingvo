@@ -111,9 +111,7 @@
 (defn drop-table
   "Drop the database `tables`."
   [tables & {:as opts}]
-  (assoc opts
-    :op :drop-table
-    :tables (map parse-table (wrap-seq tables))))
+  (Stmt. (merge opts {:op :drop-table :tables (map parse-table (wrap-seq tables))})))
 
 (defn from
   "Add the FROM item to the SQL statement."
@@ -159,9 +157,7 @@
 (defn truncate
   "Truncate the database `tables`."
   [tables & {:as opts}]
-  (assoc opts
-    :op :truncate
-    :tables (map parse-table (wrap-seq tables))))
+  (Stmt. (merge opts {:op :truncate :tables (map parse-table (wrap-seq tables))})))
 
 (defn union
   "Select the SQL set union between `stmt-1` and `stmt-2`."
