@@ -5,7 +5,22 @@
             [sqlingvo.compiler :refer [compile-sql]]
             [sqlingvo.util :refer [parse-expr parse-exprs parse-table]]))
 
-(declare run sql)
+(defn sql
+  "Compile `stmt` into a vector, where the first element is the
+  SQL stmt and the rest are the prepared stmt arguments."
+  [stmt] (compile-sql stmt))
+
+(defmulti run
+  "Run the SQL statement `stmt`."
+  (fn [stmt] (:op stmt)))
+
+(defmethod run :select [stmt]
+  (jdbc/with-query-results  results
+    (sql stmt)
+    (doall results)))
+
+(defmethod run :default [stmt]
+  (apply jdbc/do-prepared (sql stmt)))
 
 (deftype Stmt [content]
 
@@ -43,7 +58,7 @@
   clojure.lang.Seqable
   (seq [this]
     (jdbc/with-query-results results
-      (compile-sql this)
+      (sql this)
       (doall results)))
 
   clojure.lang.ILookup
@@ -54,13 +69,13 @@
     (.valAt content k not-found))
 
   (toString [this]
-    (first (compile-sql this))))
+    (first (sql this))))
 
 (defmethod print-method Stmt [node writer]
-  (print-dup (compile-sql node) writer))
+  (print-dup (sql node) writer))
 
 (defmethod print-dup Stmt [node writer]
-  (print-dup (compile-sql node) writer))
+  (print-dup (sql node) writer))
 
 (defn make-stmt
   "Make a new AST node for `op`."
@@ -77,11 +92,6 @@
 
 (defn- wrap-seq [s]
   (if (sequential? s) s [s]))
-
-(defn sql
-  "Compile `stmt` into a vector, where the first element is the
-  SQL stmt and the rest are the prepared stmt arguments."
-  [stmt] (compile-sql stmt))
 
 (defn as
   "Add an AS clause to the SQL statement."
@@ -160,15 +170,3 @@
     :condition
     {:op :condition
      :condition (parse-expr condition)}))
-
-(defmulti run
-  "Run the SQL statement `stmt`."
-  (fn [stmt] (:op stmt)))
-
-(defmethod run :select [stmt]
-  (jdbc/with-query-results  results
-    (sql stmt)
-    (doall results)))
-
-(defmethod run :default [stmt]
-  (apply jdbc/do-prepared (sql stmt)))
