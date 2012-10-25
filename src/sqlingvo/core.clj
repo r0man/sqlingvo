@@ -5,6 +5,8 @@
             [sqlingvo.compiler :refer [compile-sql]]
             [sqlingvo.util :refer [parse-expr parse-exprs parse-table]]))
 
+(declare run sql)
+
 (deftype Stmt [content]
 
   clojure.lang.IPersistentMap
@@ -30,10 +32,8 @@
 
   clojure.lang.IPersistentCollection
   (count [this]
-    (jdbc/with-query-results results
-      (let [exprs [(assoc (parse-expr '(count *)) :as :count)]]
-        (compile-sql (assoc this :exprs {:op :exprs :children exprs})))
-      (:count (first (doall results)))))
+    (let [exprs [(assoc (parse-expr '(count *)) :as :count)]]
+      (:count (first (run (assoc this :exprs {:op :exprs :children exprs}))))))
 
   (equiv [this other]
     (and (isa? (class other) Stmt)
