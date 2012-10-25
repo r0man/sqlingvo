@@ -4,6 +4,10 @@
   (:use clojure.test
         sqlingvo.core))
 
+(defmacro with-database [& body]
+  `(jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
+     ~@body))
+
 (deftest test-drop-table
   (are [stmt expected]
        (is (= expected (sql stmt)))
@@ -168,3 +172,11 @@
        ["TRUNCATE TABLE continents RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]
        (truncate [:continents :countries] :cascade true :continue-identity true :restart-identity true :restrict true)
        ["TRUNCATE TABLE continents, countries RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
+
+(deftest test-stmt-deftype
+  (with-database
+    (is (= "SELECT 1" (str (select 1))))
+    (is (= "[\"SELECT 1\"]\n" (prn-str (select 1))))
+    (is (= 1 (count (select 1))))
+    (is (= [{:1 1}] (seq (select 1))))
+    (is (= [{:a 1}] (seq (select (as 1 :a)))))))

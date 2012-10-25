@@ -5,17 +5,17 @@
             [sqlingvo.compiler :refer [compile-sql]]
             [sqlingvo.util :refer [parse-expr parse-exprs parse-table]]))
 
-(deftype Node [content]
+(deftype Stmt [content]
 
   clojure.lang.IPersistentMap
   (assoc [_ k v]
-    (Node. (.assoc content k v)))
+    (Stmt. (.assoc content k v)))
 
   (assocEx [_ k v]
-    (Node. (.assocEx content k v)))
+    (Stmt. (.assocEx content k v)))
 
   (without [_ k]
-    (Node. (.without content k)))
+    (Stmt. (.without content k)))
 
   java.lang.Iterable
   (iterator [this]
@@ -31,12 +31,12 @@
   clojure.lang.IPersistentCollection
   (count [this]
     (jdbc/with-query-results results
-      (let [exprs [(parse-expr '(count *))]]
+      (let [exprs [(assoc (parse-expr '(count *)) :as :count)]]
         (compile-sql (assoc this :exprs {:op :exprs :children exprs})))
-      (:count (first results))))
+      (:count (first (doall results)))))
 
   (equiv [this other]
-    (and (isa? (class other) Node)
+    (and (isa? (class other) Stmt)
          (= (. this content)
             (. other content))))
 
@@ -56,16 +56,16 @@
   (toString [this]
     (first (compile-sql this))))
 
-(defmethod print-method Node [node writer]
+(defmethod print-method Stmt [node writer]
   (print-dup (compile-sql node) writer))
 
-(defmethod print-dup Node [node writer]
+(defmethod print-dup Stmt [node writer]
   (print-dup (compile-sql node) writer))
 
-(defn node
+(defn make-stmt
   "Make a new AST node for `op`."
   [op & {:as opts}]
-  (assoc (Node. (or opts {})) :op op))
+  (assoc (Stmt. (or opts {})) :op op))
 
 (defn- parse-from [forms]
   (cond
@@ -91,7 +91,7 @@
 (defn except
   "Select the SQL set difference between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  {:op :except :children [stmt-1 stmt-2] :all all})
+  (make-stmt :except :children [stmt-1 stmt-2] :all all))
 
 (defn drop-table
   "Drop the database `tables`."
@@ -115,7 +115,7 @@
 (defn intersect
   "Select the SQL set intersection between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  {:op :intersect :children [stmt-1 stmt-2] :all all})
+  (make-stmt :intersect :children [stmt-1 stmt-2] :all all))
 
 (defn limit
   "Add the LIMIT clause to the SQL statement."
@@ -139,7 +139,7 @@
 (defn select
   "Select `exprs` from the database."
   [& exprs]
-  {:op :select :exprs (parse-exprs exprs)})
+  (make-stmt :select :exprs (parse-exprs exprs)))
 
 (defn truncate
   "Truncate the database `tables`."
@@ -151,7 +151,7 @@
 (defn union
   "Select the SQL set union between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  {:op :union :children [stmt-1 stmt-2] :all all})
+  (make-stmt :union :children [stmt-1 stmt-2] :all all))
 
 (defn where
   "Add the WHERE `condition` to the SQL statement."
