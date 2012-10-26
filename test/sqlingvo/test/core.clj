@@ -145,17 +145,17 @@
        (select (select 1) (select "x"))
        ["SELECT (SELECT 1), (SELECT ?)" "x"]
        (union (select 1) (select 2))
-       ["SELECT 1 UNION (SELECT 2)"]
+       ["SELECT 1 UNION SELECT 2"]
        (union (select 1) (select 2) :all true)
-       ["SELECT 1 UNION ALL (SELECT 2)"]
+       ["SELECT 1 UNION ALL SELECT 2"]
        (intersect (select 1) (select 2))
-       ["SELECT 1 INTERSECT (SELECT 2)"]
+       ["SELECT 1 INTERSECT SELECT 2"]
        (intersect (select 1) (select 2) :all true)
-       ["SELECT 1 INTERSECT ALL (SELECT 2)"]
+       ["SELECT 1 INTERSECT ALL SELECT 2"]
        (except (select 1) (select 2))
-       ["SELECT 1 EXCEPT (SELECT 2)"]
+       ["SELECT 1 EXCEPT SELECT 2"]
        (except (select 1) (select 2) :all true)
-       ["SELECT 1 EXCEPT ALL (SELECT 2)"]
+       ["SELECT 1 EXCEPT ALL SELECT 2"]
        (-> (select *) (from :continents) (where '(= :name "Europe")))
        ["SELECT * FROM continents WHERE (name = ?)" "Europe"]))
 
@@ -207,17 +207,19 @@
          [(assoc nil
             (keyword "(select 1)") 1
             (keyword "(select ?)") "x")]
-         ;; TODO: Valid SQL?
-         ;; (union (select 1) (select 2))
-         ;; ["SELECT 1 UNION (SELECT 2)"]
-         ;; (union (select 1) (select 2) :all true)
-         ;; ["SELECT 1 UNION ALL (SELECT 2)"]
-         ;; (intersect (select 1) (select 2))
-         ;; ["SELECT 1 INTERSECT (SELECT 2)"]
+         (union (select 1) (select 1))
+         [{:1 1}]
+         (union (select 1) (select 1) :all true)
+         [{:1 1} {:1 1}]
+         (union (select 1) (select 2) :all true)
+         [{:1 1} {:1 2}]
+         (intersect (select 1) (select 2))
+         nil
+         (intersect (select 1) (select 1))
+         [{:1 1}]
          ;; (intersect (select 1) (select 2) :all true)
-         ;; ["SELECT 1 INTERSECT ALL (SELECT 2)"]
-         ;; (except (select 1) (select 2))
-         ;; ["SELECT 1 EXCEPT (SELECT 2)"]
-         ;; (except (select 1) (select 2) :all true)
-         ;; ["SELECT 1 EXCEPT ALL (SELECT 2)"]
-         )))
+         ;; []
+         (except (select 1) (select 2))
+         [{:1 1}]
+         (except (select 1) (select 1))
+         nil)))

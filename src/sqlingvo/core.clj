@@ -14,10 +14,22 @@
   "Run the SQL statement `stmt`."
   (fn [stmt] (:op stmt)))
 
-(defmethod run :select [stmt]
+(defn- run-query [stmt]
   (jdbc/with-query-results  results
     (sql stmt)
     (doall results)))
+
+(defmethod run :select [stmt]
+  (run-query stmt))
+
+(defmethod run :except [stmt]
+  (run-query stmt))
+
+(defmethod run :intersect [stmt]
+  (run-query stmt))
+
+(defmethod run :union [stmt]
+  (run-query stmt))
 
 (defmethod run :default [stmt]
   (apply jdbc/do-prepared (sql stmt)))

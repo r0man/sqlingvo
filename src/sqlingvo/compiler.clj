@@ -21,8 +21,9 @@
 
 (defn- compile-set-op [op {:keys [children all]}]
   (let [[[s1 a1] [s2 a2]] (map compile-sql children)]
-    (cons (str s1 " " (upper-case (name op)) (if all " ALL") " (" s2 ")")
-          (concat a1 a2))))
+    (->> (cons (str s1 " " (upper-case (name op)) (if all " ALL") " "s2)
+               (apply vector (concat a1 a2)))
+         (apply vector))))
 
 ;; COMPILE CONSTANTS
 
@@ -189,7 +190,7 @@
               (~arity-fn ~'node)))))
 
 (defarity compile-2-ary
-  := :!= :<> :< :> :<= :>= :!~ :!~* "/" "^" "~*" :like :ilike)
+  := :!= :<> :< :> :<= :>= :!~ :!~* :&& "/" "^" "~*" :like :ilike)
 
 (defarity compile-infix
   :+ :* :& "%" :and :or :union)
