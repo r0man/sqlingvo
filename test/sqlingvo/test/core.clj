@@ -204,9 +204,7 @@
          (select (select 1))
          [(assoc nil (keyword "(select 1)") 1)]
          (select (select 1) (select "x"))
-         [(assoc nil
-            (keyword "(select 1)") 1
-            (keyword "(select ?)") "x")]
+         [(assoc nil (keyword "(select 1)") 1 (keyword "(select ?)") "x")]
          (union (select 1) (select 1))
          [{:1 1}]
          (union (select 1) (select 1) :all true)
