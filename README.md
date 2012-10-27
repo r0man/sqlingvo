@@ -12,6 +12,23 @@ Via Clojars: https://clojars.org/sqlingvo
 
 ## Examples
 
+### Select
+
+Select all films.
+
+    (-> (select *)
+        (from :films)
+        (sql))
+    ;=> ["SELECT * FROM films"]
+
+Select all Comedy films.
+
+    (-> (select *)
+        (from :films)
+        (where '(= :kind "Comedy"))
+        (sql))
+    ;=> ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
+
 ### Insert
 
 Insert a single row into table films.

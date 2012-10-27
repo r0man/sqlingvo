@@ -249,3 +249,11 @@
          [{:1 1}]
          (except (select 1) (select 1))
          nil)))
+
+
+(prn
+ (-> (select *)
+     (from :films)
+     (where '(= :kind "Comedy"))
+     (sql))
+ )
