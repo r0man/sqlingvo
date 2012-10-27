@@ -17,7 +17,7 @@
          (apply vector))))
 
 (defn- stmt [& stmts]
-  (apply join-stmt " " stmts))
+  (apply join-stmt " " (remove nil? stmts)))
 
 (defn- compile-set-op [op {:keys [children all]}]
   (let [[[s1 a1] [s2 a2]] (map compile-sql children)]
@@ -97,9 +97,6 @@
   (compile-sql node))
 
 ;; COMPILE SQL
-
-(defmethod compile-sql nil [_]
-  nil)
 
 (defmethod compile-sql :column [{:keys [as schema name table]}]
   [(str (join "." (map jdbc/as-identifier (remove nil? [schema table name])))
