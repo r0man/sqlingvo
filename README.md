@@ -34,7 +34,7 @@ Insert a row consisting entirely of default values
     (-> (insert :films)
         (default-values)
         (sql)
-    ;=> ["INSERT INTO films DEFAULT VALUES" ]
+    ;=> ["INSERT INTO films DEFAULT VALUES"]
 
 ### Update
 
