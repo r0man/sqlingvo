@@ -10,6 +10,17 @@ Via Clojars: https://clojars.org/sqlingvo
 
 FIXME
 
+## Examples
+
+### Update
+
+Change the word Drama to Dramatic in the column kind of the table films.
+
+    (-> (update :films {:kind "Dramatic"})
+        (where '(= :kind "Drama"))
+        (sql))
+    ;=> ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
+
 ## License
 
 Copyright © 2012 Roman Scherer
