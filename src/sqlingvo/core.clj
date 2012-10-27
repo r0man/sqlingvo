@@ -1,7 +1,7 @@
 (ns sqlingvo.core
-  (:refer-clojure :exclude [group-by replace])
+  (:refer-clojure :exclude [group-by])
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :refer [join replace split]]
+            [clojure.string :as s]
             [sqlingvo.compiler :refer [compile-sql]]
             [sqlingvo.util :refer [parse-expr parse-exprs parse-table]]))
 
@@ -115,3 +115,14 @@
   "Add the WHERE `condition` to the SQL statement."
   [stmt condition]
   (assoc-op stmt :condition :condition (parse-expr condition)))
+
+(defn join
+  [stmt from [how & condition] & {:keys [type outer]}]
+  (update-in
+   stmt [:from :joins] conj
+   {:op :join
+    :from (parse-from from)
+    :type type
+    :how (keyword (name how))
+    :condition (parse-exprs condition)
+    :outer outer}))

@@ -6,6 +6,9 @@
 
 (defmulti compile-sql :op)
 
+(defn- concat-v [& args]
+  (apply vector (apply concat args)))
+
 (defn stmt? [arg]
   (and (sequential? arg) (string? (first arg))))
 
@@ -129,9 +132,13 @@
 (defmethod compile-sql :fn [node]
   (compile-fn node))
 
-(defmethod compile-sql :from [{:keys [from]}]
-  (let [from (map compile-from from)]
-    (cons (str "FROM " (join ", " (map first from)))
+(defmethod compile-sql :from [{:keys [from joins]}]
+  (let [from (map compile-from from)
+        joins (map compile-sql joins)]
+    (cons (str "FROM "
+               (join ", " (map first from))
+               (if-not (empty? joins)
+                 (str " " (join " " (map first joins)))))
           (apply concat (map rest from)))))
 
 (defmethod compile-sql :group-by [{:keys [exprs]}]
@@ -139,6 +146,22 @@
 
 (defmethod compile-sql :intersect [node]
   (compile-set-op :intersect node))
+
+(defmethod compile-sql :join [{:keys [condition from how type outer]}]
+  (let [[cond-sql & cond-args] (compile-sql condition)
+        [from-sql & from-args] (compile-sql from)]
+    (cons (str (condp = type
+                 :cross "CROSS "
+                 :inner "INNER "
+                 :left "LEFT "
+                 :right "RIGHT "
+                 nil "")
+               (if outer "OUTER ")
+               "JOIN " from-sql " " (upper-case (name how)) " "
+               (condp = how
+                 :on cond-sql
+                 :using (str "(" cond-sql ")")))
+          (concat-v from-args cond-args))))
 
 (defmethod compile-sql :keyword [{:keys [form]}]
   [(jdbc/as-identifier form)])

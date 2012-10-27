@@ -157,7 +157,19 @@
        (except (select 1) (select 2) :all true)
        ["SELECT 1 EXCEPT ALL SELECT 2"]
        (-> (select *) (from :continents) (where '(= :name "Europe")))
-       ["SELECT * FROM continents WHERE (name = ?)" "Europe"]))
+       ["SELECT * FROM continents WHERE (name = ?)" "Europe"]
+       (-> (select *)
+           (from :countries)
+           (join :continents '(on (= :continents.id :countries.continent-id))))
+       ["SELECT * FROM countries JOIN continents ON (continents.id = countries.continent-id)"]
+       (-> (select *)
+           (from :countries)
+           (join :continents '(using :id)))
+       ["SELECT * FROM countries JOIN continents USING (id)"]
+       (-> (select *)
+           (from :countries)
+           (join :continents '(using :id :created-at)))
+       ["SELECT * FROM countries JOIN continents USING (id, created-at)"]))
 
 (deftest test-truncate
   (are [stmt expected]
