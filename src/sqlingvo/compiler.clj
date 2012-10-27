@@ -195,6 +195,14 @@
 (defmethod compile-sql :union [node]
   (compile-set-op :union node))
 
+(defmethod compile-sql :update [{:keys [condition table record]}]
+  (let [[sql & args] (if condition (compile-sql condition))
+        columns (map jdbc/as-identifier (keys record))]
+    (cons (str "UPDATE " (first (compile-sql table))
+               " SET " (apply str (concat (interpose " = ?, " columns) " = ?"))
+               (if sql (str " " sql)))
+          (concat (vals record) args))))
+
 ;; DEFINE SQL FN ARITY
 
 (defmacro defarity

@@ -169,7 +169,10 @@
        (-> (select *)
            (from :countries)
            (join :continents '(using :id :created-at)))
-       ["SELECT * FROM countries JOIN continents USING (id, created-at)"]))
+       ["SELECT * FROM countries JOIN continents USING (id, created-at)"]
+       (-> (update :films {:kind "Dramatic"})
+           (where '(= :kind "Drama")))
+       ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]))
 
 (deftest test-truncate
   (are [stmt expected]

@@ -127,3 +127,8 @@
   "Add the WHERE `condition` to the SQL statement."
   [stmt condition]
   (assoc-op stmt :condition :condition (parse-expr condition)))
+
+(defn update
+  "Update rows of the database `table`."
+  [table record]
+  (node :update :table (parse-table table) :record record))
