@@ -36,7 +36,7 @@ Insert a single row into table films.
     (-> (insert :films {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})
         (sql))
     ;=> ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
-    =>   106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
+    ;=>  106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
 
 Insert multiple rows into the table films using the multirow VALUES syntax.
 
