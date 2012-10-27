@@ -81,6 +81,18 @@
   [stmt-1 stmt-2 & {:keys [all]}]
   (node :intersect :children [stmt-1 stmt-2] :all all))
 
+(defn join
+  "Add a JOIN clause to the SQL statement."
+  [stmt from [how & condition] & {:keys [type outer]}]
+  (update-in
+   stmt [:from :joins] conj
+   {:op :join
+    :from (parse-from from)
+    :type type
+    :how (keyword (name how))
+    :condition (parse-exprs condition)
+    :outer outer}))
+
 (defn limit
   "Add the LIMIT clause to the SQL statement."
   [stmt count]
@@ -115,14 +127,3 @@
   "Add the WHERE `condition` to the SQL statement."
   [stmt condition]
   (assoc-op stmt :condition :condition (parse-expr condition)))
-
-(defn join
-  [stmt from [how & condition] & {:keys [type outer]}]
-  (update-in
-   stmt [:from :joins] conj
-   {:op :join
-    :from (parse-from from)
-    :type type
-    :how (keyword (name how))
-    :condition (parse-exprs condition)
-    :outer outer}))
