@@ -179,7 +179,13 @@
        ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)" 106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
        (-> (insert :films [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
                            {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
-       ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)" 110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]))
+       ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)" 110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
+       (-> (insert :distributors {:did 106 :dname "XYZ Widgets"})
+           (returning *))
+       ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
+       (-> (insert :distributors {:did 106 :dname "XYZ Widgets"})
+           (returning :did))
+       ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING did" 106 "XYZ Widgets"]))
 
 (deftest test-truncate
   (are [stmt expected]

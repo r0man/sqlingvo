@@ -139,14 +139,16 @@
 (defmethod compile-sql :group-by [{:keys [exprs]}]
   (stmt ["GROUP BY"] exprs))
 
-(defmethod compile-sql :insert [{:keys [table rows default-values]}]
+(defmethod compile-sql :insert [{:keys [table rows default-values returning]}]
   (let [columns (map jdbc/as-identifier (keys (first rows)))
         template (str "(" (join ", " (repeat (count columns) "?")) ")")]
     (cons (str "INSERT INTO " (first (compile-sql table))
                (if-not (empty? rows)
                  (str " (" (join ", " columns) ") VALUES "
                       (join ", " (repeat (count rows) template))))
-               (if default-values " DEFAULT VALUES"))
+               (if default-values " DEFAULT VALUES")
+               (if returning
+                 (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
           (apply concat (map vals rows)))))
 
 (defmethod compile-sql :intersect [node]

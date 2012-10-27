@@ -122,6 +122,11 @@
   [stmt exprs & {:as opts}]
   (assoc stmt :order-by (merge opts (node :order-by :exprs (parse-exprs (wrap-seq exprs))))))
 
+(defn returning
+  "Add the RETURNING clause the SQL statement."
+  [stmt exprs]
+  (assoc-op stmt :returning :exprs (parse-exprs (wrap-seq exprs))))
+
 (defn select
   "Select `exprs` from the database."
   [& exprs]
