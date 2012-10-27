@@ -61,6 +61,13 @@
   [stmt-1 stmt-2 & {:keys [all]}]
   (node :except :children [stmt-1 stmt-2] :all all))
 
+(defn default-values
+  "Add the DEFAULT VALUES clause to `stmt`."
+  ([stmt]
+     (default-values stmt true))
+  ([stmt enabled]
+     (assoc stmt :default-values enabled)))
+
 (defn drop-table
   "Drop the database `tables`."
   [tables & {:as opts}]
@@ -75,6 +82,11 @@
   "Add the GROUP BY clause to the SQL statement."
   [stmt & exprs]
   (assoc-op stmt :group-by :exprs (parse-exprs exprs)))
+
+(defn insert
+  "Insert rows into the database `table`."
+  [table]
+  (node :insert :table (parse-table table)))
 
 (defn intersect
   "Select the SQL set intersection between `stmt-1` and `stmt-2`."
@@ -123,12 +135,12 @@
   [stmt-1 stmt-2 & {:keys [all]}]
   (node :union :children [stmt-1 stmt-2] :all all))
 
-(defn where
-  "Add the WHERE `condition` to the SQL statement."
-  [stmt condition]
-  (assoc-op stmt :condition :condition (parse-expr condition)))
-
 (defn update
   "Update rows of the database `table`."
   [table record]
   (node :update :table (parse-table table) :record record))
+
+(defn where
+  "Add the WHERE `condition` to the SQL statement."
+  [stmt condition]
+  (assoc-op stmt :condition :condition (parse-expr condition)))

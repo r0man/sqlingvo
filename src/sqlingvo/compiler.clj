@@ -139,6 +139,12 @@
 (defmethod compile-sql :group-by [{:keys [exprs]}]
   (stmt ["GROUP BY"] exprs))
 
+(defmethod compile-sql :insert [{:keys [table record default-values]}]
+  (let [columns (map jdbc/as-identifier (keys record))]
+    (cons (str "INSERT INTO " (first (compile-sql table))
+               (if default-values " DEFAULT VALUES"))
+          (if record (vals record)))))
+
 (defmethod compile-sql :intersect [node]
   (compile-set-op :intersect node))
 
