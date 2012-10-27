@@ -35,7 +35,7 @@
 (defmethod compile-const :default [{:keys [form as]}]
   [(str form (if as (str " AS " (jdbc/as-identifier as))))])
 
-;; COMPILE CONSTANTS
+;; COMPILE EXPRESSIONS
 
 (defmulti compile-expr
   "Compile a SQL expression."
