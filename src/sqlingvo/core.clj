@@ -8,7 +8,7 @@
 (defn sql
   "Compile `stmt` into a vector, where the first element is the
   SQL stmt and the rest are the prepared stmt arguments."
-  [stmt] (compile-sql stmt))
+  [stmt] (apply vector (compile-sql stmt)))
 
 (defmulti run
   "Run the SQL statement `stmt`."

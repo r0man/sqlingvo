@@ -6,27 +6,22 @@
 
 (defmulti compile-sql :op)
 
-(defn- concat-v [& args]
-  (apply vector (apply concat args)))
-
 (defn stmt? [arg]
   (and (sequential? arg) (string? (first arg))))
 
 (defn- join-stmt [separator & stmts]
   (let [stmts (map #(if (stmt? %1) %1 (compile-sql %1)) stmts)
         stmts (remove (comp blank? first) stmts)]
-    (->> (cons (join separator (map first stmts))
-               (apply concat (map rest stmts)))
-         (apply vector))))
+    (cons (join separator (map first stmts))
+          (apply concat (map rest stmts)))))
 
 (defn- stmt [& stmts]
   (apply join-stmt " " (remove nil? stmts)))
 
 (defn- compile-set-op [op {:keys [children all]}]
   (let [[[s1 a1] [s2 a2]] (map compile-sql children)]
-    (->> (cons (str s1 " " (upper-case (name op)) (if all " ALL") " "s2)
-               (apply vector (concat a1 a2)))
-         (apply vector))))
+    (cons (str s1 " " (upper-case (name op)) (if all " ALL") " "s2)
+          (concat a1 a2))))
 
 ;; COMPILE CONSTANTS
 
@@ -161,7 +156,7 @@
                (condp = how
                  :on cond-sql
                  :using (str "(" cond-sql ")")))
-          (concat-v from-args cond-args))))
+          (concat from-args cond-args))))
 
 (defmethod compile-sql :keyword [{:keys [form]}]
   [(jdbc/as-identifier form)])
