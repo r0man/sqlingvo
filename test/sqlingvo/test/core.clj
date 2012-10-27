@@ -174,7 +174,12 @@
            (where '(= :kind "Drama")))
        ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
        (-> (insert :films) (default-values))
-       ["INSERT INTO films DEFAULT VALUES" ]))
+       ["INSERT INTO films DEFAULT VALUES" ]
+       (-> (insert :films {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
+       ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)" 106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
+       (-> (insert :films [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+                           {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
+       ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)" 110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]))
 
 (deftest test-truncate
   (are [stmt expected]

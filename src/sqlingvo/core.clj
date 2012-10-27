@@ -85,8 +85,10 @@
 
 (defn insert
   "Insert rows into the database `table`."
-  [table]
-  (node :insert :table (parse-table table)))
+  ([table]
+     (insert table []))
+  ([table rows]
+     (node :insert :table (parse-table table) :rows (wrap-seq rows))))
 
 (defn intersect
   "Select the SQL set intersection between `stmt-1` and `stmt-2`."
@@ -137,8 +139,8 @@
 
 (defn update
   "Update rows of the database `table`."
-  [table record]
-  (node :update :table (parse-table table) :record record))
+  [table row]
+  (node :update :table (parse-table table) :row row))
 
 (defn where
   "Add the WHERE `condition` to the SQL statement."

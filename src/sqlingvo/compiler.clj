@@ -139,11 +139,15 @@
 (defmethod compile-sql :group-by [{:keys [exprs]}]
   (stmt ["GROUP BY"] exprs))
 
-(defmethod compile-sql :insert [{:keys [table record default-values]}]
-  (let [columns (map jdbc/as-identifier (keys record))]
+(defmethod compile-sql :insert [{:keys [table rows default-values]}]
+  (let [columns (map jdbc/as-identifier (keys (first rows)))
+        template (str "(" (join ", " (repeat (count columns) "?")) ")")]
     (cons (str "INSERT INTO " (first (compile-sql table))
+               (if-not (empty? rows)
+                 (str " (" (join ", " columns) ") VALUES "
+                      (join ", " (repeat (count rows) template))))
                (if default-values " DEFAULT VALUES"))
-          (if record (vals record)))))
+          (apply concat (map vals rows)))))
 
 (defmethod compile-sql :intersect [node]
   (compile-set-op :intersect node))
@@ -201,13 +205,13 @@
 (defmethod compile-sql :union [node]
   (compile-set-op :union node))
 
-(defmethod compile-sql :update [{:keys [condition table record]}]
+(defmethod compile-sql :update [{:keys [condition table row]}]
   (let [[sql & args] (if condition (compile-sql condition))
-        columns (map jdbc/as-identifier (keys record))]
+        columns (map jdbc/as-identifier (keys row))]
     (cons (str "UPDATE " (first (compile-sql table))
                " SET " (apply str (concat (interpose " = ?, " columns) " = ?"))
                (if sql (str " " sql)))
-          (concat (vals record) args))))
+          (concat (vals row) args))))
 
 ;; DEFINE SQL FN ARITY
 
