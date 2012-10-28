@@ -68,10 +68,14 @@
 (defn compile-infix
   "Compile a SQL infix function node into a SQL statement."
   [{:keys [as args name]}]
-  (let [args (map compile-sql args)]
-    (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
-               (if as (str " AS " (jdbc/as-identifier as))))
-          (apply concat (map rest args)))))
+  (cond
+   (= 1 (count args))
+   (compile-sql (first args))
+   :else
+   (let [args (map compile-sql args)]
+     (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
+                (if as (str " AS " (jdbc/as-identifier as))))
+           (apply concat (map rest args))))))
 
 (defmulti compile-fn
   "Compile a SQL function node into a SQL statement."

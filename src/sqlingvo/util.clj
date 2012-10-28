@@ -47,6 +47,9 @@
 (defmethod parse-expr clojure.lang.Cons [expr]
   (parse-fn-expr expr))
 
+(defmethod parse-expr clojure.lang.LazySeq [expr]
+  (parse-fn-expr expr))
+
 (defmethod parse-expr clojure.lang.PersistentList [expr]
   (parse-fn-expr expr))
 
