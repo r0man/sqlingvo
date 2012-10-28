@@ -134,6 +134,10 @@
        ["SELECT * FROM continents GROUP BY name, created-at"]
        (-> (select 1) (where '(= 1 1)))
        ["SELECT 1 WHERE (1 = 1)"]
+       (-> (select 1) (where (list '= 1 1)))
+       ["SELECT 1 WHERE (1 = 1)"]
+       (-> (select 1) (where (list 'and (list '= 1 1) (list '= 1 2))))
+       ["SELECT 1 WHERE ((1 = 1) and (1 = 2))"]
        (-> (select 1) (where '(= 1 2 3)))
        ["SELECT 1 WHERE (1 = 2) AND (2 = 3)"]
        (-> (select 1) (where '(< 1 2)))
@@ -249,11 +253,3 @@
          [{:1 1}]
          (except (select 1) (select 1))
          nil)))
-
-
-(prn
- (-> (select *)
-     (from :films)
-     (where '(= :kind "Comedy"))
-     (sql))
- )

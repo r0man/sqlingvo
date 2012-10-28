@@ -32,7 +32,10 @@
   (run-query stmt))
 
 (defmethod run :default [stmt]
-  (apply jdbc/do-prepared (sql stmt)))
+  (if (:returning stmt)
+    (run-query stmt)
+    (let [[sql & args] (sql stmt)]
+      (jdbc/do-prepared sql args))))
 
 (defn- node [op & {:as opts}]
   (assoc opts :op op))
