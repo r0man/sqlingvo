@@ -211,12 +211,14 @@
 (defmethod compile-sql :union [node]
   (compile-set-op :union node))
 
-(defmethod compile-sql :update [{:keys [condition table row]}]
+(defmethod compile-sql :update [{:keys [condition table row returning]}]
   (let [[sql & args] (if condition (compile-sql condition))
         columns (map jdbc/as-identifier (keys row))]
     (cons (str "UPDATE " (first (compile-sql table))
                " SET " (apply str (concat (interpose " = ?, " columns) " = ?"))
-               (if sql (str " " sql)))
+               (if sql (str " " sql))
+               (if returning
+                 (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
           (concat (vals row) args))))
 
 ;; DEFINE SQL FN ARITY
