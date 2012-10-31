@@ -35,7 +35,7 @@
   (if (:returning stmt)
     (run-query stmt)
     (let [[sql & args] (sql stmt)]
-      (jdbc/do-prepared sql args))))
+      (map #(hash-map :count %1) (jdbc/do-prepared sql args)))))
 
 (defn- node [op & {:as opts}]
   (assoc opts :op op))
