@@ -79,7 +79,9 @@
 (defn from
   "Add the FROM item to the SQL statement."
   [stmt & from]
-  (assoc-op stmt :from :from (map parse-from from)))
+  (condp = (:op stmt)
+    :copy (assoc stmt :from (first from))
+    (assoc-op stmt :from :from (map parse-from from))))
 
 (defn group-by
   "Add the GROUP BY clause to the SQL statement."
@@ -109,6 +111,12 @@
     :how (keyword (name how))
     :condition (parse-exprs condition)
     :outer outer}))
+
+(defn copy
+  "Copy data from or to a database table."
+  [table & args]
+  {:op :copy
+   :table (parse-table table)})
 
 (defn limit
   "Add the LIMIT clause to the SQL statement."

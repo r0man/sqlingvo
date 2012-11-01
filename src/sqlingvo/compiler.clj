@@ -100,6 +100,17 @@
 
 ;; COMPILE SQL
 
+(defmethod compile-sql :copy [{:keys [from to table]}]
+  (if from
+    (cons (str "COPY " (first (compile-sql table))
+               " FROM " (cond
+                         (string? from) "?"
+                         (= :stdin from) "STDIN"))
+          (cond
+           (string? from) [from]
+           (= :stdin from) []))
+    ))
+
 (defmethod compile-sql :column [{:keys [as schema name table]}]
   [(str (join "." (map jdbc/as-identifier (remove nil? [schema table name])))
         (if as (str " AS " (jdbc/as-identifier as))))])

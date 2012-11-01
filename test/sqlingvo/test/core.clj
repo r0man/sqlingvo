@@ -191,7 +191,11 @@
        ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
        (-> (insert :distributors {:did 106 :dname "XYZ Widgets"})
            (returning :did))
-       ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING did" 106 "XYZ Widgets"]))
+       ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING did" 106 "XYZ Widgets"]
+       (-> (copy :country) (from :stdin))
+       ["COPY country FROM STDIN"]
+       (-> (copy :country) (from "/usr1/proj/bray/sql/country_data"))
+       ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]))
 
 (deftest test-truncate
   (are [stmt expected]
