@@ -104,15 +104,14 @@
   (if from
     (cons (str "COPY " (first (compile-sql table))
                (if-not (empty? columns)
-                 (str " (" (join ", " (map (comp first compile-sql) columns)) ")"))
+                 (str " (" (first (apply join-stmt ", " columns)) ")"))
                " FROM "
                (cond
                 (string? from) "?"
                 (= :stdin from) "STDIN"))
           (cond
            (string? from) [from]
-           (= :stdin from) []))
-    ))
+           (= :stdin from) []))))
 
 (defmethod compile-sql :column [{:keys [as schema name table]}]
   [(str (join "." (map jdbc/as-identifier (remove nil? [schema table name])))
