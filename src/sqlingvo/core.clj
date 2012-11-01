@@ -3,7 +3,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as s]
             [sqlingvo.compiler :refer [compile-sql]]
-            [sqlingvo.util :refer [parse-expr parse-exprs parse-table]]))
+            [sqlingvo.util :refer [parse-expr parse-exprs parse-column parse-table]]))
 
 (defn sql
   "Compile `stmt` into a vector, where the first element is the
@@ -59,6 +59,13 @@
   [stmt as]
   (assoc (parse-expr stmt) :as as))
 
+(defn copy
+  "Copy data from or to a database table."
+  [table & [columns]]
+  {:op :copy
+   :table (parse-table table)
+   :columns (map parse-column columns)})
+
 (defn except
   "Select the SQL set difference between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
@@ -111,12 +118,6 @@
     :how (keyword (name how))
     :condition (parse-exprs condition)
     :outer outer}))
-
-(defn copy
-  "Copy data from or to a database table."
-  [table & args]
-  {:op :copy
-   :table (parse-table table)})
 
 (defn limit
   "Add the LIMIT clause to the SQL statement."

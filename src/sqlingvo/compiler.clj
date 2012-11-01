@@ -100,12 +100,15 @@
 
 ;; COMPILE SQL
 
-(defmethod compile-sql :copy [{:keys [from to table]}]
+(defmethod compile-sql :copy [{:keys [columns from to table]}]
   (if from
     (cons (str "COPY " (first (compile-sql table))
-               " FROM " (cond
-                         (string? from) "?"
-                         (= :stdin from) "STDIN"))
+               (if-not (empty? columns)
+                 (str " (" (join ", " (map (comp first compile-sql) columns)) ")"))
+               " FROM "
+               (cond
+                (string? from) "?"
+                (= :stdin from) "STDIN"))
           (cond
            (string? from) [from]
            (= :stdin from) []))
