@@ -61,12 +61,23 @@ Insert multiple rows into the table films using the multirow VALUES syntax.
     ;=> ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
     ;=>  110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
 
-Insert a row consisting entirely of default values
+Insert a row consisting entirely of default values.
 
     (-> (insert :films)
         (default-values)
         (sql)
     ;=> ["INSERT INTO films DEFAULT VALUES"]
+
+
+Insert some rows into table films from a table tmp-films with the same column layout as films.
+
+    (-> (insert :films
+                (-> (select *)
+                    (from :tmp-films)
+                    (where '(< :date-prod "2004-05-07"))))
+        (sql))
+    ;=> ["INSERT INTO films (SELECT * FROM tmp-films WHERE (date-prod < ?))" "2004-05-07"]
+
 
 ### Select
 

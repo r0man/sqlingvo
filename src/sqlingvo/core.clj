@@ -109,8 +109,14 @@
   "Insert rows into the database `table`."
   ([table]
      (insert table []))
-  ([table rows]
-     {:op :insert :table (parse-table table) :rows (wrap-seq rows)}))
+  ([table what]
+     (let [stmt {:op :insert :table (parse-table table)}]
+       (cond
+        (sequential? what)
+        (assoc stmt :rows what)
+        (and (map? what)
+             (= :select (:op what)))
+        (assoc stmt :query what)))))
 
 (defn if-not-exists
   "Add a IF NOT EXISTS clause to statement."
