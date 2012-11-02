@@ -203,7 +203,14 @@
        (-> (delete :films) (where '(<> :kind "Musical")))
        ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
        (-> (delete :tasks) (where '(= status "DONE")) (returning *))
-       ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]))
+       ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
+       (-> (delete :quotes)
+           (where `(and (= :company-id 1)
+                        (> :date ~(-> (select '(min :date))
+                                      (from :import)))
+                        (> :date ~(-> (select '(max :date))
+                                      (from :import))))))
+       ["DELETE FROM quotes WHERE ((company-id = 1) and (date > (SELECT min(date) FROM import)) and (date > (SELECT max(date) FROM import)))"]))
 
 (deftest test-truncate
   (are [stmt expected]

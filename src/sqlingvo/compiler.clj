@@ -57,7 +57,7 @@
    (> 2 (count args))
    (throw (IllegalArgumentException. "More than 1 arg needed."))
    (= 2 (count args))
-   (let [[[s1 & a1] [s2 & a2]] (map compile-sql args)]
+   (let [[[s1 & a1] [s2 & a2]] (map compile-expr args)]
      (cons (str "(" s1 " " (core/name name) " " s2 ")")
            (concat a1 a2)))
    :else
