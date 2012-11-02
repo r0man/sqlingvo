@@ -8,6 +8,48 @@
   `(jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
      ~@body))
 
+(deftest test-copy
+  (are [stmt expected]
+       (is (= expected (sql stmt)))
+       (-> (copy :country) (from :stdin))
+       ["COPY country FROM STDIN"]
+       (-> (copy :country) (from "/usr1/proj/bray/sql/country_data"))
+       ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
+       (-> (copy :country [:id :name]) (from "/usr1/proj/bray/sql/country_data"))
+       ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]))
+
+(deftest test-create-table
+  (are [stmt expected]
+       (is (= expected (sql stmt)))
+       (-> (create-table :import)
+           (if-not-exists true)
+           (inherits :quotes)
+           (temporary true))
+       ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]))
+
+(deftest test-delete
+  (are [stmt expected]
+       (is (= expected (sql stmt)))
+       (-> (delete :films))
+       ["DELETE FROM films"]
+       (-> (delete :films) (where '(<> :kind "Musical")))
+       ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
+       (-> (delete :tasks) (where '(= status "DONE")) (returning *))
+       ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
+       (-> (delete :films)
+           (where `(in :producer-id
+                       ~(-> (select :id)
+                            (from :producers)
+                            (where '(= name "foo"))))))
+       ["DELETE FROM films WHERE (producer-id in (SELECT id FROM producers WHERE (name = ?)))" "foo"]
+       (-> (delete :quotes)
+           (where `(and (= :company-id 1)
+                        (> :date ~(-> (select '(min :date))
+                                      (from :import)))
+                        (> :date ~(-> (select '(max :date))
+                                      (from :import))))))
+       ["DELETE FROM quotes WHERE ((company-id = 1) and (date > (SELECT min(date) FROM import)) and (date > (SELECT max(date) FROM import)))"]))
+
 (deftest test-drop-table
   (are [stmt expected]
        (is (= expected (sql stmt)))
@@ -49,6 +91,23 @@
       (let [node (second (:children exprs))]
         (is (= :column (:op node)))
         (is (= :created-at (:name node)))))))
+
+(deftest test-insert
+  (are [stmt expected]
+       (is (= expected (sql stmt)))
+       (-> (insert :films) (default-values))
+       ["INSERT INTO films DEFAULT VALUES" ]
+       (-> (insert :films {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
+       ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)" 106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
+       (-> (insert :films [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+                           {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
+       ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)" 110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
+       (-> (insert :distributors {:did 106 :dname "XYZ Widgets"})
+           (returning *))
+       ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
+       (-> (insert :distributors {:did 106 :dname "XYZ Widgets"})
+           (returning :did))
+       ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING did" 106 "XYZ Widgets"]))
 
 (deftest test-limit
   (is (= {:limit {:op :limit :count 1}} (limit {} 1))))
@@ -175,57 +234,7 @@
        (-> (select *)
            (from :countries)
            (join :continents '(using :id :created-at)))
-       ["SELECT * FROM countries JOIN continents USING (id, created-at)"]
-       (-> (update :films {:kind "Dramatic"})
-           (where '(= :kind "Drama")))
-       ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
-       (-> (insert :films) (default-values))
-       ["INSERT INTO films DEFAULT VALUES" ]
-       (-> (insert :films {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
-       ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)" 106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
-       (-> (insert :films [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-                           {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
-       ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)" 110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
-       (-> (insert :distributors {:did 106 :dname "XYZ Widgets"})
-           (returning *))
-       ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
-       (-> (insert :distributors {:did 106 :dname "XYZ Widgets"})
-           (returning :did))
-       ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING did" 106 "XYZ Widgets"]
-       (-> (copy :country) (from :stdin))
-       ["COPY country FROM STDIN"]
-       (-> (copy :country) (from "/usr1/proj/bray/sql/country_data"))
-       ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
-       (-> (copy :country [:id :name]) (from "/usr1/proj/bray/sql/country_data"))
-       ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]
-       (-> (delete :films))
-       ["DELETE FROM films"]
-       (-> (delete :films) (where '(<> :kind "Musical")))
-       ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
-       (-> (delete :tasks) (where '(= status "DONE")) (returning *))
-       ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
-       (-> (delete :films)
-           (where `(in :producer-id
-                       ~(-> (select :id)
-                            (from :producers)
-                            (where '(= name "foo"))))))
-       ["DELETE FROM films WHERE (producer-id in (SELECT id FROM producers WHERE (name = ?)))" "foo"]
-       (-> (delete :quotes)
-           (where `(and (= :company-id 1)
-                        (> :date ~(-> (select '(min :date))
-                                      (from :import)))
-                        (> :date ~(-> (select '(max :date))
-                                      (from :import))))))
-       ["DELETE FROM quotes WHERE ((company-id = 1) and (date > (SELECT min(date) FROM import)) and (date > (SELECT max(date) FROM import)))"]))
-
-(deftest test-create-table
-  (are [stmt expected]
-       (is (= expected (sql stmt)))
-       (-> (create-table :import)
-           (if-not-exists true)
-           (inherits :quotes)
-           (temporary true))
-       ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]))
+       ["SELECT * FROM countries JOIN continents USING (id, created-at)"]))
 
 (deftest test-truncate
   (are [stmt expected]
@@ -238,6 +247,13 @@
        ["TRUNCATE TABLE continents RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]
        (truncate [:continents :countries] :cascade true :continue-identity true :restart-identity true :restrict true)
        ["TRUNCATE TABLE continents, countries RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
+
+(deftest test-update
+  (are [stmt expected]
+       (is (= expected (sql stmt)))
+       (-> (update :films {:kind "Dramatic"})
+           (where '(= :kind "Drama")))
+       ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]))
 
 (deftest test-run
   (with-database
