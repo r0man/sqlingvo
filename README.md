@@ -12,6 +12,15 @@ Via Clojars: https://clojars.org/sqlingvo
 
 ## Examples
 
+### Copy
+
+Copy data from a file into the country table.
+
+    (-> (copy :country)
+        (from "/usr1/proj/bray/sql/country_data")
+        (sql))
+    ;=> ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
+
 ### Delete
 
 Clear the table films.
