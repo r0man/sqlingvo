@@ -36,6 +36,14 @@ Delete all films but musicals.
         (sql))
     ;=> ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
 
+Delete completed tasks, returning full details of the deleted rows.
+
+    (-> (delete :tasks)
+        (where '(= status "DONE"))
+        (returning *)
+        (sql))
+    ;=> ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
+
 ### Insert
 
 Insert a single row into table films.

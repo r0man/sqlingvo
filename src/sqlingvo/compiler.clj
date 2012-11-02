@@ -113,10 +113,12 @@
            (string? from) [from]
            (= :stdin from) []))))
 
-(defmethod compile-sql :delete [{:keys [condition table]}]
+(defmethod compile-sql :delete [{:keys [condition table returning]}]
   (let [[sql & args] (if condition (compile-sql condition))]
     (cons (str "DELETE FROM " (first (compile-sql table))
-               (if sql (str " " sql)))
+               (if sql (str " " sql))
+               (if returning
+                 (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
           args)))
 
 (defmethod compile-sql :column [{:keys [as schema name table]}]

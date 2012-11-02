@@ -201,7 +201,9 @@
        (-> (delete :films))
        ["DELETE FROM films"]
        (-> (delete :films) (where '(<> :kind "Musical")))
-       ["DELETE FROM films WHERE (kind <> ?)" "Musical"]))
+       ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
+       (-> (delete :tasks) (where '(= status "DONE")) (returning *))
+       ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]))
 
 (deftest test-truncate
   (are [stmt expected]
