@@ -113,6 +113,17 @@
            (string? from) [from]
            (= :stdin from) []))))
 
+(defmethod compile-sql :create-table [{:keys [columns table if-not-exists inherits temporary]}]
+  (cons (str "CREATE"
+             (if temporary " TEMPORARY")
+             " TABLE"
+             (if if-not-exists " IF NOT EXISTS")
+             (str " " (first (compile-sql table)))
+             " (" (join ", " (map (comp first compile-sql) columns)) ")"
+             (if inherits
+               (str " INHERITS (" (join ", " (map (comp first compile-sql) inherits)) ")")))
+        []))
+
 (defmethod compile-sql :delete [{:keys [condition table returning]}]
   (let [[sql & args] (if condition (compile-sql condition))]
     (cons (str "DELETE FROM " (first (compile-sql table))

@@ -59,6 +59,11 @@
   [stmt as]
   (assoc (parse-expr stmt) :as as))
 
+(defn create-table
+  "Define a new table."
+  [table]
+  {:op :create-table :table (parse-table table)})
+
 (defn copy
   "Copy data from or to a database table."
   [table & [columns]]
@@ -99,12 +104,20 @@
   [stmt & exprs]
   (assoc-op stmt :group-by :exprs (parse-exprs exprs)))
 
+(defn inherits
+  [stmt & tables]
+  (assoc stmt :inherits (map parse-table tables)))
+
 (defn insert
   "Insert rows into the database `table`."
   ([table]
      (insert table []))
   ([table rows]
      (node :insert :table (parse-table table) :rows (wrap-seq rows))))
+
+(defn if-not-exists
+  "Add a IF NOT EXISTS clause to statement."
+  [stmt bool] (assoc stmt :if-not-exists bool))
 
 (defn intersect
   "Select the SQL set intersection between `stmt-1` and `stmt-2`."
@@ -147,6 +160,11 @@
   "Select `exprs` from the database."
   [& exprs]
   (node :select :exprs (parse-exprs exprs)))
+
+(defn temporary
+  "Create a temporary table."
+  [stmt temporary]
+  (assoc stmt :temporary temporary))
 
 (defn truncate
   "Truncate the database `tables`."

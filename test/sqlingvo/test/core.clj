@@ -218,6 +218,15 @@
                                       (from :import))))))
        ["DELETE FROM quotes WHERE ((company-id = 1) and (date > (SELECT min(date) FROM import)) and (date > (SELECT max(date) FROM import)))"]))
 
+(deftest test-create-table
+  (are [stmt expected]
+       (is (= expected (sql stmt)))
+       (-> (create-table :import)
+           (if-not-exists true)
+           (inherits :quotes)
+           (temporary true))
+       ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]))
+
 (deftest test-truncate
   (are [stmt expected]
        (is (= expected (sql stmt)))
