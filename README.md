@@ -27,23 +27,6 @@ Delete all films but musicals.
         (sql))
     ;=> ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
 
-### Select
-
-Select all films.
-
-    (-> (select *)
-        (from :films)
-        (sql))
-    ;=> ["SELECT * FROM films"]
-
-Select all Comedy films.
-
-    (-> (select *)
-        (from :films)
-        (where '(= :kind "Comedy"))
-        (sql))
-    ;=> ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
-
 ### Insert
 
 Insert a single row into table films.
@@ -67,6 +50,23 @@ Insert a row consisting entirely of default values
         (default-values)
         (sql)
     ;=> ["INSERT INTO films DEFAULT VALUES"]
+
+### Select
+
+Select all films.
+
+    (-> (select *)
+        (from :films)
+        (sql))
+    ;=> ["SELECT * FROM films"]
+
+Select all Comedy films.
+
+    (-> (select *)
+        (from :films)
+        (where '(= :kind "Comedy"))
+        (sql))
+    ;=> ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
 
 ### Update
 
