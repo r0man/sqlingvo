@@ -204,6 +204,12 @@
        ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
        (-> (delete :tasks) (where '(= status "DONE")) (returning *))
        ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
+       (-> (delete :films)
+           (where `(in :producer-id
+                       ~(-> (select :id)
+                            (from :producers)
+                            (where '(= name "foo"))))))
+       ["DELETE FROM films WHERE (producer-id in (SELECT id FROM producers WHERE (name = ?)))" "foo"]
        (-> (delete :quotes)
            (where `(and (= :company-id 1)
                         (> :date ~(-> (select '(min :date))
