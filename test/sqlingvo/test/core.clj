@@ -197,7 +197,9 @@
        (-> (copy :country) (from "/usr1/proj/bray/sql/country_data"))
        ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
        (-> (copy :country [:id :name]) (from "/usr1/proj/bray/sql/country_data"))
-       ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]))
+       ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]
+       (-> (delete :films))
+       ["DELETE FROM films"]))
 
 (deftest test-truncate
   (are [stmt expected]

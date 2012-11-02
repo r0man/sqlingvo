@@ -66,6 +66,10 @@
    :table (parse-table table)
    :columns (map parse-column columns)})
 
+(defn delete
+  "Delete rows of a database table."
+  [table] {:op :delete :table (parse-table table)})
+
 (defn except
   "Select the SQL set difference between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
