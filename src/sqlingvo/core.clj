@@ -37,9 +37,6 @@
     (let [[sql & args] (sql stmt)]
       (map #(hash-map :count %1) (jdbc/do-prepared sql args)))))
 
-(defn- node [op & {:as opts}]
-  (assoc opts :op op))
-
 (defn- assoc-op [stmt op & {:as opts}]
   (assoc stmt op (assoc opts :op op)))
 
@@ -78,7 +75,7 @@
 (defn except
   "Select the SQL set difference between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (node :except :children [stmt-1 stmt-2] :all all))
+  {:op :except :children [stmt-1 stmt-2] :all all})
 
 (defn default-values
   "Add the DEFAULT VALUES clause to `stmt`."
@@ -90,7 +87,7 @@
 (defn drop-table
   "Drop the database `tables`."
   [tables & {:as opts}]
-  (merge opts (node :drop-table :tables (map parse-table (wrap-seq tables)))))
+  (merge opts {:op :drop-table :tables (map parse-table (wrap-seq tables))}))
 
 (defn from
   "Add the FROM item to the SQL statement."
@@ -113,7 +110,7 @@
   ([table]
      (insert table []))
   ([table rows]
-     (node :insert :table (parse-table table) :rows (wrap-seq rows))))
+     {:op :insert :table (parse-table table) :rows (wrap-seq rows)}))
 
 (defn if-not-exists
   "Add a IF NOT EXISTS clause to statement."
@@ -122,7 +119,7 @@
 (defn intersect
   "Select the SQL set intersection between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (node :intersect :children [stmt-1 stmt-2] :all all))
+  {:op :intersect :children [stmt-1 stmt-2] :all all})
 
 (defn join
   "Add a JOIN clause to the SQL statement."
@@ -149,7 +146,7 @@
 (defn order-by
   "Add the ORDER BY clause to the SQL statement."
   [stmt exprs & {:as opts}]
-  (assoc stmt :order-by (merge opts (node :order-by :exprs (parse-exprs (wrap-seq exprs))))))
+  (assoc stmt :order-by (merge opts {:op :order-by :exprs (parse-exprs (wrap-seq exprs))})))
 
 (defn returning
   "Add the RETURNING clause the SQL statement."
@@ -159,7 +156,7 @@
 (defn select
   "Select `exprs` from the database."
   [& exprs]
-  (node :select :exprs (parse-exprs exprs)))
+  {:op :select :exprs (parse-exprs exprs)})
 
 (defn temporary
   "Create a temporary table."
@@ -169,17 +166,17 @@
 (defn truncate
   "Truncate the database `tables`."
   [tables & {:as opts}]
-  (merge opts (node :truncate :tables (map parse-table (wrap-seq tables)))))
+  (merge opts {:op :truncate :tables (map parse-table (wrap-seq tables))}))
 
 (defn union
   "Select the SQL set union between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  (node :union :children [stmt-1 stmt-2] :all all))
+  {:op :union :children [stmt-1 stmt-2] :all all})
 
 (defn update
   "Update rows of the database `table`."
   [table row]
-  (node :update :table (parse-table table) :row row))
+  {:op :update :table (parse-table table) :row row})
 
 (defn where
   "Add the WHERE `condition` to the SQL statement."
