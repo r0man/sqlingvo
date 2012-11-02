@@ -12,6 +12,21 @@ Via Clojars: https://clojars.org/sqlingvo
 
 ## Examples
 
+### Delete
+
+Clear the table films.
+
+    (-> (delete :films)
+        (sql))
+    ;=> ["DELETE FROM films"]
+
+Delete all films but musicals.
+
+    (-> (delete :films)
+        (where '(<> :kind "Musical"))
+        (sql))
+    ;=> ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
+
 ### Select
 
 Select all films.

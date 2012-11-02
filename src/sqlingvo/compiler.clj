@@ -113,9 +113,11 @@
            (string? from) [from]
            (= :stdin from) []))))
 
-(defmethod compile-sql :delete [{:keys [table]}]
-  (cons (str "DELETE FROM " (first (compile-sql table)))
-        []))
+(defmethod compile-sql :delete [{:keys [condition table]}]
+  (let [[sql & args] (if condition (compile-sql condition))]
+    (cons (str "DELETE FROM " (first (compile-sql table))
+               (if sql (str " " sql)))
+          args)))
 
 (defmethod compile-sql :column [{:keys [as schema name table]}]
   [(str (join "." (map jdbc/as-identifier (remove nil? [schema table name])))

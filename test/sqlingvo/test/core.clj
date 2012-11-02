@@ -199,7 +199,9 @@
        (-> (copy :country [:id :name]) (from "/usr1/proj/bray/sql/country_data"))
        ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]
        (-> (delete :films))
-       ["DELETE FROM films"]))
+       ["DELETE FROM films"]
+       (-> (delete :films) (where '(<> :kind "Musical")))
+       ["DELETE FROM films WHERE (kind <> ?)" "Musical"]))
 
 (deftest test-truncate
   (are [stmt expected]
