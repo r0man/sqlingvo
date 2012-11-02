@@ -112,7 +112,7 @@
                    (-> (select *)
                        (from :tmp-films)
                        (where '(< :date-prod "2004-05-07")))))
-       ["INSERT INTO films (SELECT * FROM tmp-films WHERE (date-prod < ?))" "2004-05-07"]))
+       ["INSERT INTO films SELECT * FROM tmp-films WHERE (date-prod < ?)" "2004-05-07"]))
 
 (deftest test-limit
   (is (= {:limit {:op :limit :count 1}} (limit {} 1))))

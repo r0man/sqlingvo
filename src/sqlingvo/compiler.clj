@@ -183,7 +183,7 @@
                (if-not (empty? rows)
                  (str " (" (join ", " columns) ") VALUES "
                       (join ", " (repeat (count rows) template))))
-               (if query-sql (str " (" query-sql ")"))
+               (if query-sql (str " " query-sql))
                (if default-values " DEFAULT VALUES")
                (if returning
                  (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
