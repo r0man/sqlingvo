@@ -247,7 +247,11 @@
        (-> (select *)
            (from :countries)
            (join :continents '(using :id :created-at)))
-       ["SELECT * FROM countries JOIN continents USING (id, created-at)"]))
+       ["SELECT * FROM countries JOIN continents USING (id, created-at)"]
+       (-> (select *)
+           (from :countries)
+           (where `(> :created-at ~(java.sql.Date. 0))))
+       ["SELECT * FROM countries WHERE (created-at > ?)" (java.sql.Date. 0)]))
 
 (deftest test-truncate
   (are [stmt expected]
