@@ -4,6 +4,13 @@
             [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [blank? join replace upper-case]]))
 
+(defprotocol SQLType
+  (sql-type [arg] "Convert `arg` into an SQL type."))
+
+(extend-type Object
+  SQLType
+  (sql-type [obj] obj))
+
 (defmulti compile-sql :op)
 
 (defn stmt? [arg]
@@ -25,15 +32,24 @@
 
 ;; COMPILE CONSTANTS
 
+(defn compile-inline [{:keys [form as]}]
+  [(str form (if as (str " AS " (jdbc/as-identifier as))))])
+
 (defmulti compile-const
   "Compile a SQL constant into a SQL statement."
   (fn [node] (class (:form node))))
 
-(defmethod compile-const String [{:keys [form] :as const}]
-  (conj (compile-const (assoc const :form '?)) form))
+(defmethod compile-const clojure.lang.Symbol [node]
+  (compile-inline node))
+
+(defmethod compile-const Double [node]
+  (compile-inline node))
+
+(defmethod compile-const Long [node]
+  (compile-inline node))
 
 (defmethod compile-const :default [{:keys [form as]}]
-  [(str form (if as (str " AS " (jdbc/as-identifier as))))])
+  [(str "?" (if as (str " AS " (jdbc/as-identifier as)))) (sql-type form)])
 
 ;; COMPILE EXPRESSIONS
 
