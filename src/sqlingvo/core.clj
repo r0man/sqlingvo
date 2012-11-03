@@ -146,8 +146,12 @@
 
 (defn like
   "Add the LIKE clause to a create table statement."
-  [stmt table]
-  (assoc stmt :like (parse-table table)))
+  [stmt table & {:keys [including excluding]}]
+  (assoc stmt
+    :like {:op :like
+           :including including
+           :excluding excluding
+           :table (parse-table table)}))
 
 (defn offset
   "Add the OFFSET clause to the SQL statement."

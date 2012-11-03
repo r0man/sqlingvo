@@ -27,7 +27,13 @@
            (temporary true))
        ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]
        (-> (create-table :tmp-films) (like :films))
-       ["CREATE TABLE tmp-films (LIKE films)"]))
+       ["CREATE TABLE tmp-films (LIKE films)"]
+       (-> (create-table :tmp-films) (like :films :including [:all]))
+       ["CREATE TABLE tmp-films (LIKE films INCLUDING ALL)"]
+       (-> (create-table :tmp-films) (like :films :including [:defaults :constraints]))
+       ["CREATE TABLE tmp-films (LIKE films INCLUDING DEFAULTS INCLUDING CONSTRAINTS)"]
+       (-> (create-table :tmp-films) (like :films :excluding [:defaults :constraints]))
+       ["CREATE TABLE tmp-films (LIKE films EXCLUDING DEFAULTS EXCLUDING CONSTRAINTS)"]))
 
 (deftest test-delete
   (are [stmt expected]
