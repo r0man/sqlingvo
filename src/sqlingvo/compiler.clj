@@ -113,13 +113,19 @@
            (string? from) [from]
            (= :stdin from) []))))
 
-(defmethod compile-sql :create-table [{:keys [columns table if-not-exists inherits temporary]}]
+(defmethod compile-sql :create-table [{:keys [columns table if-not-exists inherits like temporary]}]
   (cons (str "CREATE"
              (if temporary " TEMPORARY")
              " TABLE"
              (if if-not-exists " IF NOT EXISTS")
              (str " " (first (compile-sql table)))
-             " (" (join ", " (map (comp first compile-sql) columns)) ")"
+             " ("
+             (cond
+              (not (empty? columns))
+              (join ", " (map (comp first compile-sql) columns))
+              like
+              (str "LIKE " (first (compile-sql like))))
+             ")"
              (if inherits
                (str " INHERITS (" (join ", " (map (comp first compile-sql) inherits)) ")")))
         []))

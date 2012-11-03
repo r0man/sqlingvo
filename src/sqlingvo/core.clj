@@ -144,6 +144,11 @@
   [stmt count]
   (assoc-op stmt :limit :count count))
 
+(defn like
+  "Add the LIKE clause to a create table statement."
+  [stmt table]
+  (assoc stmt :like (parse-table table)))
+
 (defn offset
   "Add the OFFSET clause to the SQL statement."
   [stmt start]
