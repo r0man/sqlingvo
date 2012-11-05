@@ -38,7 +38,23 @@
        `(= 1 1)
        {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}
        '(= :name "Europe")
-       {:op :fn :name := :args [{:op :column :schema nil :table nil :name :name :as nil} {:op :constant :form "Europe"}]}))
+       {:op :fn :name := :args [{:op :column :schema nil :table nil :name :name :as nil} {:op :constant :form "Europe"}]}
+       '((lag :close) over (partition by :company-id order by :date desc))
+       '{:op :expr-list
+         :children
+         [{:op :fn
+           :name :lag
+           :args [{:op :column :schema nil :table nil :name :close :as nil}]}
+          {:op :constant :form over}
+          {:op :fn
+           :name :partition
+           :args
+           [{:op :constant :form by}
+            {:op :column :schema nil :table nil :name :company-id :as nil}
+            {:op :constant :form order}
+            {:op :constant :form by}
+            {:op :column :schema nil :table nil :name :date :as nil}
+            {:op :constant :form desc}]}]}))
 
 (deftest test-qualified-name
   (are [arg expected]

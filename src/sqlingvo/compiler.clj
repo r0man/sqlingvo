@@ -93,6 +93,12 @@
                 (if as (str " AS " (jdbc/as-identifier as))))
            (apply concat (map rest args))))))
 
+(defn compile-whitespace-args [{:keys [as args name]}]
+  (let [[sql & args] (apply join-stmt " " args)]
+    (cons (str (core/name name) "(" sql ")"
+               (if as (str " AS " (jdbc/as-identifier as))))
+          args)))
+
 (defmulti compile-fn
   "Compile a SQL function node into a SQL statement."
   (fn [node] (keyword (:name node))))
@@ -174,6 +180,9 @@
 
 (defmethod compile-sql :except [node]
   (compile-set-op :except node))
+
+(defmethod compile-sql :expr-list [{:keys [children]}]
+  (apply join-stmt " " children))
 
 (defmethod compile-sql :exprs [{:keys [children]}]
   (let [children (map compile-expr children)]
@@ -304,3 +313,6 @@
 
 (defarity compile-infix
   :+ :* :& "%" :and :or :union)
+
+(defarity compile-whitespace-args
+  :partition)

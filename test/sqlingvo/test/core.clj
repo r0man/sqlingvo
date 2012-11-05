@@ -251,7 +251,9 @@
        (-> (select *)
            (from :countries)
            (where `(> :created-at ~(java.sql.Date. 0))))
-       ["SELECT * FROM countries WHERE (created-at > ?)" (java.sql.Date. 0)]))
+       ["SELECT * FROM countries WHERE (created-at > ?)" (java.sql.Date. 0)]
+       (-> (select :id '((lag :close) over (partition by :company-id order by :date desc))) (from :quotes))
+       ["SELECT id, lag(close) over partition(by company-id order by date desc) FROM quotes"]))
 
 (deftest test-truncate
   (are [stmt expected]

@@ -51,7 +51,9 @@
   (parse-fn-expr expr))
 
 (defmethod parse-expr clojure.lang.PersistentList [expr]
-  (parse-fn-expr expr))
+  (if (list? (first expr))
+    {:op :expr-list :children (map parse-expr expr)}
+    (parse-fn-expr expr)))
 
 (defmethod parse-expr clojure.lang.IPersistentMap [expr]
   expr)
