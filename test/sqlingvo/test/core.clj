@@ -253,7 +253,13 @@
            (where `(> :created-at ~(java.sql.Date. 0))))
        ["SELECT * FROM countries WHERE (created-at > ?)" (java.sql.Date. 0)]
        (-> (select :id '((lag :close) over (partition by :company-id order by :date desc))) (from :quotes))
-       ["SELECT id, lag(close) over (partition by company-id order by date desc) FROM quotes"]))
+       ["SELECT id, lag(close) over (partition by company-id order by date desc) FROM quotes"]
+       (-> (select :id '(- ((lag :close) over (partition by :company-id order by :date desc)) 1)) (from :quotes))
+       ["SELECT id, (lag(close) over (partition by company-id order by date desc) - 1) FROM quotes"]
+       (-> (select :id '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))) (from :quotes))
+       ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) FROM quotes"]
+       (-> (select :id (as '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)) (from :quotes))
+       ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) AS daily-return FROM quotes"]))
 
 (deftest test-truncate
   (are [stmt expected]

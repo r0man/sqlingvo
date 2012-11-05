@@ -81,7 +81,8 @@
    (throw (IllegalArgumentException. "More than 1 arg needed."))
    (= 2 (count args))
    (let [[[s1 & a1] [s2 & a2]] (map compile-expr args)]
-     (cons (str "(" s1 " " (core/name name) " " s2 ")")
+     (cons (str "(" s1 " " (core/name name) " " s2 ")"
+                (if as (str " AS " (jdbc/as-identifier as))))
            (concat a1 a2)))
    :else
    (apply join-stmt " AND "
@@ -326,7 +327,7 @@
   := :!= :<> :< :> :<= :>= :!~ :!~* :&& "/" "^" "~*" :like :ilike :in)
 
 (defarity compile-infix
-  :+ :* :& "%" :and :or :union)
+  :+ :- :* :& "%" :and :or :union)
 
 (defarity compile-whitespace-args
   :partition)
