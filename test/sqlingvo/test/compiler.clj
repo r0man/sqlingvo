@@ -126,3 +126,19 @@
         :cascade {:op :cascade :cascade true}
         :restrict {:op :restrict :restrict true}}
        ["TRUNCATE TABLE continents RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
+
+(deftest test-wrap-stmt
+  (are [stmt expected]
+       (is (= expected (wrap-stmt stmt)))
+       ["SELECT 1"]
+       ["(SELECT 1)"]
+       ["SELECT ?" "x"]
+       ["(SELECT ?)" "x"]))
+
+(deftest test-unwrap-stmt
+  (are [stmt expected]
+       (is (= expected (unwrap-stmt stmt)))
+       ["(SELECT 1)"]
+       ["SELECT 1"]
+       ["(SELECT ?)" "x"]
+       ["SELECT ?" "x"]))

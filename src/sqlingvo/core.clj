@@ -191,7 +191,10 @@
 (defn update
   "Update rows of the database `table`."
   [table row]
-  {:op :update :table (parse-table table) :row row})
+  {:op :update
+   :table (parse-table table)
+   :exprs (if (sequential? row) (map parse-expr row))
+   :row (if (map? row) row)})
 
 (defn where
   "Add the WHERE `condition` to the SQL statement."

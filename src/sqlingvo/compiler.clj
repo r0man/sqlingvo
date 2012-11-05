@@ -16,6 +16,14 @@
 (defn stmt? [arg]
   (and (sequential? arg) (string? (first arg))))
 
+(defn wrap-stmt [stmt]
+  (let [[sql & args] stmt]
+    (cons (str "(" sql ")") args)))
+
+(defn unwrap-stmt [stmt]
+  (let [[sql & args] stmt]
+    (cons (replace sql #"^\(|\)$" "") args)))
+
 (defn- join-stmt [separator & stmts]
   (let [stmts (map #(if (stmt? %1) %1 (compile-sql %1)) stmts)
         stmts (remove (comp blank? first) stmts)]
@@ -57,9 +65,8 @@
   "Compile a SQL expression."
   :op)
 
-(defmethod compile-expr :select [expr]
-  (let [[sql & args] (compile-sql expr)]
-    (cons (str "(" sql ")") args)))
+(defmethod compile-expr :select [{:keys [as] :as expr}]
+  (wrap-stmt (compile-sql expr)))
 
 (defmethod compile-expr :default [node]
   (compile-sql node))
@@ -289,15 +296,20 @@
 (defmethod compile-sql :union [node]
   (compile-set-op :union node))
 
-(defmethod compile-sql :update [{:keys [condition table row returning]}]
+(defmethod compile-sql :update [{:keys [condition from exprs table row returning]}]
   (let [[sql & args] (if condition (compile-sql condition))
-        columns (map jdbc/as-identifier (keys row))]
+        columns (if row (map jdbc/as-identifier (keys row)))
+        exprs (if exprs (map (comp unwrap-stmt compile-sql) exprs))
+        from (if from (map compile-from (:from from)))]
     (cons (str "UPDATE " (first (compile-sql table))
-               " SET " (apply str (concat (interpose " = ?, " columns) " = ?"))
+               " SET " (if row
+                         (apply str (concat (interpose " = ?, " columns) " = ?"))
+                         (join ", " (map first exprs)))
+               (if from (str " FROM " (join " " (map first from))))
                (if sql (str " " sql))
                (if returning
                  (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
-          (concat (vals row) args))))
+          (concat (vals row) args (mapcat rest (concat exprs from))))))
 
 ;; DEFINE SQL FN ARITY
 

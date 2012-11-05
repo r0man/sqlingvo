@@ -272,7 +272,12 @@
        (is (= expected (sql stmt)))
        (-> (update :films {:kind "Dramatic"})
            (where '(= :kind "Drama")))
-       ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]))
+       ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
+       (-> (update :quotes '((= :daily-return :u.daily-return)))
+           (where '(= :quotes.id :u.id))
+           (from (as (-> (select :id '((lag :close) over (partition by :company-id order by :date desc)))
+                         (from :quotes)) :u)))
+       ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over partition(by company-id order by date desc) FROM quotes) AS u WHERE (quotes.id = u.id)"]))
 
 (deftest test-run
   (with-database
