@@ -100,9 +100,9 @@
                 (if as (str " AS " (jdbc/as-identifier as))))
            (apply concat (map rest args))))))
 
-(defn compile-whitespace-args [{:keys [as args name]}]
+(defn compile-whitespace-args [{:keys [as args name] :as node}]
   (let [[sql & args] (apply join-stmt " " args)]
-    (cons (str (core/name name) "(" sql ")"
+    (cons (str "(" (core/name name) " " sql ")"
                (if as (str " AS " (jdbc/as-identifier as))))
           args)))
 
@@ -188,8 +188,10 @@
 (defmethod compile-sql :except [node]
   (compile-set-op :except node))
 
-(defmethod compile-sql :expr-list [{:keys [children]}]
-  (apply join-stmt " " children))
+(defmethod compile-sql :expr-list [{:keys [as children]}]
+  (let [[sql & args] (apply join-stmt " " children)]
+    (cons (str sql (if as (str " AS " (jdbc/as-identifier as))))
+          args)))
 
 (defmethod compile-sql :exprs [{:keys [children]}]
   (let [children (map compile-expr children)]
@@ -299,7 +301,7 @@
 (defmethod compile-sql :update [{:keys [condition from exprs table row returning]}]
   (let [[sql & args] (if condition (compile-sql condition))
         columns (if row (map jdbc/as-identifier (keys row)))
-        exprs (if exprs (map (comp unwrap-stmt compile-sql) exprs))
+        exprs (if exprs (map (comp unwrap-stmt compile-expr) exprs))
         from (if from (map compile-from (:from from)))]
     (cons (str "UPDATE " (first (compile-sql table))
                " SET " (if row

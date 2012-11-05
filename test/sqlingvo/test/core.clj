@@ -253,7 +253,7 @@
            (where `(> :created-at ~(java.sql.Date. 0))))
        ["SELECT * FROM countries WHERE (created-at > ?)" (java.sql.Date. 0)]
        (-> (select :id '((lag :close) over (partition by :company-id order by :date desc))) (from :quotes))
-       ["SELECT id, lag(close) over partition(by company-id order by date desc) FROM quotes"]))
+       ["SELECT id, lag(close) over (partition by company-id order by date desc) FROM quotes"]))
 
 (deftest test-truncate
   (are [stmt expected]
@@ -275,9 +275,9 @@
        ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
        (-> (update :quotes '((= :daily-return :u.daily-return)))
            (where '(= :quotes.id :u.id))
-           (from (as (-> (select :id '((lag :close) over (partition by :company-id order by :date desc)))
+           (from (as (-> (select :id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return))
                          (from :quotes)) :u)))
-       ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over partition(by company-id order by date desc) FROM quotes) AS u WHERE (quotes.id = u.id)"]))
+       ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over (partition by company-id order by date desc) AS daily-return FROM quotes) AS u WHERE (quotes.id = u.id)"]))
 
 (deftest test-run
   (with-database

@@ -41,6 +41,7 @@
        {:op :fn :name := :args [{:op :column :schema nil :table nil :name :name :as nil} {:op :constant :form "Europe"}]}
        '((lag :close) over (partition by :company-id order by :date desc))
        '{:op :expr-list
+         :as nil
          :children
          [{:op :fn
            :name :lag
