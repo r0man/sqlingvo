@@ -237,7 +237,7 @@
 
 (defmethod compile-sql :join [{:keys [condition from how type outer]}]
   (let [[cond-sql & cond-args] (compile-sql condition)
-        [from-sql & from-args] (compile-sql from)]
+        [from-sql & from-args] (compile-from from)]
     (cons (str (condp = type
                  :cross "CROSS "
                  :inner "INNER "

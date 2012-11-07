@@ -259,7 +259,16 @@
        (-> (select :id '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))) (from :quotes))
        ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) FROM quotes"]
        (-> (select :id (as '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)) (from :quotes))
-       ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) AS daily-return FROM quotes"]))
+       ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) AS daily-return FROM quotes"]
+       (-> (select :quotes.* :start-date)
+           (from :quotes)
+           (join (as (-> (select :company-id (as '(min :date) :start-date))
+                         (from :quotes)
+                         (group-by :company-id))
+                     :start-dates)
+                 '(on (and (= :quotes.company-id :start-dates.company-id)
+                           (= :quotes.date :start-dates.start-date)))))
+       ["SELECT quotes.*, start-date FROM quotes JOIN (SELECT company-id, min(date) AS start-date FROM quotes GROUP BY company-id) AS start-dates ON ((quotes.company-id = start-dates.company-id) and (quotes.date = start-dates.start-date))"]))
 
 (deftest test-truncate
   (are [stmt expected]
