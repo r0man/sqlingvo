@@ -2,13 +2,13 @@
   (:refer-clojure :exclude [group-by])
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as s]
-            [sqlingvo.compiler :refer [compile-sql]]
+            [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer [parse-expr parse-exprs parse-column parse-table]]))
 
-(defn sql
-  "Compile `stmt` into a vector, where the first element is the
-  SQL stmt and the rest are the prepared stmt arguments."
-  [stmt] (apply vector (compile-sql stmt)))
+(defmacro sql
+  "Compile `stmts` into a vector, where the first element is the SQL
+  stmt and the rest are the prepared stmt arguments."
+  [& stmts] `(compile-stmt (-> ~@stmts identity)))
 
 (defmulti run
   "Run the SQL statement `stmt`."
@@ -36,6 +36,10 @@
     (run-query stmt)
     (let [[sql & args] (sql stmt)]
       (map #(hash-map :count %1) (jdbc/do-prepared sql args)))))
+
+(defmacro sqlr
+  "Run `stmts` against the clojure.java.jdbc database connection."
+  [& stmts] `(run (-> ~@stmts identity)))
 
 (defn- assoc-op [stmt op & {:as opts}]
   (assoc stmt op (assoc opts :op op)))

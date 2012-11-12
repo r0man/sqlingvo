@@ -331,3 +331,8 @@
 
 (defarity compile-whitespace-args
   :partition)
+
+(defn compile-stmt
+  "Compile `stmt` into a clojure.java.jdbc compatible prepared
+  statement vector."
+  [stmt] (apply vector (compile-sql stmt)))
