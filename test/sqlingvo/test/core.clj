@@ -292,7 +292,18 @@
            (where '(= :quotes.id :u.id))
            (from (as (-> (select :id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return))
                          (from :quotes)) :u)))
-       ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over (partition by company-id order by date desc) AS daily-return FROM quotes) AS u WHERE (quotes.id = u.id)"]))
+       ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over (partition by company-id order by date desc) AS daily-return FROM quotes) AS u WHERE (quotes.id = u.id)"]
+       (let [quote {:id 1}]
+         (-> (update :prices '((= :daily-return :u.daily-return)))
+             (from (as (-> (select :id (as '(- (/ close ((lag :close) over (partition by :quote-id order by :date desc))) 1)
+                                           :daily-return))
+                           (from :prices)
+                           (where `(= :prices.quote-id ~(:id quote)))) :u))
+             (where `(and (= :prices.id :u.id)
+                          (= :prices.quote-id ~(:id quote))))))
+       [(str "UPDATE prices SET daily-return = u.daily-return "
+             "FROM (SELECT id, ((close / lag(close) over (partition by quote-id order by date desc)) - 1) AS daily-return "
+             "FROM prices WHERE (prices.quote-id = 1)) AS u WHERE ((prices.id = u.id) and (prices.quote-id = 1))")]))
 
 (deftest test-run
   (with-database
