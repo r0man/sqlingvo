@@ -268,7 +268,11 @@
                      :start-dates)
                  '(on (and (= :quotes.company-id :start-dates.company-id)
                            (= :quotes.date :start-dates.start-date)))))
-       ["SELECT quotes.*, start-date FROM quotes JOIN (SELECT company-id, min(date) AS start-date FROM quotes GROUP BY company-id) AS start-dates ON ((quotes.company-id = start-dates.company-id) and (quotes.date = start-dates.start-date))"]))
+       ["SELECT quotes.*, start-date FROM quotes JOIN (SELECT company-id, min(date) AS start-date FROM quotes GROUP BY company-id) AS start-dates ON ((quotes.company-id = start-dates.company-id) and (quotes.date = start-dates.start-date))"]
+       (-> (select :id :symbol :quote)
+           (from :quotes)
+           (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
+       ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]))
 
 (deftest test-truncate
   (are [stmt expected]

@@ -324,7 +324,7 @@
               (~arity-fn ~'node)))))
 
 (defarity compile-2-ary
-  := :!= :<> :< :> :<= :>= :!~ :!~* :&& "/" "^" "~*" :like :ilike :in)
+  := :!= :<> :< :> :<= :>= :!~ :!~* :&& "/" "^" "~" "~*" :like :ilike :in)
 
 (defarity compile-infix
   :+ :- :* :& "%" :and :or :union)
