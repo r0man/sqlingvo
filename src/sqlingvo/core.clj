@@ -63,8 +63,8 @@
 
 (defn as
   "Add an AS clause to the SQL statement."
-  [stmt as]
-  (assoc (parse-expr stmt) :as as))
+  [stmt alias]
+  (assoc (parse-expr stmt) :as alias))
 
 (defn create-table
   "Define a new table."
