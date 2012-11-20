@@ -9,21 +9,12 @@
   "Run the SQL statement `stmt`."
   (fn [stmt] (:op stmt)))
 
-(defn- run-query [stmt]
+(defn run-query [stmt]
   (jdbc/with-query-results  results
     (compile-stmt stmt)
     (doall results)))
 
 (defmethod run-stmt :select [stmt]
-  (run-query stmt))
-
-(defmethod run-stmt :except [stmt]
-  (run-query stmt))
-
-(defmethod run-stmt :intersect [stmt]
-  (run-query stmt))
-
-(defmethod run-stmt :union [stmt]
   (run-query stmt))
 
 (defmethod run-stmt :default [stmt]
@@ -40,7 +31,7 @@
 (defmacro run
   "Run `stmts` against the current clojure.java.jdbc database
   connection ans return all rows."
-  [& stmts] `(run-stmt (sql ~@stmts)))
+  [& stmts] `(run-stmt (-> ~@stmts identity)))
 
 (defmacro run1
   "Run `stmts` against the current clojure.java.jdbc database
@@ -85,7 +76,7 @@
 (defn except
   "Select the SQL set difference between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  {:op :except :children [stmt-1 stmt-2] :all all})
+  (update-in stmt-1 [:set] conj {:op :except :stmt stmt-2 :all all}))
 
 (defn default-values
   "Add the DEFAULT VALUES clause to `stmt`."
@@ -135,7 +126,7 @@
 (defn intersect
   "Select the SQL set intersection between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  {:op :intersect :children [stmt-1 stmt-2] :all all})
+  (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all}))
 
 (defn join
   "Add a JOIN clause to the SQL statement."
@@ -196,7 +187,7 @@
 (defn union
   "Select the SQL set union between `stmt-1` and `stmt-2`."
   [stmt-1 stmt-2 & {:keys [all]}]
-  {:op :union :children [stmt-1 stmt-2] :all all})
+  (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all}))
 
 (defn update
   "Update rows of the database `table`."

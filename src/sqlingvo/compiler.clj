@@ -33,10 +33,10 @@
 (defn- stmt [& stmts]
   (apply join-stmt " " (remove nil? stmts)))
 
-(defn- compile-set-op [op {:keys [children all]}]
-  (let [[[s1 a1] [s2 a2]] (map compile-sql children)]
-    (cons (str s1 " " (upper-case (name op)) (if all " ALL") " " s2)
-          (concat a1 a2))))
+(defn- compile-set-op [op {:keys [stmt all] :as node}]
+  (let [[sql & args] (compile-sql stmt)]
+    (cons (str (upper-case (name op)) (if all " ALL") " " sql)
+          args)))
 
 ;; COMPILE CONSTANTS
 
@@ -284,8 +284,8 @@
   [(str (join "." (map jdbc/as-identifier (remove nil? [schema name])))
         (if as (str " AS " (jdbc/as-identifier as))))])
 
-(defmethod compile-sql :select [{:keys [exprs from condition group-by limit offset order-by]}]
-  (stmt ["SELECT"] exprs from condition group-by order-by limit offset))
+(defmethod compile-sql :select [{:keys [exprs from condition group-by limit offset order-by set]}]
+  (apply stmt ["SELECT"] exprs from condition group-by order-by limit offset (map compile-sql set)))
 
 (defmethod compile-sql :truncate [{:keys [cascade tables continue-identity restart-identity restrict]}]
   (let [[sql & args] (apply join-stmt ", " tables)]
@@ -310,8 +310,7 @@
                          (join ", " (map first exprs)))
                (if from (str " FROM " (join " " (map first from))))
                (if sql (str " " sql))
-               (if returning
-                 (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
+               (if returning (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
           (concat (vals row) args (mapcat rest (concat exprs from))))))
 
 ;; DEFINE SQL FN ARITY
