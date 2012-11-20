@@ -309,10 +309,10 @@
              "FROM (SELECT id, ((close / lag(close) over (partition by quote-id order by date desc)) - 1) AS daily-return "
              "FROM prices WHERE (prices.quote-id = 1)) AS u WHERE ((prices.id = u.id) and (prices.quote-id = 1))")]))
 
-(deftest test-run
+(deftest test-run-stmt
   (with-database
     (are [stmt expected]
-         (is (= expected (run stmt)))
+         (is (= expected (run-stmt stmt)))
          (select 1)
          [{:1 1}]
          (select (as 1 :n))

@@ -5,41 +5,47 @@
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer [parse-expr parse-exprs parse-column parse-table]]))
 
-(defmacro sql
-  "Compile `stmts` into a vector, where the first element is the SQL
-  stmt and the rest are the prepared stmt arguments."
-  [& stmts] `(compile-stmt (-> ~@stmts identity)))
-
-(defmulti run
+(defmulti run-stmt
   "Run the SQL statement `stmt`."
   (fn [stmt] (:op stmt)))
 
 (defn- run-query [stmt]
   (jdbc/with-query-results  results
-    (sql stmt)
+    (compile-stmt stmt)
     (doall results)))
 
-(defmethod run :select [stmt]
+(defmethod run-stmt :select [stmt]
   (run-query stmt))
 
-(defmethod run :except [stmt]
+(defmethod run-stmt :except [stmt]
   (run-query stmt))
 
-(defmethod run :intersect [stmt]
+(defmethod run-stmt :intersect [stmt]
   (run-query stmt))
 
-(defmethod run :union [stmt]
+(defmethod run-stmt :union [stmt]
   (run-query stmt))
 
-(defmethod run :default [stmt]
+(defmethod run-stmt :default [stmt]
   (if (:returning stmt)
     (run-query stmt)
-    (let [[sql & args] (sql stmt)]
+    (let [[sql & args] (compile-stmt stmt)]
       (map #(hash-map :count %1) (jdbc/do-prepared sql args)))))
 
-(defmacro sqlr
-  "Run `stmts` against the clojure.java.jdbc database connection."
-  [& stmts] `(run (-> ~@stmts identity)))
+(defmacro sql
+  "Compile `stmts` into a vector, where the first element is the SQL
+  stmt and the rest are the prepared stmt arguments."
+  [& stmts] `(compile-stmt (-> ~@stmts identity)))
+
+(defmacro run
+  "Run `stmts` against the current clojure.java.jdbc database
+  connection ans return all rows."
+  [& stmts] `(run-stmt (sql ~@stmts)))
+
+(defmacro run1
+  "Run `stmts` against the current clojure.java.jdbc database
+  connection and return the first row."
+  [& stmts] `(first (run ~@stmts)))
 
 (defn- assoc-op [stmt op & {:as opts}]
   (assoc stmt op (assoc opts :op op)))
