@@ -88,7 +88,7 @@
   [stmt & from]
   (condp = (:op stmt)
     :copy (assoc stmt :from (first from))
-    (assoc-op stmt :from :from (map parse-from from))))
+    (assoc-op stmt :from :clause (map parse-from from))))
 
 (defn group-by
   "Add the GROUP BY clause to the SQL statement."

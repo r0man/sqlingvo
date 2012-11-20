@@ -204,8 +204,8 @@
 (defmethod compile-sql :fn [node]
   (compile-fn node))
 
-(defmethod compile-sql :from [{:keys [from joins]}]
-  (let [from (map compile-from from)
+(defmethod compile-sql :from [{:keys [clause joins]}]
+  (let [from (map compile-from clause)
         joins (map compile-sql joins)]
     (cons (str "FROM "
                (join ", " (map first from))
@@ -303,7 +303,7 @@
   (let [[sql & args] (if condition (compile-sql condition))
         columns (if row (map jdbc/as-identifier (keys row)))
         exprs (if exprs (map (comp unwrap-stmt compile-expr) exprs))
-        from (if from (map compile-from (:from from)))]
+        from (if from (map compile-from (:clause from)))]
     (cons (str "UPDATE " (first (compile-sql table))
                " SET " (if row
                          (apply str (concat (interpose " = ?, " columns) " = ?"))

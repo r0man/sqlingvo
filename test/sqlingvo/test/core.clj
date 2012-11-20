@@ -73,20 +73,20 @@
 (deftest test-from
   (let [node (:from (from {} :continents))]
     (is (= :from (:op node)))
-    (let [node (first (:from node))]
+    (let [node (first (:clause node))]
       (is (= :table (:op node)))
       (is (= :continents (:name node)))))
   (let [node (:from (from {} :continents :countries))]
     (is (= :from (:op node)))
-    (let [node (first (:from node))]
+    (let [node (first (:clause node))]
       (is (= :table (:op node)))
       (is (= :continents (:name node))))
-    (let [node (second (:from node))]
+    (let [node (second (:clause node))]
       (is (= :table (:op node)))
       (is (= :countries (:name node)))))
   (let [node (:from (from {} (select 1 2 3)))]
     (is (= :from (:op node)))
-    (let [node (first (:from node))]
+    (let [node (first (:clause node))]
       (is (= :select (:op node))))))
 
 (deftest test-group-by
