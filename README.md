@@ -77,14 +77,14 @@ Insert some rows into table films from a table tmp-films with the same column la
 Select all films.
 
     (sql (select *)
-        (from :films))
+         (from :films))
     ;=> ["SELECT * FROM films"]
 
 Select all Comedy films.
 
     (sql (select *)
-        (from :films)
-        (where '(= :kind "Comedy")))
+         (from :films)
+         (where '(= :kind "Comedy")))
     ;=> ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
 
 ### Update
