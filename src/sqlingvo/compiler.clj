@@ -246,7 +246,7 @@
                  nil "")
                (if outer "OUTER ")
                "JOIN " from-sql " " (upper-case (name how)) " "
-               (condp = how
+               (case how
                  :on cond-sql
                  :using (str "(" cond-sql ")")))
           (concat from-args cond-args))))
