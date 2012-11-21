@@ -186,6 +186,12 @@
        ["SELECT * FROM continents LIMIT 1 OFFSET 2"]
        (-> (select *) (from :continents) (order-by :created-at))
        ["SELECT * FROM continents ORDER BY created-at"]
+       (-> (select *) (from :continents) (order-by "created-at"))
+       ["SELECT * FROM continents ORDER BY created-at"]
+       (-> (select *) (from :continents) (order-by "(lower :name)"))
+       ["SELECT * FROM continents ORDER BY lower(name)"]
+       (-> (select *) (from :continents) (order-by ['(lower :name)]))
+       ["SELECT * FROM continents ORDER BY lower(name)"]
        (-> (select *) (from :continents) (order-by :created-at :direction :asc))
        ["SELECT * FROM continents ORDER BY created-at ASC"]
        (-> (select *) (from :continents) (order-by :created-at :direction :desc))
@@ -353,8 +359,6 @@
          nil
          (intersect (select 1) (select 1))
          [{:1 1}]
-         ;; (intersect (select 1) (select 2) :all true)
-         ;; []
          (except (select 1) (select 2))
          [{:1 1}]
          (except (select 1) (select 1))

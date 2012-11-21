@@ -43,7 +43,7 @@
    :else (throw (IllegalArgumentException. (str "Can't parse FROM form: " forms)))))
 
 (defn- wrap-seq [s]
-  (if (sequential? s) s [s]))
+  (if (vector? s) s [s]))
 
 (defn as
   "Add an AS clause to the SQL statement."
@@ -155,7 +155,12 @@
 (defn order-by
   "Add the ORDER BY clause to the SQL statement."
   [stmt exprs & {:as opts}]
-  (assoc stmt :order-by (merge opts {:op :order-by :exprs (parse-exprs (wrap-seq exprs))})))
+  (let [exprs (map #(if (string? %1)
+                      (binding [*read-eval* false]
+                        (parse-expr (read-string %1)))
+                      %1) (wrap-seq exprs))
+        exprs (parse-exprs exprs)]
+    (assoc stmt :order-by (merge opts {:op :order-by :exprs exprs}))))
 
 (defn returning
   "Add the RETURNING clause the SQL statement."
