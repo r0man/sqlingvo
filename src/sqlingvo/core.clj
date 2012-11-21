@@ -19,7 +19,7 @@
       (jdbc/with-query-results results
         compiled (doall results))
       (map #(hash-map :count %1)
-           (apply jdbc/do-prepared compiled)))))
+           (jdbc/do-prepared (first compiled) (rest compiled))))))
 
 (defmacro run
   "Run `stmts` against the current clojure.java.jdbc database
