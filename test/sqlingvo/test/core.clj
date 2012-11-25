@@ -158,6 +158,8 @@
        ["SELECT 1 AS a, 2 AS b, 3 AS c"]
        (-> (select) (from :continents))
        ["SELECT * FROM continents"]
+       (-> (select :continents.*) (from :continents))
+       ["SELECT continents.* FROM continents"]
        (-> (select *) (from :continents))
        ["SELECT * FROM continents"]
        (-> (select *) (from :continents/c))
