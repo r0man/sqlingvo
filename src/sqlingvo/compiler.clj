@@ -94,9 +94,9 @@
   [{:keys [as args name]}]
   (cond
    (= 1 (count args))
-   (compile-sql (first args))
+   (compile-expr (first args))
    :else
-   (let [args (map compile-sql args)]
+   (let [args (map compile-expr args)]
      (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
                 (if as (str " AS " (jdbc/as-identifier as))))
            (apply concat (map rest args))))))
@@ -112,7 +112,7 @@
   (fn [node] (keyword (:name node))))
 
 (defmethod compile-fn :default [{:keys [as args name]}]
-  (let [args (map compile-sql args)]
+  (let [args (map compile-expr args)]
     (cons (str (core/name name) "(" (join ", " (map first args)) ")"
                (if as (str " AS " (jdbc/as-identifier as))))
           (apply concat (map rest args)))))

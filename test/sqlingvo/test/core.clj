@@ -280,7 +280,11 @@
        (-> (select :id :symbol :quote)
            (from :quotes)
            (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
-       ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]))
+       ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
+       (select `(setval :continentd-id-seq
+                 ~(-> (select `(max :id))
+                      (from :continents))))
+       ["SELECT setval(continentd-id-seq, (SELECT max(id) FROM continents))"]))
 
 (deftest test-truncate
   (are [stmt expected]
