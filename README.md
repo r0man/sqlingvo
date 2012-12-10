@@ -87,6 +87,13 @@ Select all Comedy films.
          (where '(= :kind "Comedy")))
     ;=> ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
 
+Retrieve the most recent weather report for each location.
+
+    (sql (select (distinct [:location :time :report] :on [:location]))
+         (from :weather-reports)
+         (order-by [:location :time] :direction :desc))
+    ;=> ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
+
 ### Update
 
 Change the word Drama to Dramatic in the column kind of the table films.

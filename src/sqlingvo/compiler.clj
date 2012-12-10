@@ -183,7 +183,7 @@
         [on-sql & on-args] (if on (compile-sql on))]
     (cons (str "DISTINCT "
                (if on
-                 (str "ON(" on-sql ") "))
+                 (str "ON (" on-sql ") "))
                expr-sql)
           (concat expr-args on-args))))
 

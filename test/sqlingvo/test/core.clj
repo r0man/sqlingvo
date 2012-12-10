@@ -290,7 +290,11 @@
        ["SELECT DISTINCT x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]
        (-> (select (distinct [:x.a :x.b] :on [:x.a :x.b]))
            (from (as (select (as 1 :a) (as 2 :b)) :x)))
-       ["SELECT DISTINCT ON(x.a, x.b) x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]))
+       ["SELECT DISTINCT ON (x.a, x.b) x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]
+       (-> (select (distinct [:location :time :report] :on [:location]))
+           (from :weather-reports)
+           (order-by [:location :time] :direction :desc))
+       ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]))
 
 (deftest test-truncate
   (are [stmt expected]
