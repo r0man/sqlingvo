@@ -298,7 +298,13 @@
        (-> (select (distinct [:location :time :report] :on [:location]))
            (from :weather-reports)
            (order-by [:location :time] :direction :desc))
-       ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]))
+       ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
+       (-> (select 1)
+           (where '(is-null nil)))
+       ["SELECT 1 WHERE NULL IS NULL"]
+       (-> (select 1)
+           (where '(is-not-null nil)))
+       ["SELECT 1 WHERE NULL IS NOT NULL"]))
 
 (deftest test-truncate
   (are [stmt expected]

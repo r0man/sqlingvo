@@ -117,6 +117,14 @@
                (if as (str " AS " (jdbc/as-identifier as))))
           (apply concat (map rest args)))))
 
+(defmethod compile-fn :is-null [{:keys [args]}]
+  (let [[sql & args] (compile-expr (first args))]
+    (cons (str sql " IS NULL") args)))
+
+(defmethod compile-fn :is-not-null [{:keys [args]}]
+  (let [[sql & args] (compile-expr (first args))]
+    (cons (str sql " IS NOT NULL") args)))
+
 ;; COMPILE FROM CLAUSE
 
 (defmulti compile-from :op)
