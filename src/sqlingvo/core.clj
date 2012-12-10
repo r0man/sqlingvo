@@ -113,7 +113,11 @@
   ([table]
      (insert table []))
   ([table what]
-     (let [stmt {:op :insert :table (parse-table table)}]
+     (insert table nil what))
+  ([table columns what]
+     (let [stmt {:op :insert
+                 :table (parse-table table)
+                 :columns (map parse-column columns)}]
        (cond
         (sequential? what)
         (assoc stmt :rows what)
