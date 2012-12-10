@@ -1,5 +1,5 @@
 (ns sqlingvo.core
-  (:refer-clojure :exclude [group-by])
+  (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as s]
             [sqlingvo.compiler :refer [compile-stmt]]
@@ -49,6 +49,13 @@
   "Add an AS clause to the SQL statement."
   [stmt alias]
   (assoc (parse-expr stmt) :as alias))
+
+(defn distinct
+  "Add a DISTINCT clause to the SQL statement."
+  [exprs & {:keys [on]}]
+  {:op :distinct
+   :exprs (parse-exprs exprs)
+   :on (if on (parse-exprs on))})
 
 (defn create-table
   "Define a new table."

@@ -1,5 +1,5 @@
 (ns sqlingvo.test.core
-  (:refer-clojure :exclude [group-by replace])
+  (:refer-clojure :exclude [distinct group-by replace])
   (:require [clojure.java.jdbc :as jdbc])
   (:use clojure.test
         sqlingvo.core))
@@ -282,9 +282,15 @@
            (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
        ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
        (select `(setval :continentd-id-seq
-                 ~(-> (select `(max :id))
-                      (from :continents))))
-       ["SELECT setval(continentd-id-seq, (SELECT max(id) FROM continents))"]))
+                        ~(-> (select `(max :id))
+                             (from :continents))))
+       ["SELECT setval(continentd-id-seq, (SELECT max(id) FROM continents))"]
+       (-> (select (distinct [:x.a :x.b]))
+           (from (as (select (as 1 :a) (as 2 :b)) :x)))
+       ["SELECT DISTINCT x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]
+       (-> (select (distinct [:x.a :x.b] :on [:x.a :x.b]))
+           (from (as (select (as 1 :a) (as 2 :b)) :x)))
+       ["SELECT DISTINCT ON(x.a, x.b) x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]))
 
 (deftest test-truncate
   (are [stmt expected]

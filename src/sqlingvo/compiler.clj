@@ -113,7 +113,7 @@
 
 (defmethod compile-fn :default [{:keys [as args name]}]
   (let [args (map compile-expr args)]
-    (cons (str (core/name name) "(" (join ", " (map first args)) ")"
+    (cons (str (jdbc/as-identifier name) "(" (join ", " (map first args)) ")"
                (if as (str " AS " (jdbc/as-identifier as))))
           (apply concat (map rest args)))))
 
@@ -177,6 +177,15 @@
 (defmethod compile-sql :condition [{:keys [condition]}]
   (let [[sql & args] (compile-sql condition)]
     (cons (str "WHERE " sql) args)))
+
+(defmethod compile-sql :distinct [{:keys [exprs on]}]
+  (let [[expr-sql & expr-args] (compile-sql exprs)
+        [on-sql & on-args] (if on (compile-sql on))]
+    (cons (str "DISTINCT "
+               (if on
+                 (str "ON(" on-sql ") "))
+               expr-sql)
+          (concat expr-args on-args))))
 
 (defmethod compile-sql :drop-table [{:keys [cascade if-exists restrict tables]}]
   (let [[sql & args] (apply join-stmt ", " tables)]
