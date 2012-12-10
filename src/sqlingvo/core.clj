@@ -41,7 +41,7 @@
    (and (map? forms) (= :select (:op forms)))
    forms
    (and (map? forms) (:as forms))
-   forms
+   (assoc forms :op :table)
    :else (throw (IllegalArgumentException. (str "Can't parse FROM form: " forms)))))
 
 (defn- wrap-seq [s]

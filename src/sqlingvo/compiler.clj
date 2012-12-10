@@ -128,9 +128,6 @@
 (defmethod compile-from :table [node]
   (compile-sql node))
 
-(defmethod compile-from :column [node]
-  (compile-sql node))
-
 ;; COMPILE SQL
 
 (defmethod compile-sql :copy [{:keys [columns from to table]}]
