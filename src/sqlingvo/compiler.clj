@@ -119,11 +119,11 @@
 
 (defmethod compile-fn :is-null [{:keys [args]}]
   (let [[sql & args] (compile-expr (first args))]
-    (cons (str sql " IS NULL") args)))
+    (cons (str "(" sql " IS NULL)") args)))
 
 (defmethod compile-fn :is-not-null [{:keys [args]}]
   (let [[sql & args] (compile-expr (first args))]
-    (cons (str sql " IS NOT NULL") args)))
+    (cons (str "(" sql " IS NOT NULL)") args)))
 
 ;; COMPILE FROM CLAUSE
 
@@ -232,21 +232,21 @@
 (defmethod compile-sql :group-by [{:keys [exprs]}]
   (stmt ["GROUP BY"] exprs))
 
-(defmethod compile-sql :insert [{:keys [table rows default-values returning query]}]
-  (let [[query-sql & query-args] (if query (compile-sql query))
-        columns (map jdbc/as-identifier (keys (first rows)))
-        template (str "(" (join ", " (repeat (count columns) "?")) ")")]
+(defmethod compile-sql :insert [{:keys [table columns rows default-values returning query]}]
+  (let [[sql & args] (if query (compile-sql query))]
     (cons (str "INSERT INTO " (first (compile-sql table))
+               (if-not (empty? columns)
+                 (str " (" (first (apply join-stmt ", " columns)) ")"))
                (if-not (empty? rows)
-                 (str " (" (join ", " columns) ") VALUES "
-                      (join ", " (repeat (count rows) template))))
-               (if query-sql (str " " query-sql))
+                 (let [columns (map jdbc/as-identifier (keys (first rows)))
+                       template (str "(" (join ", " (repeat (count columns) "?")) ")")]
+                   (str " (" (join ", " columns) ") VALUES "
+                        (join ", " (repeat (count rows) template)))))
+               (if sql (str " " sql))
                (if default-values " DEFAULT VALUES")
                (if returning
                  (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
-          (if rows
-            (apply concat (map vals rows))
-            query-args))))
+          (if rows (apply concat (map vals rows)) args))))
 
 (defmethod compile-sql :intersect [node]
   (compile-set-op :intersect node))
