@@ -8,7 +8,7 @@ Via Clojars: https://clojars.org/sqlingvo
 
 ## Usage
 
-    (refer-clojure :exclude '[group-by])
+    (refer-clojure :exclude '[distinct group-by])
     (use 'sqlingvo.core)
 
 ## Examples
