@@ -156,7 +156,7 @@
        ["SELECT 1, 2, 3"]
        (select (as 1 :a) (as 2 :b) (as 3 :c))
        ["SELECT 1 AS a, 2 AS b, 3 AS c"]
-       (-> (select) (from :continents))
+       (-> (select *) (from :continents))
        ["SELECT * FROM continents"]
        (-> (select :continents.*) (from :continents))
        ["SELECT continents.* FROM continents"]

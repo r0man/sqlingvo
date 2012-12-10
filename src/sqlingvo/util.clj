@@ -68,4 +68,4 @@
   {:op :constant :form expr})
 
 (defn parse-exprs [exprs]
-  {:op :exprs :children (map parse-expr exprs)})
+  (if exprs {:op :exprs :children (map parse-expr exprs)}))

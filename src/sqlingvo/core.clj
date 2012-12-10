@@ -55,7 +55,7 @@
   [exprs & {:keys [on]}]
   {:op :distinct
    :exprs (parse-exprs exprs)
-   :on (if on (parse-exprs on))})
+   :on (parse-exprs on)})
 
 (defn create-table
   "Define a new table."
