@@ -120,7 +120,21 @@
                    (-> (select *)
                        (from :tmp-films)
                        (where '(< :date-prod "2004-05-07")))))
-       ["INSERT INTO films SELECT * FROM tmp-films WHERE (date-prod < ?)" "2004-05-07"]))
+       ["INSERT INTO films SELECT * FROM tmp-films WHERE (date-prod < ?)" "2004-05-07"]
+       (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
+               (-> (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code]))
+                   (from (as :natural-earth.airports :a))
+                   (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
+                   (join :airports '(on (= :airports.iata-code :a.iata-code)) :type :left)
+                   (where '(and (is-not-null :a.gps-code)
+                                (is-not-null :a.iata-code)
+                                (is-null :airports.iata-code)))))
+       [(str "INSERT INTO airports (country-id, name, gps-code, iata-code, wikipedia-url, location) "
+             "SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
+             "FROM natural-earth.airports AS a "
+             "LEFT JOIN airports ON (airports.iata-code = a.iata-code) "
+             "JOIN countries AS c ON (c.geography && a.geom) "
+             "WHERE ((a.gps-code IS NOT NULL) and (a.iata-code IS NOT NULL) and (airports.iata-code IS NULL))")]))
 
 (deftest test-limit
   (is (= {:limit {:op :limit :count 1}} (limit {} 1))))
