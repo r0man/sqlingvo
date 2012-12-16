@@ -3,7 +3,7 @@
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as s]
             [sqlingvo.compiler :refer [compile-stmt]]
-            [sqlingvo.util :refer [parse-expr parse-exprs parse-column parse-table]]))
+            [sqlingvo.util :refer [parse-expr parse-exprs parse-column parse-from parse-table]]))
 
 (defmacro sql
   "Compile `stmts` into a vector, where the first element is the SQL
@@ -33,21 +33,6 @@
 
 (defn- assoc-op [stmt op & {:as opts}]
   (assoc stmt op (assoc opts :op op)))
-
-(defn- parse-from [forms]
-  (cond
-   (keyword? forms)
-   (parse-table forms)
-   (and (map? forms) (= :select (:op forms)))
-   forms
-   (and (map? forms) (= :table (:op forms)))
-   forms
-   (and (map? forms) (:as forms))
-   {:op :table
-    :as (:as forms)
-    :schema (:table forms)
-    :name (:name forms)}
-   :else (throw (IllegalArgumentException. (str "Can't parse FROM form: " forms)))))
 
 (defn- wrap-seq [s]
   (if (vector? s) s [s]))

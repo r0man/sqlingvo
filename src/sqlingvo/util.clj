@@ -112,3 +112,18 @@
 
 (defn parse-exprs [exprs]
   (if exprs {:op :exprs :children (map parse-expr exprs)}))
+
+(defn parse-from [forms]
+  (cond
+   (keyword? forms)
+   (parse-table forms)
+   (and (map? forms) (= :select (:op forms)))
+   forms
+   (and (map? forms) (= :table (:op forms)))
+   forms
+   (and (map? forms) (:as forms))
+   {:op :table
+    :as (:as forms)
+    :schema (:table forms)
+    :name (:name forms)}
+   :else (throw (IllegalArgumentException. (str "Can't parse FROM form: " forms)))))
