@@ -18,6 +18,8 @@
    (jdbc/as-identifier obj)
    (string? obj)
    obj
+   (symbol? obj)
+   (str obj)
    (map? obj)
    (->> [(:schema obj) (:table obj) (:name obj)]
         (map jdbc/as-identifier)
@@ -30,6 +32,8 @@
    nil
    (keyword? obj)
    obj
+   (symbol? obj)
+   (keyword (hyphenize obj))
    (string? obj)
    (keyword (hyphenize obj))
    (map? obj)

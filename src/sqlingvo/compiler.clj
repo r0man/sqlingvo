@@ -1,7 +1,6 @@
 (ns sqlingvo.compiler
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
-            [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [blank? join replace upper-case]]
             [sqlingvo.util :refer [as-identifier]]))
 
@@ -114,7 +113,7 @@
 
 (defmethod compile-fn :default [{:keys [as args name]}]
   (let [args (map compile-expr args)]
-    (cons (str (jdbc/as-identifier name) "(" (join ", " (map first args)) ")"
+    (cons (str (as-identifier name) "(" (join ", " (map first args)) ")"
                (if as (str " AS " (as-identifier as))))
           (apply concat (map rest args)))))
 

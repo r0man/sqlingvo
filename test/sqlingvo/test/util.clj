@@ -6,6 +6,8 @@
   (are [obj expected]
        (is (= expected (as-identifier obj)))
        nil nil
+       'a-1 "a-1"
+       'a_1 "a_1"
        :a-1 "a-1"
        "a-1" "a-1"
        "a_1" "a_1"
@@ -18,6 +20,8 @@
   (are [obj expected]
        (is (= expected (as-keyword obj)))
        nil nil
+       'a-1 :a-1
+       'a_1 :a-1
        :a-1 :a-1
        "a-1" :a-1
        "a_1" :a-1
