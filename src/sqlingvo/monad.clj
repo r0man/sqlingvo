@@ -4,6 +4,9 @@
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer [as-keyword parse-expr parse-column parse-from parse-table]]))
 
+(defn- concat-in [m ks & args]
+  (apply update-in m ks concat args))
+
 (defn as
   "Parse `expr` and return an expr with and AS clause using `alias`."
   [expr alias]
@@ -36,8 +39,8 @@
   "Returns a fn that adds a FROM clause to an SQL statement."
   [& from]
   (fn [stmt]
-    [nil (update-in
-          stmt [:from] concat
+    [nil (concat-in
+          stmt [:from]
           (case (:op stmt)
             :copy [(first from)]
             (map parse-from from)))]))
@@ -46,19 +49,19 @@
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
   (fn [stmt]
-    [nil (update-in stmt [:group-by] concat (map parse-expr exprs))]))
+    [nil (concat-in stmt [:group-by] (map parse-expr exprs))]))
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
   (fn [stmt]
-    [nil (update-in stmt [:order-by] concat (map parse-expr exprs))]))
+    [nil (concat-in stmt [:order-by] (map parse-expr exprs))]))
 
 (defn returning
   "Add the RETURNING clause the SQL statement."
   [& exprs]
   (fn [stmt]
-    [nil (update-in stmt [:returning] concat (map parse-expr exprs))]))
+    [nil (concat-in stmt [:returning] (map parse-expr exprs))]))
 
 (defn select
   "Returns a SELECT statement."
@@ -71,7 +74,7 @@
   "Returns a fn that adds a WHERE clause to an SQL statement."
   [& exprs]
   (fn [stmt]
-    [nil (update-in stmt [:where] concat (map parse-expr exprs))]))
+    [nil (concat-in stmt [:where] (map parse-expr exprs))]))
 
 (defn sql [stmt]
   (compile-stmt stmt))
