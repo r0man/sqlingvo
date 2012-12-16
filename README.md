@@ -110,12 +110,14 @@ The sort expression(s) can be any expression that would be valid in the query's 
            (order-by '(+ :a :b) :c)))
     ;=> ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
 
-A sort expression can also be the column label or number of an output column, as in:
+A sort expression can also be the column label
 
     (sql (select [(as '(+ :a :b) :sum) :c]
            (from :table-1)
            (order-by :sum)))
     ;=> ["SELECT a + b AS sum, c FROM table-1 ORDER BY sum"]
+
+or number of an output column.
 
     (sql (select [:a '(max :b)]
            (from :table-1)
