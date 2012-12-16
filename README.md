@@ -117,7 +117,7 @@ A sort expression can also be the column label
            (order-by :sum)))
     ;=> ["SELECT a + b AS sum, c FROM table-1 ORDER BY sum"]
 
-or number of an output column.
+or the number of an output column.
 
     (sql (select [:a '(max :b)]
            (from :table-1)
