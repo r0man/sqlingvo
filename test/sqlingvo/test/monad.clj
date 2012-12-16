@@ -11,6 +11,13 @@
        (is (= ~sql (compile-stmt ~stmt)))
        ~@body)))
 
+(deftest-stmt test-copy-country
+  ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
+  (copy :country []
+    (from "/usr1/proj/bray/sql/country_data"))
+  (is (= :copy (:op stmt)))
+  (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))

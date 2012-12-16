@@ -139,16 +139,17 @@
 ;; COMPILE SQL
 
 (defmethod compile-sql :copy [{:keys [columns from to table]}]
-  (cons (str "COPY " (first (compile-sql table))
-             (if-not (empty? columns)
-               (str " (" (first (apply join-stmt ", " columns)) ")"))
-             " FROM "
-             (cond
-              (string? from) "?"
-              (= :stdin from) "STDIN"))
-        (cond
-         (string? from) [from]
-         (= :stdin from) [])))
+  (let [from (first from)]
+    (cons (str "COPY " (first (compile-sql table))
+               (if-not (empty? columns)
+                 (str " (" (first (apply join-stmt ", " columns)) ")"))
+               " FROM "
+               (cond
+                (string? from) "?"
+                (= :stdin from) "STDIN"))
+          (cond
+           (string? from) [from]
+           (= :stdin from) []))))
 
 (defmethod compile-sql :create-table [{:keys [columns table if-not-exists inherits like temporary]}]
   (cons (str "CREATE"
