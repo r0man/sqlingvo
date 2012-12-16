@@ -23,6 +23,11 @@
   (delete :films)
   (is (= :delete (:op stmt))))
 
+(deftest-stmt test-delete-all-films-but-musicals
+  ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
+  (delete :films
+    (where '(<> :kind "Musical"))))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))

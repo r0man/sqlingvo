@@ -168,13 +168,14 @@
                (str " INHERITS (" (join ", " (map (comp first compile-sql) inherits)) ")")))
         []))
 
-(defmethod compile-sql :delete [{:keys [condition table returning]}]
-  (let [[sql & args] (if condition (compile-sql condition))]
+(defmethod compile-sql :delete [{:keys [where table returning]}]
+  (let [where (if where (map compile-sql where))]
     (cons (str "DELETE FROM " (first (compile-sql table))
-               (if sql (str " " sql))
+               (if-not (empty? where)
+                 (str " WHERE " (join ", " (map first where))))
                (if returning
                  (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
-          args)))
+          (mapcat rest where))))
 
 (defmethod compile-sql :column [{:keys [as schema name table]}]
   [(str (join "." (map as-identifier (remove nil? [schema table name])))

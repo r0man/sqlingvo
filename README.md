@@ -30,8 +30,8 @@ Clear the table films.
 
 Delete all films but musicals.
 
-    (sql (delete :films)
-         (where '(<> :kind "Musical")))
+    (sql (delete :films
+           (where '(<> :kind "Musical"))))
     ;=> ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
 
 Delete completed tasks, returning full details of the deleted rows.
