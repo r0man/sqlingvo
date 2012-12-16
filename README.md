@@ -13,7 +13,7 @@ Via Clojars: https://clojars.org/sqlingvo
 
 ## Examples
 
-### Copy
+### [Copy](http://www.postgresql.org/docs/9.2/static/sql-copy.html)
 
 Copy data from a file into the country table.
 
@@ -21,7 +21,7 @@ Copy data from a file into the country table.
          (from "/usr1/proj/bray/sql/country_data"))
     ;=> ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
 
-### Delete
+### [Delete](http://www.postgresql.org/docs/9.2/static/sql-delete.html)
 
 Clear the table films.
 
@@ -41,7 +41,7 @@ Delete completed tasks, returning full details of the deleted rows.
          (returning *))
     ;=> ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
 
-### Insert
+### [Insert](http://www.postgresql.org/docs/9.2/static/sql-insert.html)
 
 Insert a single row into table films.
 
@@ -72,7 +72,7 @@ Insert some rows into table films from a table tmp-films with the same column la
     ;=> ["INSERT INTO films (SELECT * FROM tmp-films WHERE (date-prod < ?))" "2004-05-07"]
 
 
-### Select
+### [Select](http://www.postgresql.org/docs/9.2/static/sql-select.html)
 
 Select all films.
 
@@ -94,7 +94,7 @@ Retrieve the most recent weather report for each location.
          (order-by [:location :time] :direction :desc))
     ;=> ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
 
-### Update
+### [Update](http://www.postgresql.org/docs/9.2/static/sql-update.html)
 
 Change the word Drama to Dramatic in the column kind of the table films.
 
