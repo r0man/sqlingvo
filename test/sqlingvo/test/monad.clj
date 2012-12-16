@@ -1,17 +1,35 @@
 (ns sqlingvo.test.monad
   (:refer-clojure :exclude [group-by])
   (:use clojure.test
+        sqlingvo.compiler
         sqlingvo.util
         sqlingvo.monad))
 
 (defmacro deftest-stmt [name sql stmt & body]
   `(deftest ~name
      (let [~'stmt ~stmt]
-       ~sql
+       (is (= ~sql (compile-stmt ~stmt)))
        ~@body)))
 
+(deftest-stmt test-select-films
+  ["SELECT * FROM films"]
+  (select [*] (from :films))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :films)] (:from stmt))))
+
+(deftest-stmt test-select-comedy-films
+  ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
+  (select [*]
+    (from :films)
+    (where '(= :kind "Comedy")))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-expr '(= :kind "Comedy"))] (:where stmt)))
+  (is (= [(parse-from :films)] (:from stmt))))
+
 (deftest-stmt test-order-by-a+b-c
-  "SELECT a, b FROM table-1 ORDER BY a + b, c"
+  ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
   (select [:a :b]
     (from :table-1)
     (order-by '(+ :a :b) :c))
@@ -21,7 +39,7 @@
   (is (= [(parse-expr '(+ :a :b)) (parse-expr :c)] (:order-by stmt))))
 
 (deftest-stmt test-order-by-sum
-  "SELECT a + b AS sum, c FROM table-1 ORDER BY sum"
+  ["SELECT (a + b) AS sum, c FROM table-1 ORDER BY sum"]
   (select [(as '(+ :a :b) :sum) :c]
     (from :table-1)
     (order-by :sum))
@@ -31,7 +49,7 @@
   (is (= [(parse-expr :sum)] (:order-by stmt))))
 
 (deftest-stmt test-order-by-1
-  "SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"
+  ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
   (select [:a '(max :b)]
     (from :table-1)
     (group-by :a)

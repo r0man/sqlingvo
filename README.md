@@ -76,15 +76,14 @@ Insert some rows into table films from a table tmp-films with the same column la
 
 Select all films.
 
-    (sql (select *)
-         (from :films))
+    (sql (select [*] (from :films)))
     ;=> ["SELECT * FROM films"]
 
 Select all Comedy films.
 
-    (sql (select *)
-         (from :films)
-         (where '(= :kind "Comedy")))
+    (sql (select [*]
+           (from :films)
+           (where '(= :kind "Comedy"))))
     ;=> ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
 
 Retrieve the most recent weather report for each location.
@@ -109,7 +108,7 @@ The sort expression(s) can be any expression that would be valid in the query's 
     (sql (select [:a :b]
            (from :table-1)
            (order-by '(+ :a :b) :c)))
-    ;=> ["SELECT a, b FROM table-1 ORDER BY a + b, c"]
+    ;=> ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
 
 A sort expression can also be the column label or number of an output column, as in:
 

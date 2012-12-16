@@ -1,7 +1,7 @@
 (ns sqlingvo.monad
   (:refer-clojure :exclude [group-by])
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
-            [sqlingvo.compiler :refer [compile-sql]]
+            [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer [as-keyword parse-expr parse-from]]))
 
 (defn as
@@ -40,3 +40,12 @@
   [exprs & body]
   (second ((with-monad state-m (m-seq body))
            {:op :select :exprs (map parse-expr exprs)})))
+
+(defn where
+  "Returns a fn that adds a WHERE clause to an SQL statement."
+  [& exprs]
+  (fn [stmt]
+    [nil (update-in stmt [:where] concat (map parse-expr exprs))]))
+
+(defn sql [stmt]
+  (compile-stmt stmt))

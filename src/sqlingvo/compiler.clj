@@ -25,13 +25,13 @@
     (cons (replace sql #"^\(|\)$" "") args)))
 
 (defn- join-stmt [separator & stmts]
-  (let [stmts (map #(if (stmt? %1) %1 (compile-sql %1)) stmts)
+  (let [stmts (map #(if (stmt? %1) %1 (compile-sql %1)) (remove empty? stmts))
         stmts (remove (comp blank? first) stmts)]
     (cons (join separator (map first stmts))
           (apply concat (map rest stmts)))))
 
 (defn- stmt [& stmts]
-  (apply join-stmt " " (remove nil? stmts)))
+  (apply join-stmt " " (remove empty? stmts)))
 
 (defn- compile-set-op [op {:keys [stmt all] :as node}]
   (let [[sql & args] (compile-sql stmt)]
@@ -306,8 +306,29 @@
   [(str (join "." (map as-identifier (remove nil? [schema name])))
         (if as (str " AS " (as-identifier as))))])
 
-(defmethod compile-sql :select [{:keys [exprs from condition group-by limit offset order-by set]}]
-  (apply stmt ["SELECT"] exprs from condition group-by order-by limit offset (map compile-sql set)))
+;; (defmethod compile-sql :select [{:keys [exprs from condition group-by limit offset order-by set]}]
+;;   (apply stmt ["SELECT"] exprs from condition group-by order-by limit offset (map compile-sql set)))
+
+(defmethod compile-sql :select [{:keys [exprs from where group-by limit offset order-by set]}]
+  (let [exprs (map compile-expr exprs)
+        from (map compile-sql from)
+        where (map compile-sql where)
+        group-by (map compile-sql group-by)
+        order-by (map compile-sql order-by)]
+    (cons (str "SELECT " (join ", " (map first exprs))
+               (if-not (empty? from)
+                 (str " FROM " (join ", " (map first from))))
+               (if-not (empty? where)
+                 (str " WHERE " (join ", " (map first where))))
+               (if-not (empty? group-by)
+                 (str " GROUP BY " (join ", " (map first group-by))))
+               (if-not (empty? order-by)
+                 (str " ORDER BY " (join ", " (map first order-by)))))
+          (concat (mapcat rest exprs)
+                  (mapcat rest from)
+                  (mapcat rest where)
+                  (mapcat rest group-by)
+                  (mapcat rest order-by)))))
 
 (defmethod compile-sql :truncate [{:keys [cascade tables continue-identity restart-identity restrict]}]
   (let [[sql & args] (apply join-stmt ", " tables)]
