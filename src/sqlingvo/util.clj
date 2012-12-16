@@ -10,7 +10,10 @@
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
 
-(defn as-identifier [obj]
+(defn as-identifier
+  "Given a obj, convert it to a string using the current naming
+  strategy."
+  [obj]
   (cond
    (nil? obj)
    nil
@@ -26,7 +29,10 @@
         (remove blank?)
         (join "."))))
 
-(defn as-keyword [obj]
+(defn as-keyword
+  "Given a obj, convert it to a keyword using the current naming
+  strategy."
+  [obj]
   (cond
    (nil? obj)
    nil
