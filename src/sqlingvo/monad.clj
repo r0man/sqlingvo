@@ -25,6 +25,13 @@
             :table (parse-table table)
             :columns (map parse-column columns)})))
 
+(defn delete
+  "Returns a DELETE statement."
+  [table & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :delete
+            :table (parse-table table)})))
+
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement."
   [& from]

@@ -18,6 +18,11 @@
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
+(deftest-stmt test-delete-films
+  ["DELETE FROM films"]
+  (delete :films)
+  (is (= :delete (:op stmt))))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))
