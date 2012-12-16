@@ -1,12 +1,39 @@
 (ns sqlingvo.util
   (:refer-clojure :exclude [replace])
-  (:require [clojure.string :refer [replace]]))
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.string :refer [blank? join replace]]
+            [inflections.core :refer [hyphenize]]))
 
 (def ^:dynamic *column-regex*
   #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?")
 
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
+
+(defn as-identifier [obj]
+  (cond
+   (keyword? obj)
+   (jdbc/as-identifier obj)
+   (string? obj)
+   obj
+   (map? obj)
+   (->> [(:schema obj) (:table obj) (:name obj)]
+        (map jdbc/as-identifier)
+        (remove blank?)
+        (join "."))))
+
+(defn as-keyword [obj]
+  (cond
+   (keyword? obj)
+   obj
+   (string? obj)
+   (keyword (hyphenize obj))
+   (map? obj)
+   (->> [(:schema obj) (:table obj) (:name obj)]
+        (map jdbc/as-identifier)
+        (remove blank?)
+        (join ".")
+        (keyword))))
 
 (defn qualified-name
   "Returns the qualified name of `k`."

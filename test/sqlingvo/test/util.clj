@@ -2,6 +2,28 @@
   (:use clojure.test
         sqlingvo.util))
 
+(deftest test-as-identifier
+  (are [obj expected]
+       (is (= expected (as-identifier obj)))
+       :a-1 "a-1"
+       "a-1" "a-1"
+       "a_1" "a_1"
+       {:schema :public :table :continents}
+       "public.continents"
+       {:schema :public :table :continents :name :id}
+       "public.continents.id"))
+
+(deftest test-as-keyword
+  (are [obj expected]
+       (is (= expected (as-keyword obj)))
+       :a-1 :a-1
+       "a-1" :a-1
+       "a_1" :a-1
+       {:schema :public :table :continents}
+       :public.continents
+       {:schema :public :table :continents :name :id}
+       :public.continents.id))
+
 (deftest test-parse-column
   (are [table expected]
        (do (is (= expected (parse-column table)))
