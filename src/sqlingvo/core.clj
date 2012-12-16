@@ -40,6 +40,8 @@
    (parse-table forms)
    (and (map? forms) (= :select (:op forms)))
    forms
+   (and (map? forms) (= :table (:op forms)))
+   forms
    (and (map? forms) (:as forms))
    {:op :table
     :as (:as forms)
