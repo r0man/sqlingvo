@@ -57,23 +57,25 @@
   "Parse `s` as a column identifier and return a map
   with :op, :schema, :name and :as keys."
   [s]
-  (if-let [matches (re-matches *column-regex* (qualified-name s))]
-    (let [[_ _ schema _ table name _ as] matches]
-      {:op :column
-       :schema (if (and schema table) (keyword schema))
-       :table (keyword (or table schema))
-       :name (keyword name)
-       :as (keyword as)})))
+  (if (map? s)
+    s (if-let [matches (re-matches *column-regex* (qualified-name s))]
+        (let [[_ _ schema _ table name _ as] matches]
+          {:op :column
+           :schema (if (and schema table) (keyword schema))
+           :table (keyword (or table schema))
+           :name (keyword name)
+           :as (keyword as)}))))
 
 (defn parse-table
   "Parse `s` as a table identifier and return a map
   with :op, :schema, :name and :as keys."
   [s]
-  (if-let [matches (re-matches *table-regex* (qualified-name s))]
-    {:op :table
-     :schema (keyword (nth matches 2))
-     :name (keyword (nth matches 3))
-     :as (keyword (nth matches 5))}))
+  (if (map? s)
+    s (if-let [matches (re-matches *table-regex* (qualified-name s))]
+        {:op :table
+         :schema (keyword (nth matches 2))
+         :name (keyword (nth matches 3))
+         :as (keyword (nth matches 5))})))
 
 (defmulti parse-expr class)
 

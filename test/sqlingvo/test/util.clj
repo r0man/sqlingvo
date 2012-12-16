@@ -43,7 +43,9 @@
        :public.continents.id
        {:op :column :schema :public :table :continents :name :id :as nil}
        :public.continents.id/i
-       {:op :column :schema :public :table :continents :name :id :as :i}))
+       {:op :column :schema :public :table :continents :name :id :as :i})
+  (is (= (parse-column :continents.id)
+         (parse-column (parse-column :continents.id)))))
 
 (deftest test-parse-table
   (are [table expected]
@@ -56,7 +58,9 @@
        :public.continents
        {:op :table :schema :public :name :continents :as nil}
        :public.continents/c
-       {:op :table :schema :public :name :continents :as :c}))
+       {:op :table :schema :public :name :continents :as :c})
+  (is (= (parse-table :public.continents/c)
+         (parse-table (parse-table :public.continents/c)))))
 
 (deftest test-parse-expr
   (are [expr expected]
