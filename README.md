@@ -102,6 +102,28 @@ Change the word Drama to Dramatic in the column kind of the table films.
          (where '(= :kind "Drama")))
     ;=> ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
 
+### [Sorting Rows](http://www.postgresql.org/docs/9.2/static/queries-order.html)
+
+The sort expression(s) can be any expression that would be valid in the query's select list.
+
+    (sql (select [:a :b]
+           (from :table-1)
+           (order-by '(+ :a :b) :c)))
+    ;=> ["SELECT a, b FROM table-1 ORDER BY a + b, c"]
+
+A sort expression can also be the column label or number of an output column, as in:
+
+    (sql (select [(as '(+ :a :b) :sum) :c]
+           (from :table-1)
+           (order-by :sum)))
+    ;=> ["SELECT a + b AS sum, c FROM table-1 ORDER BY sum"]
+
+    (sql (select [:a '(max :b)]
+           (from :table-1)
+           (group-by :a)
+           (order-by 1)))
+    ;=> ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
+
 ## License
 
 Copyright © 2012 Roman Scherer
