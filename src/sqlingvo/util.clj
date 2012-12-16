@@ -12,6 +12,8 @@
 
 (defn as-identifier [obj]
   (cond
+   (nil? obj)
+   nil
    (keyword? obj)
    (jdbc/as-identifier obj)
    (string? obj)
@@ -24,6 +26,8 @@
 
 (defn as-keyword [obj]
   (cond
+   (nil? obj)
+   nil
    (keyword? obj)
    obj
    (string? obj)

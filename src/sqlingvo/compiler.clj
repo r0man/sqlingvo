@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
             [clojure.java.jdbc :as jdbc]
-            [clojure.string :refer [blank? join replace upper-case]]))
+            [clojure.string :refer [blank? join replace upper-case]]
+            [sqlingvo.util :refer [as-identifier]]))
 
 (defprotocol SQLType
   (sql-type [arg] "Convert `arg` into an SQL type."))
@@ -41,7 +42,7 @@
 ;; COMPILE CONSTANTS
 
 (defn compile-inline [{:keys [form as]}]
-  [(str form (if as (str " AS " (jdbc/as-identifier as))))])
+  [(str form (if as (str " AS " (as-identifier as))))])
 
 (defmulti compile-const
   "Compile a SQL constant into a SQL statement."
@@ -57,7 +58,7 @@
   (compile-inline node))
 
 (defmethod compile-const :default [{:keys [form as]}]
-  [(str "?" (if as (str " AS " (jdbc/as-identifier as)))) (sql-type form)])
+  [(str "?" (if as (str " AS " (as-identifier as)))) (sql-type form)])
 
 ;; COMPILE EXPRESSIONS
 
@@ -82,7 +83,7 @@
    (= 2 (count args))
    (let [[[s1 & a1] [s2 & a2]] (map compile-expr args)]
      (cons (str "(" s1 " " (core/name name) " " s2 ")"
-                (if as (str " AS " (jdbc/as-identifier as))))
+                (if as (str " AS " (as-identifier as))))
            (concat a1 a2)))
    :else
    (apply join-stmt " AND "
@@ -98,13 +99,13 @@
    :else
    (let [args (map compile-expr args)]
      (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
-                (if as (str " AS " (jdbc/as-identifier as))))
+                (if as (str " AS " (as-identifier as))))
            (apply concat (map rest args))))))
 
 (defn compile-whitespace-args [{:keys [as args name] :as node}]
   (let [[sql & args] (apply join-stmt " " args)]
     (cons (str "(" (core/name name) " " sql ")"
-               (if as (str " AS " (jdbc/as-identifier as))))
+               (if as (str " AS " (as-identifier as))))
           args)))
 
 (defmulti compile-fn
@@ -114,7 +115,7 @@
 (defmethod compile-fn :default [{:keys [as args name]}]
   (let [args (map compile-expr args)]
     (cons (str (jdbc/as-identifier name) "(" (join ", " (map first args)) ")"
-               (if as (str " AS " (jdbc/as-identifier as))))
+               (if as (str " AS " (as-identifier as))))
           (apply concat (map rest args)))))
 
 (defmethod compile-fn :is-null [{:keys [args]}]
@@ -131,7 +132,7 @@
 
 (defmethod compile-from :select [node]
   (let [[sql & args] (compile-sql node)]
-    (cons (str "(" sql ") AS " (jdbc/as-identifier (:as node))) args)))
+    (cons (str "(" sql ") AS " (as-identifier (:as node))) args)))
 
 (defmethod compile-from :table [node]
   (compile-sql node))
@@ -176,8 +177,8 @@
           args)))
 
 (defmethod compile-sql :column [{:keys [as schema name table]}]
-  [(str (join "." (map jdbc/as-identifier (remove nil? [schema table name])))
-        (if as (str " AS " (jdbc/as-identifier as))))])
+  [(str (join "." (map as-identifier (remove nil? [schema table name])))
+        (if as (str " AS " (as-identifier as))))])
 
 (defmethod compile-sql :constant [node]
   (compile-const node))
@@ -207,7 +208,7 @@
 
 (defmethod compile-sql :expr-list [{:keys [as children]}]
   (let [[sql & args] (apply join-stmt " " children)]
-    (cons (str sql (if as (str " AS " (jdbc/as-identifier as))))
+    (cons (str sql (if as (str " AS " (as-identifier as))))
           args)))
 
 (defmethod compile-sql :exprs [{:keys [children]}]
@@ -238,7 +239,7 @@
                (if-not (empty? columns)
                  (str " (" (first (apply join-stmt ", " columns)) ")"))
                (if-not (empty? rows)
-                 (let [columns (map jdbc/as-identifier (keys (first rows)))
+                 (let [columns (map as-identifier (keys (first rows)))
                        template (str "(" (join ", " (repeat (count columns) "?")) ")")]
                    (str " (" (join ", " columns) ") VALUES "
                         (join ", " (repeat (count rows) template)))))
@@ -268,7 +269,7 @@
           (concat from-args cond-args))))
 
 (defmethod compile-sql :keyword [{:keys [form]}]
-  [(jdbc/as-identifier form)])
+  [(as-identifier form)])
 
 (defmethod compile-sql :limit [{:keys [count]}]
   [(str "LIMIT " (if (number? count) count "ALL"))])
@@ -303,8 +304,8 @@
           args)))
 
 (defmethod compile-sql :table [{:keys [as schema name]}]
-  [(str (join "." (map jdbc/as-identifier (remove nil? [schema name])))
-        (if as (str " AS " (jdbc/as-identifier as))))])
+  [(str (join "." (map as-identifier (remove nil? [schema name])))
+        (if as (str " AS " (as-identifier as))))])
 
 (defmethod compile-sql :select [{:keys [exprs from condition group-by limit offset order-by set]}]
   (apply stmt ["SELECT"] exprs from condition group-by order-by limit offset (map compile-sql set)))
@@ -323,7 +324,7 @@
 
 (defmethod compile-sql :update [{:keys [condition from exprs table row returning]}]
   (let [[sql & args] (if condition (compile-sql condition))
-        columns (if row (map jdbc/as-identifier (keys row)))
+        columns (if row (map as-identifier (keys row)))
         exprs (if exprs (map (comp unwrap-stmt compile-expr) exprs))
         from (if from (map compile-from (:clause from)))]
     (cons (str "UPDATE " (first (compile-sql table))
