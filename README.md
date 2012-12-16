@@ -36,9 +36,9 @@ Delete all films but musicals.
 
 Delete completed tasks, returning full details of the deleted rows.
 
-    (sql (delete :tasks)
-         (where '(= status "DONE"))
-         (returning *))
+    (sql (delete :tasks
+           (where '(= status "DONE"))
+           (returning *)))
     ;=> ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
 
 ### [Insert](http://www.postgresql.org/docs/9.2/static/sql-insert.html)

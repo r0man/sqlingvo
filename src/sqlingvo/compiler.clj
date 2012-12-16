@@ -169,13 +169,15 @@
         []))
 
 (defmethod compile-sql :delete [{:keys [where table returning]}]
-  (let [where (if where (map compile-sql where))]
+  (let [returning (if returning (map compile-sql returning))
+        where (if where (map compile-sql where))]
     (cons (str "DELETE FROM " (first (compile-sql table))
                (if-not (empty? where)
                  (str " WHERE " (join ", " (map first where))))
-               (if returning
-                 (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
-          (mapcat rest where))))
+               (if-not (empty? returning)
+                 (apply str " RETURNING " (join ", " (map first returning)))))
+          (concat (mapcat rest where)
+                  (mapcat rest returning)))))
 
 (defmethod compile-sql :column [{:keys [as schema name table]}]
   [(str (join "." (map as-identifier (remove nil? [schema table name])))

@@ -54,6 +54,12 @@
   (fn [stmt]
     [nil (update-in stmt [:order-by] concat (map parse-expr exprs))]))
 
+(defn returning
+  "Add the RETURNING clause the SQL statement."
+  [& exprs]
+  (fn [stmt]
+    [nil (update-in stmt [:returning] concat (map parse-expr exprs))]))
+
 (defn select
   "Returns a SELECT statement."
   [exprs & body]

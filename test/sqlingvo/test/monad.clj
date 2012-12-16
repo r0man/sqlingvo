@@ -28,6 +28,23 @@
   (delete :films
     (where '(<> :kind "Musical"))))
 
+(deftest-stmt test-delete-completed-tasks-returning-all
+  ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
+  (delete :tasks
+    (where '(= status "DONE"))
+    (returning *)))
+
+(deftest-stmt test-group-by-a-order-by-1
+  ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
+  (select [:a '(max :b)]
+    (from :table-1)
+    (group-by :a)
+    (order-by 1))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr :a) (parse-expr '(max :b))] (:exprs stmt)))
+  (is (= [(parse-from :table-1)] (:from stmt)))
+  (is (= [(parse-expr 1)] (:order-by stmt))))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))
@@ -45,7 +62,7 @@
   (is (= [(parse-expr '(= :kind "Comedy"))] (:where stmt)))
   (is (= [(parse-from :films)] (:from stmt))))
 
-(deftest-stmt test-order-by-a+b-c
+(deftest-stmt test-order-by-query-select
   ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
   (select [:a :b]
     (from :table-1)
@@ -64,14 +81,3 @@
   (is (= [(parse-expr (as '(+ :a :b) :sum)) (parse-expr :c)] (:exprs stmt)))
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr :sum)] (:order-by stmt))))
-
-(deftest-stmt test-order-by-1
-  ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
-  (select [:a '(max :b)]
-    (from :table-1)
-    (group-by :a)
-    (order-by 1))
-  (is (= :select (:op stmt)))
-  (is (= [(parse-expr :a) (parse-expr '(max :b))] (:exprs stmt)))
-  (is (= [(parse-from :table-1)] (:from stmt)))
-  (is (= [(parse-expr 1)] (:order-by stmt))))
