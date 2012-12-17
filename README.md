@@ -88,9 +88,9 @@ Select all Comedy films.
 
 Retrieve the most recent weather report for each location.
 
-    (sql (select (distinct [:location :time :report] :on [:location]))
-         (from :weather-reports)
-         (order-by [:location :time] :direction :desc))
+    (sql (select (distinct [:location :time :report] :on [:location])
+           (from :weather-reports)
+           (order-by [:location :time] :direction :desc)))
     ;=> ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
 
 ### [Update](http://www.postgresql.org/docs/9.2/static/sql-update.html)

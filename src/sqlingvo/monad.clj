@@ -1,5 +1,5 @@
 (ns sqlingvo.monad
-  (:refer-clojure :exclude [group-by])
+  (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer [as-keyword parse-expr parse-column parse-from parse-table]]))
@@ -19,6 +19,13 @@
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
   [expr] (assoc (parse-expr expr) :direction :desc))
+
+(defn distinct
+  "Parse `exprs` and retuern a DISTINCT clause."
+  [exprs & {:keys [on]}]
+  {:op :distinct
+   :exprs (map parse-expr exprs)
+   :on (map parse-expr on)})
 
 (defn copy
   "Returns a COPY statement."
@@ -68,7 +75,10 @@
   [exprs & body]
   (second ((with-monad state-m (m-seq body))
            {:op :select
-            :exprs (map parse-expr exprs)})))
+            :exprs (if (sequential? exprs)
+                     (map parse-expr exprs))
+            :distinct (if (= :distinct (:op exprs))
+                        exprs)})))
 
 (defn update
   "Returns a UPDATE statement."

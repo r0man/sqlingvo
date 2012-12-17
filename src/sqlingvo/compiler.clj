@@ -179,9 +179,10 @@
           (concat (mapcat rest where)
                   (mapcat rest returning)))))
 
-(defmethod compile-sql :column [{:keys [as schema name table]}]
+(defmethod compile-sql :column [{:keys [as schema name table direction]}]
   [(str (join "." (map as-identifier (remove nil? [schema table name])))
-        (if as (str " AS " (as-identifier as))))])
+        (if as (str " AS " (as-identifier as)))
+        (if direction (str " " (upper-case (core/name direction)))))])
 
 (defmethod compile-sql :constant [node]
   (compile-const node))
@@ -189,15 +190,6 @@
 (defmethod compile-sql :condition [{:keys [condition]}]
   (let [[sql & args] (compile-sql condition)]
     (cons (str "WHERE " sql) args)))
-
-(defmethod compile-sql :distinct [{:keys [exprs on]}]
-  (let [[expr-sql & expr-args] (compile-sql exprs)
-        [on-sql & on-args] (if on (compile-sql on))]
-    (cons (str "DISTINCT "
-               (if on
-                 (str "ON (" on-sql ") "))
-               expr-sql)
-          (concat expr-args on-args))))
 
 (defmethod compile-sql :drop-table [{:keys [cascade if-exists restrict tables]}]
   (let [[sql & args] (apply join-stmt ", " tables)]
@@ -311,15 +303,38 @@
         (if as (str " AS " (as-identifier as))))])
 
 ;; (defmethod compile-sql :select [{:keys [exprs from condition group-by limit offset order-by set]}]
-;;   (apply stmt ["SELECT"] exprs from condition group-by order-by limit offset (map compile-sql set)))
+;;   (apply stmt ["SELECT"] exprs from condition group-by order-by
+;;   limit offset (map compile-sql set)))
 
-(defmethod compile-sql :select [{:keys [exprs from where group-by limit offset order-by set]}]
-  (let [exprs (map compile-expr exprs)
+(defmethod compile-sql :distinct [{:keys [exprs on]}]
+  (let [[expr-sql & expr-args] (compile-sql exprs)
+        [on-sql & on-args] (if on (compile-sql on))]
+    (cons (str "DISTINCT "
+               (if on
+                 (str "ON (" on-sql ") "))
+               expr-sql)
+          (concat expr-args on-args))))
+
+(defmethod compile-sql :distinct [{:keys [exprs on]}]
+  (let [exprs (if exprs (map compile-sql exprs))
+        on (if on (map compile-sql on))]
+    (cons (str "DISTINCT "
+               (if-not (empty? on)
+                 (str "ON (" (join ", " (map first on)) ") "))
+               (if-not (empty? on)
+                 (join ", " (map first exprs))))
+          (concat (mapcat rest on)
+                  (mapcat rest exprs)))))
+
+(defmethod compile-sql :select [{:keys [exprs distinct from where group-by limit offset order-by set]}]
+  (let [[distinct-sql & distinct-args] (if distinct (compile-sql distinct))
+        exprs (map compile-expr exprs)
         from (map compile-sql from)
         where (map compile-sql where)
         group-by (map compile-sql group-by)
         order-by (map compile-sql order-by)]
     (cons (str "SELECT " (join ", " (map first exprs))
+               distinct-sql
                (if-not (empty? from)
                  (str " FROM " (join ", " (map first from))))
                (if-not (empty? where)

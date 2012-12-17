@@ -1,5 +1,5 @@
 (ns sqlingvo.test.monad
-  (:refer-clojure :exclude [group-by])
+  (:refer-clojure :exclude [distinct group-by])
   (:use clojure.test
         sqlingvo.compiler
         sqlingvo.util
@@ -61,6 +61,12 @@
   (is (= [(parse-expr *)] (:exprs stmt)))
   (is (= [(parse-expr '(= :kind "Comedy"))] (:where stmt)))
   (is (= [(parse-from :films)] (:from stmt))))
+
+(deftest-stmt test-select-most-recent-weather-report
+  ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
+  (select (distinct [:location :time :report] :on [:location])
+    (from :weather-reports)
+    (order-by :location (desc :time))))
 
 (deftest-stmt test-update-drama-to-dramatic
   ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
