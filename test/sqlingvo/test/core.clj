@@ -25,18 +25,6 @@
        (-> (create-table :tmp-films) (like :films :excluding [:defaults :constraints]))
        ["CREATE TABLE tmp-films (LIKE films EXCLUDING DEFAULTS EXCLUDING CONSTRAINTS)"]))
 
-(deftest test-drop-table
-  (are [stmt expected]
-       (is (= expected (sql stmt)))
-       (drop-table :continents)
-       ["DROP TABLE continents"]
-       (drop-table [:continents :countries])
-       ["DROP TABLE continents, countries"]
-       (drop-table :continents :if-exists true :restrict true)
-       ["DROP TABLE IF EXISTS continents RESTRICT"]
-       (drop-table [:continents :countries] :if-exists true :restrict true)
-       ["DROP TABLE IF EXISTS continents, countries RESTRICT"]))
-
 (deftest test-insert
   (are [stmt expected]
        (is (= expected (sql stmt)))

@@ -192,11 +192,10 @@
     (cons (str "WHERE " sql) args)))
 
 (defmethod compile-sql :drop-table [{:keys [cascade if-exists restrict tables]}]
-  (let [[sql & args] (apply join-stmt ", " tables)]
-    (cons (str "DROP TABLE " (if if-exists "IF EXISTS ") sql
-               (if cascade " CASCADE")
-               (if restrict " RESTRICT"))
-          args)))
+  (join-stmt
+   " " ["DROP TABLE"]
+   if-exists (apply join-stmt ", " tables)
+   cascade restrict))
 
 (defmethod compile-sql :except [node]
   (compile-set-op :except node))
@@ -354,13 +353,11 @@
 (defmethod compile-sql :default [{:keys [op]}]
   [(replace (upper-case (name op)) #"-" " ")])
 
-(defmethod compile-sql :truncate [{:keys [tables children]}]
-  (let [[table-sql & table-args] (apply join-stmt ", " tables)
-        [child-sql & child-args] (apply join-stmt " " children)]
-    (cons (str "TRUNCATE TABLE " table-sql
-               (if-not (blank? child-sql)
-                 (str " " child-sql)))
-          (concat table-args child-args))))
+(defmethod compile-sql :truncate [{:keys [tables continue-identity restart-identity cascade restrict]}]
+  (join-stmt
+   " " ["TRUNCATE TABLE"]
+   (apply join-stmt ", " tables)
+   continue-identity restart-identity cascade restrict))
 
 (defmethod compile-sql :union [node]
   (compile-set-op :union node))

@@ -18,11 +18,11 @@
 
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
-  [] (fn [stmt] [nil (concat-in stmt [:children] [{:op :cascade}])]))
+  [] (fn [stmt] [nil (assoc stmt :cascade {:op :cascade})]))
 
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
-  [] (fn [stmt] [nil (concat-in stmt [:children] [{:op :continue-identity}])]))
+  [] (fn [stmt] [nil (assoc stmt :continue-identity {:op :continue-identity})]))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -50,6 +50,13 @@
            {:op :delete
             :table (parse-table table)})))
 
+(defn drop-table
+  "Returns a DROP TABLE statement."
+  [tables & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :drop-table
+            :tables (map parse-table tables)})))
+
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement."
   [& from]
@@ -63,6 +70,10 @@
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs] (fn [stmt] [nil (concat-in stmt [:group-by] (map parse-expr exprs))]))
+
+(defn if-exists
+  "Returns a fn that adds a IF EXISTS clause to an SQL statement."
+  [] (fn [stmt] [nil (assoc stmt :if-exists {:op :if-exists})]))
 
 (defn insert
   "Returns a INSERT statement."
@@ -78,11 +89,11 @@
 
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
-  [] (fn [stmt] [nil (concat-in stmt [:children] [{:op :restart-identity}])]))
+  [] (fn [stmt] [nil (assoc stmt :restart-identity {:op :restart-identity})]))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
-  [] (fn [stmt] [nil (concat-in stmt [:children] [{:op :restrict}])]))
+  [] (fn [stmt] [nil (assoc stmt :restrict {:op :restrict})]))
 
 (defn returning
   "Add the RETURNING clause the SQL statement."

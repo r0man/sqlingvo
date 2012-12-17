@@ -91,6 +91,38 @@
                             (> :date ~(select ['(max :date)] (from :import)))))]
          (:where stmt))))
 
+;; DROP TABLE
+
+(deftest-stmt test-drop-continents
+  ["DROP TABLE continents"]
+  (drop-table [:continents])
+  (is (= :drop-table (:op stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt))))
+
+(deftest-stmt test-drop-continents-and-countries
+  ["DROP TABLE continents, countries"]
+  (drop-table [:continents :countries])
+  (is (= :drop-table (:op stmt)))
+  (is (= (map parse-table [:continents :countries]) (:tables stmt))))
+
+(deftest-stmt test-drop-continents-if-exists
+  ["DROP TABLE IF EXISTS continents"]
+  (drop-table [:continents]
+    (if-exists))
+  (is (= :drop-table (:op stmt)))
+  (is (= {:op :if-exists} (:if-exists stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt))))
+
+(deftest-stmt test-drop-continents-countries-if-exists-restrict
+  ["DROP TABLE IF EXISTS continents, countries RESTRICT"]
+  (drop-table [:continents :countries]
+    (if-exists)
+    (restrict))
+  (is (= :drop-table (:op stmt)))
+  (is (= {:op :if-exists} (:if-exists stmt)))
+  (is (= (map parse-table [:continents :countries]) (:tables stmt)))
+  (is (= {:op :restrict} (:restrict stmt))))
+
 ;; INSERT
 
 (deftest-stmt test-insert-default-values
@@ -332,7 +364,8 @@
     (restrict))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
-  (is (= [{:op :restart-identity} {:op :restrict}] (:children stmt))))
+  (is (= {:op :restrict} (:restrict stmt)))
+  (is (= {:op :restart-identity} (:restart-identity stmt))))
 
 (deftest-stmt test-truncate-continents-continue-cascade
   ["TRUNCATE TABLE continents CONTINUE IDENTITY CASCADE"]
@@ -341,7 +374,8 @@
     (cascade))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
-  (is (= [{:op :continue-identity} {:op :cascade}] (:children stmt))))
+  (is (= {:op :cascade} (:cascade stmt)))
+  (is (= {:op :continue-identity} (:continue-identity stmt))))
 
 ;; UPDATE
 
