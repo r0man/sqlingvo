@@ -110,6 +110,12 @@
   (is (= :select (:op stmt)))
   (is (= [(parse-expr (as 1 :n))] (:exprs stmt))))
 
+(deftest-stmt test-select-x-as
+  ["SELECT ? AS x" "x"]
+  (select [(as "x" :x)])
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr (as "x" :x))] (:exprs stmt))))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))
