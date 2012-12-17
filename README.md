@@ -52,17 +52,17 @@ Insert a single row into table films.
 
 Insert multiple rows into the table films using the multirow VALUES syntax.
 
-    (sql (insert :films [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-                         {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
+    (sql (insert :films []
+           (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+                    {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])))
     ;=> ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
     ;=>  110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
 
 Insert a row consisting entirely of default values.
 
-    (sql (insert :films
+    (sql (insert :films []
            (values :default)))
     ;=> ["INSERT INTO films DEFAULT VALUES"]
-
 
 Insert some rows into table films from a table tmp-films with the same column layout as films.
 
@@ -71,7 +71,6 @@ Insert some rows into table films from a table tmp-films with the same column la
                      (from :tmp-films)
                      (where '(< :date-prod "2004-05-07")))))
     ;=> ["INSERT INTO films (SELECT * FROM tmp-films WHERE (date-prod < ?))" "2004-05-07"]
-
 
 ### [Select](http://www.postgresql.org/docs/9.2/static/sql-select.html)
 
