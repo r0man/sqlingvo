@@ -21,6 +21,13 @@
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
+(deftest-stmt test-copy-stdin
+  ["COPY country FROM STDIN"]
+  (copy :country []
+    (from :stdin))
+  (is (= :copy (:op stmt)))
+  (is (= [:stdin] (:from stmt))))
+
 ;; DELETE
 
 (deftest-stmt test-delete-films

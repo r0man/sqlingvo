@@ -11,10 +11,6 @@
 (deftest test-copy
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (copy :country) (from :stdin))
-       ["COPY country FROM STDIN"]
-       (-> (copy :country) (from "/usr1/proj/bray/sql/country_data"))
-       ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
        (-> (copy :country [:id :name]) (from "/usr1/proj/bray/sql/country_data"))
        ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]))
 
