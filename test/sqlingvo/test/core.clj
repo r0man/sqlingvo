@@ -60,36 +60,6 @@
        (drop-table [:continents :countries] :if-exists true :restrict true)
        ["DROP TABLE IF EXISTS continents, countries RESTRICT"]))
 
-(deftest test-from
-  (let [node (:from (from {} :continents))]
-    (is (= :from (:op node)))
-    (let [node (first (:clause node))]
-      (is (= :table (:op node)))
-      (is (= :continents (:name node)))))
-  (let [node (:from (from {} :continents :countries))]
-    (is (= :from (:op node)))
-    (let [node (first (:clause node))]
-      (is (= :table (:op node)))
-      (is (= :continents (:name node))))
-    (let [node (second (:clause node))]
-      (is (= :table (:op node)))
-      (is (= :countries (:name node)))))
-  (let [node (:from (from {} (select 1 2 3)))]
-    (is (= :from (:op node)))
-    (let [node (first (:clause node))]
-      (is (= :select (:op node))))))
-
-(deftest test-group-by
-  (let [node (:group-by (group-by {} :name :created-at))]
-    (is (= :group-by (:op node)))
-    (let [exprs (:exprs node)]
-      (let [node (first (:children exprs))]
-        (is (= :column (:op node)))
-        (is (= :name (:name node))))
-      (let [node (second (:children exprs))]
-        (is (= :column (:op node)))
-        (is (= :created-at (:name node)))))))
-
 (deftest test-insert
   (are [stmt expected]
        (is (= expected (sql stmt)))
@@ -112,27 +82,6 @@
              "LEFT JOIN airports ON (airports.iata-code = a.iata-code) "
              "JOIN countries AS c ON (c.geography && a.geom) "
              "WHERE ((a.gps-code IS NOT NULL) and (a.iata-code IS NOT NULL) and (airports.iata-code IS NULL))")]))
-
-(deftest test-limit
-  (is (= {:limit {:op :limit :count 1}} (limit {} 1))))
-
-(deftest test-offset
-  (is (= {:offset {:op :offset :start 1}} (offset {} 1))))
-
-(deftest test-order-by
-  (let [node (:order-by (order-by {} :created-at))]
-    (is (= :order-by (:op node)))
-    (let [node (:exprs node)]
-      (is (= :exprs (:op node)))
-      (is (= [{:op :column :schema nil :table nil :name :created-at :as nil}] (:children node)))))
-  (let [node (:order-by (order-by {} [:name :created-at] :direction :desc :nulls :first))]
-    (is (= :order-by (:op node)))
-    (is (= :desc (:direction node)))
-    (is (= :first (:nulls node)))
-    (let [node (:exprs node)]
-      (is (= :exprs (:op node)))
-      (is (= [{:op :column :schema nil :table nil :name :name :as nil}
-              {:op :column :schema nil :table nil :name :created-at :as nil}] (:children node))))))
 
 (deftest test-select
   (are [stmt expected]
