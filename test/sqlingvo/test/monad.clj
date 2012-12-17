@@ -62,6 +62,35 @@
   (is (= [(parse-expr '(= status "DONE"))] (:where stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
+(deftest-stmt test-delete-films-by-producer-name
+  ["DELETE FROM films WHERE (producer-id in (SELECT id FROM producers WHERE (name = ?)))" "foo"]
+  (delete :films
+    (where `(in :producer-id
+                ~(select [:id]
+                   (from :producers)
+                   (where '(= name "foo"))))))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= [(parse-expr `(in :producer-id
+                           ~(select [:id]
+                              (from :producers)
+                              (where '(= name "foo")))))]
+         (:where stmt))))
+
+(deftest-stmt test-delete-quotes
+  [(str "DELETE FROM quotes WHERE ((company-id = 1) and (date > (SELECT min(date) FROM import)) and "
+        "(date > (SELECT max(date) FROM import)))")]
+  (delete :quotes
+    (where `(and (= :company-id 1)
+                 (> :date ~(select ['(min :date)] (from :import)))
+                 (> :date ~(select ['(max :date)] (from :import))))))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :quotes) (:table stmt)))
+  (is (= [(parse-expr `(and (= :company-id 1)
+                            (> :date ~(select ['(min :date)] (from :import)))
+                            (> :date ~(select ['(max :date)] (from :import)))))]
+         (:where stmt))))
+
 ;; INSERT
 
 (deftest-stmt test-insert-default-values

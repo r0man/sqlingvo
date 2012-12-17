@@ -25,29 +25,6 @@
        (-> (create-table :tmp-films) (like :films :excluding [:defaults :constraints]))
        ["CREATE TABLE tmp-films (LIKE films EXCLUDING DEFAULTS EXCLUDING CONSTRAINTS)"]))
 
-(deftest test-delete
-  (are [stmt expected]
-       (is (= expected (sql stmt)))
-       (-> (delete :films))
-       ["DELETE FROM films"]
-       (-> (delete :films) (where '(<> :kind "Musical")))
-       ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
-       (-> (delete :tasks) (where '(= status "DONE")) (returning *))
-       ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
-       (-> (delete :films)
-           (where `(in :producer-id
-                       ~(-> (select :id)
-                            (from :producers)
-                            (where '(= name "foo"))))))
-       ["DELETE FROM films WHERE (producer-id in (SELECT id FROM producers WHERE (name = ?)))" "foo"]
-       (-> (delete :quotes)
-           (where `(and (= :company-id 1)
-                        (> :date ~(-> (select '(min :date))
-                                      (from :import)))
-                        (> :date ~(-> (select '(max :date))
-                                      (from :import))))))
-       ["DELETE FROM quotes WHERE ((company-id = 1) and (date > (SELECT min(date) FROM import)) and (date > (SELECT max(date) FROM import)))"]))
-
 (deftest test-drop-table
   (are [stmt expected]
        (is (= expected (sql stmt)))
