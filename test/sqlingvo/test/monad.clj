@@ -108,6 +108,16 @@
          (:values stmt)))
   (is (= (parse-table :films) (:table stmt))))
 
+(deftest-stmt test-insert-returning
+  ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
+  (insert :distributors []
+    (values [{:did 106 :dname "XYZ Widgets"}])
+    (returning *))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= (parse-table :distributors) (:table stmt)))
+  (is (= [(parse-expr *)] (:returning stmt))))
+
 ;; SELECT
 
 (deftest-stmt test-select-1

@@ -229,7 +229,8 @@
   (stmt ["GROUP BY"] exprs))
 
 (defmethod compile-sql :insert [{:keys [table columns rows default-values values returning query]}]
-  (let [[sql & args] (if query (compile-sql query))]
+  (let [[sql & args] (if query (compile-sql query))
+        returning (if returning (map compile-sql returning))]
     (cons (str "INSERT INTO " (first (compile-sql table))
                (if-not (empty? columns)
                  (str " (" (first (apply join-stmt ", " columns)) ")"))
@@ -240,8 +241,8 @@
                         (join ", " (repeat (count values) template)))))
                (if sql (str " " sql))
                (if default-values " DEFAULT VALUES")
-               (if returning
-                 (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
+               (if-not (empty? returning)
+                 (apply str " RETURNING " (join ", " (map first returning)))))
           (if values (apply concat (map vals values)) args))))
 
 (defmethod compile-sql :intersect [node]
