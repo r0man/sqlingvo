@@ -141,6 +141,14 @@
   (is (= :select (:op stmt)))
   (is (= [(select [1]) (select ["x"])] (:exprs stmt))))
 
+(deftest-stmt test-select-where-single-arg-and
+  ["SELECT 1 WHERE (1 = 1)"]
+  (select [1]
+    (where '(and (= 1 1))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= [(parse-expr '(and (= 1 1)))] (:where stmt))))
+
 (deftest-stmt test-select-continents
   ["SELECT * FROM continents"]
   (select [*]
