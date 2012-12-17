@@ -17,7 +17,7 @@ Via Clojars: https://clojars.org/sqlingvo
 
 Copy data from a file into the country table.
 
-    (sql (copy :country
+    (sql (copy :country []
            (from "/usr1/proj/bray/sql/country_data")))
     ;=> ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
 
