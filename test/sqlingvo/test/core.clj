@@ -160,8 +160,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (select (as 1 :n))
-       ["SELECT 1 AS n"]
        (select (as "s" :s))
        ["SELECT ? AS s" "s"]
        (select 1 2 3)
