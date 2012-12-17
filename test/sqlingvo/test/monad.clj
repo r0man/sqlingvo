@@ -149,6 +149,14 @@
   (is (= [(parse-expr 1)] (:exprs stmt)))
   (is (= [(parse-expr '(and (= 1 1)))] (:where stmt))))
 
+(deftest-stmt test-select-where-multi-arg-and
+  ["SELECT 1 WHERE (1 < 2) AND (2 < 3)"]
+  (select [1]
+    (where '(< 1 2 3)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= [(parse-expr '(< 1 2 3))] (:where stmt))))
+
 (deftest-stmt test-select-continents
   ["SELECT * FROM continents"]
   (select [*]
