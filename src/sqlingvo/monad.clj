@@ -83,10 +83,10 @@
   [exprs & body]
   (second ((with-monad state-m (m-seq body))
            {:op :select
-            :exprs (if (sequential? exprs)
-                     (map parse-expr exprs))
             :distinct (if (= :distinct (:op exprs))
-                        exprs)})))
+                        exprs)
+            :exprs (if (sequential? exprs)
+                     (map parse-expr exprs))})))
 
 (defn update
   "Returns a UPDATE statement."
@@ -115,3 +115,68 @@
 
 (defn sql [stmt]
   (compile-stmt stmt))
+
+;; ;; EXPERIMENTS
+
+;; (defn ast [stmt]
+;;   (second (stmt nil)))
+
+;; (defn sql [stmt]
+;;   (compile-stmt (ast stmt)))
+
+;; (defn select
+;;   "Returns a SELECT statement."
+;;   [exprs & body]
+;;   (fn [stmt]
+;;     [nil (second
+;;           ((with-monad state-m (m-seq body))
+;;            {:op :select
+;;             :distinct (if (= :distinct (:op exprs))
+;;                         exprs)
+;;             :exprs (if (sequential? exprs)
+;;                      (map parse-expr exprs))}))]))
+
+;; (defn insert
+;;   "Returns a INSERT statement."
+;;   [table columns & body]
+;;   (fn [stmt]
+;;     [nil (assoc {:op :insert
+;;                  :table (parse-table table)
+;;                  :columns (map parse-column columns)}
+;;            :what (second ((with-monad state-m (m-seq body)) {})))]))
+
+;; (pprint
+;;  ((insert :films []
+;;     (select [*]
+;;       (from :tmp-films)
+;;       (where '(< :date-prod "2004-05-07")))) nil))
+
+;; (pprint
+;;  ((insert :films []
+;;     (values :default)) nil))
+
+;; ((insert :films []
+;;    (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})) nil)
+
+
+;; ((select [*]
+;;    (from :tmp-films)
+;;    (where '(< :date-prod "2004-05-07"))) nil)
+
+;; ((select [1]) nil)
+
+;; ((select [*]
+;;    (from :continents)) nil)
+
+;; (sql (select [1]))
+;; (sql (select [*]
+;;        (from :continents)))
+
+;; (ast (select [*]
+;;        (from :continents)))
+
+
+;; (ast (select [*]
+;;        (from :continents)))
+
+;; ((select [1]) nil)

@@ -129,6 +129,12 @@
   (is (= (map parse-expr [(as 1 :a) (as 2 :b) (as 3 :c)])
          (:exprs stmt))))
 
+(deftest-stmt test-select-select-1
+  ["SELECT (SELECT 1)"]
+  (select [(select [1])])
+  (is (= :select (:op stmt)))
+  (is (= [(select [1])] (:exprs stmt))))
+
 (deftest-stmt test-select-continents
   ["SELECT * FROM continents"]
   (select [*]
