@@ -160,8 +160,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select :continents.*) (from :continents))
-       ["SELECT continents.* FROM continents"]
        (-> (select *) (from :continents))
        ["SELECT * FROM continents"]
        (-> (select *) (from :continents/c))

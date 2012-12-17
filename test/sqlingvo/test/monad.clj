@@ -137,6 +137,14 @@
   (is (= [(parse-expr *)] (:exprs stmt)))
   (is (= [(parse-from :continents)] (:from stmt))))
 
+(deftest-stmt test-select-continents-qualified
+  ["SELECT continents.* FROM continents"]
+  (select [:continents.*]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr :continents.*)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt))))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))
