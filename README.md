@@ -125,6 +125,21 @@ or the number of an output column.
            (order-by 1)))
     ;=> ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
 
+## Tips & Tricks
+
+### Emacs
+
+Better indentation in Emacs via clojure-mode.
+
+    (add-hook
+     'clojure-mode-hook
+     (lambda ()
+       (define-clojure-indent
+         (copy 2)
+         (select 1)
+         (update 2)
+         (delete 1))))
+
 ## License
 
 Copyright © 2012 Roman Scherer
