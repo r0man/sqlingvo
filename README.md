@@ -97,8 +97,8 @@ Retrieve the most recent weather report for each location.
 
 Change the word Drama to Dramatic in the column kind of the table films.
 
-    (sql (update :films {:kind "Dramatic"})
-         (where '(= :kind "Drama")))
+    (sql (update :films {:kind "Dramatic"}
+           (where '(= :kind "Drama"))))
     ;=> ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
 
 ### [Sorting Rows](http://www.postgresql.org/docs/9.2/static/queries-order.html)

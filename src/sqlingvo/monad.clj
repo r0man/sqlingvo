@@ -70,6 +70,15 @@
            {:op :select
             :exprs (map parse-expr exprs)})))
 
+(defn update
+  "Returns a UPDATE statement."
+  [table row & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :update
+            :table (parse-table table)
+            :exprs (if (sequential? row) (map parse-expr row))
+            :row (if (map? row) row)})))
+
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
   [& exprs]

@@ -62,6 +62,11 @@
   (is (= [(parse-expr '(= :kind "Comedy"))] (:where stmt)))
   (is (= [(parse-from :films)] (:from stmt))))
 
+(deftest-stmt test-update-drama-to-dramatic
+  ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
+  (update :films {:kind "Dramatic"}
+    (where '(= :kind "Drama"))))
+
 (deftest-stmt test-order-by-query-select
   ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
   (select [:a :b]

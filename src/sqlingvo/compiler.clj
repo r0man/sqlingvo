@@ -346,8 +346,8 @@
 (defmethod compile-sql :union [node]
   (compile-set-op :union node))
 
-(defmethod compile-sql :update [{:keys [condition from exprs table row returning]}]
-  (let [[sql & args] (if condition (compile-sql condition))
+(defmethod compile-sql :update [{:keys [where from exprs table row returning]}]
+  (let [where (if where (map compile-sql where))
         columns (if row (map as-identifier (keys row)))
         exprs (if exprs (map (comp unwrap-stmt compile-expr) exprs))
         from (if from (map compile-from (:clause from)))]
@@ -355,10 +355,14 @@
                " SET " (if row
                          (apply str (concat (interpose " = ?, " columns) " = ?"))
                          (join ", " (map first exprs)))
-               (if from (str " FROM " (join " " (map first from))))
-               (if sql (str " " sql))
+               (if from
+                 (str " FROM " (join " " (map first from))))
+               (if-not (empty? where)
+                 (str " WHERE " (join ", " (map first where))))
                (if returning (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
-          (concat (vals row) args (mapcat rest (concat exprs from))))))
+          (concat (vals row)
+                  (mapcat rest (concat exprs from))
+                  (mapcat rest where)))))
 
 ;; DEFINE SQL FN ARITY
 
