@@ -129,16 +129,17 @@ or the number of an output column.
 
 ### Emacs
 
-Better indentation in Emacs via clojure-mode.
+For better indentation in clojure-mode add this to your Emacs config.
 
     (add-hook
      'clojure-mode-hook
      (lambda ()
        (define-clojure-indent
          (copy 2)
+         (delete 1)
+         (insert 2)
          (select 1)
-         (update 2)
-         (delete 1))))
+         (update 2))))
 
 ## License
 
