@@ -1,6 +1,7 @@
 (ns sqlingvo.test.monad
   (:refer-clojure :exclude [distinct group-by])
   (:use clojure.test
+        clojure.pprint
         sqlingvo.compiler
         sqlingvo.util
         sqlingvo.monad))
@@ -21,18 +22,26 @@
 (deftest-stmt test-delete-films
   ["DELETE FROM films"]
   (delete :films)
-  (is (= :delete (:op stmt))))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-delete-all-films-but-musicals
   ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
   (delete :films
-    (where '(<> :kind "Musical"))))
+    (where '(<> :kind "Musical")))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= [(parse-expr '(<> :kind "Musical"))] (:where stmt))))
 
 (deftest-stmt test-delete-completed-tasks-returning-all
   ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
   (delete :tasks
     (where '(= status "DONE"))
-    (returning *)))
+    (returning *))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :tasks) (:table stmt)))
+  (is (= [(parse-expr '(= status "DONE"))] (:where stmt)))
+  (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-group-by-a-order-by-1
   ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
@@ -48,7 +57,11 @@
 (deftest-stmt test-insert-default-values
   ["INSERT INTO films DEFAULT VALUES"]
   (insert :films []
-    (values :default)))
+          (values :default))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= [:default] (:values stmt)))
+  (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
@@ -71,12 +84,23 @@
   ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
   (select (distinct [:location :time :report] :on [:location])
     (from :weather-reports)
-    (order-by :location (desc :time))))
+    (order-by :location (desc :time)))
+  (is (= :select (:op stmt)))
+  (let [distinct (:distinct stmt)]
+    (is (= :distinct (:op distinct)))
+    (is (= (map parse-expr [:location :time :report]) (:exprs distinct)))
+    (is (= [(parse-expr :location)] (:on distinct))))
+  (is (= [(parse-from :weather-reports)] (:from stmt)))
+  (is (= [(parse-expr :location) (desc :time)] (:order-by stmt))))
 
 (deftest-stmt test-update-drama-to-dramatic
   ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
   (update :films {:kind "Dramatic"}
-    (where '(= :kind "Drama"))))
+    (where '(= :kind "Drama")))
+  (is (= :update (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
+  (is (= {:kind "Dramatic"} (:row stmt))))
 
 (deftest-stmt test-order-by-query-select
   ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
