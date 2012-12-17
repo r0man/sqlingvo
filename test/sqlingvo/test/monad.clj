@@ -98,6 +98,12 @@
          (:values stmt)))
   (is (= (parse-table :films) (:table stmt))))
 
+(deftest-stmt test-select-1
+  ["SELECT 1"]
+  (select [1])
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt))))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))
