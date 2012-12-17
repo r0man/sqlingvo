@@ -57,10 +57,32 @@
 (deftest-stmt test-insert-default-values
   ["INSERT INTO films DEFAULT VALUES"]
   (insert :films []
-          (values :default))
+    (values :default))
   (is (= :insert (:op stmt)))
   (is (= [] (:columns stmt)))
-  (is (= [:default] (:values stmt)))
+  (is (= true (:default-values stmt)))
+  (is (= (parse-table :films) (:table stmt))))
+
+(deftest-stmt test-insert-single-row-as-map
+  ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
+   106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
+  (insert :films []
+    (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]
+         (:values stmt)))
+  (is (= (parse-table :films) (:table stmt))))
+
+(deftest-stmt test-insert-single-row-as-seq
+  ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
+   106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
+  (insert :films []
+    (values [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]
+         (:values stmt)))
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-select-films

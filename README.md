@@ -45,7 +45,8 @@ Delete completed tasks, returning full details of the deleted rows.
 
 Insert a single row into table films.
 
-    (sql (insert :films [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
+    (sql (insert :films []
+           (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})))
     ;=> ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
     ;=>  106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
 

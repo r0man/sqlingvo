@@ -99,9 +99,13 @@
 
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
-  [& values]
+  [values]
   (fn [stmt]
-    [nil (concat-in stmt [:values] values)]))
+    [nil (case values
+           :default (assoc stmt :default-values true)
+           (concat-in
+            stmt [:values]
+            (if (sequential? values) values [values])))]))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
