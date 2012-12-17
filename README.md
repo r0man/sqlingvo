@@ -27,6 +27,12 @@ Copy data from a file into the country table.
            (from "/usr1/proj/bray/sql/country_data")))
     ;=> ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
 
+Copy data from a file into the country table with columns in the given order.
+
+    (sql (copy :country [:id :name]
+           (from "/usr1/proj/bray/sql/country_data")))
+    ;=>["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]
+
 ### [Delete](http://www.postgresql.org/docs/9.2/static/sql-delete.html)
 
 Clear the table films.

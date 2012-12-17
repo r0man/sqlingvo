@@ -14,6 +14,13 @@
 
 ;; COPY
 
+(deftest-stmt test-copy-stdin
+  ["COPY country FROM STDIN"]
+  (copy :country []
+    (from :stdin))
+  (is (= :copy (:op stmt)))
+  (is (= [:stdin] (:from stmt))))
+
 (deftest-stmt test-copy-country
   ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
   (copy :country []
@@ -21,12 +28,13 @@
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
-(deftest-stmt test-copy-stdin
-  ["COPY country FROM STDIN"]
-  (copy :country []
-    (from :stdin))
+(deftest-stmt test-copy-country-columns
+  ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]
+  (copy :country [:id :name]
+    (from "/usr1/proj/bray/sql/country_data"))
   (is (= :copy (:op stmt)))
-  (is (= [:stdin] (:from stmt))))
+  (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt)))
+  (is (= (map parse-column [:id :name]) (:columns stmt))))
 
 ;; DELETE
 

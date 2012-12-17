@@ -8,12 +8,6 @@
   `(jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
      ~@body))
 
-(deftest test-copy
-  (are [stmt expected]
-       (is (= expected (sql stmt)))
-       (-> (copy :country [:id :name]) (from "/usr1/proj/bray/sql/country_data"))
-       ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]))
-
 (deftest test-create-table
   (are [stmt expected]
        (is (= expected (sql stmt)))
