@@ -350,14 +350,17 @@
                   (mapcat rest group-by)
                   (mapcat rest order-by)))))
 
-(defmethod compile-sql :truncate [{:keys [cascade tables continue-identity restart-identity restrict]}]
-  (let [[sql & args] (apply join-stmt ", " tables)]
-    (cons (str "TRUNCATE TABLE " sql
-               (if restart-identity " RESTART IDENTITY")
-               (if continue-identity " CONTINUE IDENTITY")
-               (if cascade " CASCADE")
-               (if restrict " RESTRICT"))
-          args)))
+
+(defmethod compile-sql :default [{:keys [op]}]
+  [(replace (upper-case (name op)) #"-" " ")])
+
+(defmethod compile-sql :truncate [{:keys [tables children]}]
+  (let [[table-sql & table-args] (apply join-stmt ", " tables)
+        [child-sql & child-args] (apply join-stmt " " children)]
+    (cons (str "TRUNCATE TABLE " table-sql
+               (if-not (blank? child-sql)
+                 (str " " child-sql)))
+          (concat table-args child-args))))
 
 (defmethod compile-sql :union [node]
   (compile-set-op :union node))

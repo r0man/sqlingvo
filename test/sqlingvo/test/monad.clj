@@ -309,6 +309,40 @@
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr :sum)] (:order-by stmt))))
 
+;; TRUNCATE
+
+(deftest-stmt test-truncate-continents
+  ["TRUNCATE TABLE continents"]
+  (truncate [:continents])
+  (is (= :truncate (:op stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt)))
+  (is (nil? (:children stmt))))
+
+(deftest-stmt test-truncate-continents-and-countries
+  ["TRUNCATE TABLE continents, countries"]
+  (truncate [:continents :countries])
+  (is (= :truncate (:op stmt)))
+  (is (= (map parse-table [:continents :countries]) (:tables stmt)))
+  (is (nil? (:children stmt))))
+
+(deftest-stmt test-truncate-continents-restart-restrict
+  ["TRUNCATE TABLE continents RESTART IDENTITY RESTRICT"]
+  (truncate [:continents]
+    (restart-identity)
+    (restrict))
+  (is (= :truncate (:op stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt)))
+  (is (= [{:op :restart-identity} {:op :restrict}] (:children stmt))))
+
+(deftest-stmt test-truncate-continents-continue-cascade
+  ["TRUNCATE TABLE continents CONTINUE IDENTITY CASCADE"]
+  (truncate [:continents]
+    (continue-identity)
+    (cascade))
+  (is (= :truncate (:op stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt)))
+  (is (= [{:op :continue-identity} {:op :cascade}] (:children stmt))))
+
 ;; UPDATE
 
 (deftest-stmt test-update-drama-to-dramatic

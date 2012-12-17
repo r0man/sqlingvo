@@ -16,6 +16,14 @@
   "Parse `expr` and return an ORDER BY expr using ascending order."
   [expr] (assoc (parse-expr expr) :direction :asc))
 
+(defn cascade
+  "Returns a fn that adds a CASCADE clause to an SQL statement."
+  [] (fn [stmt] [nil (concat-in stmt [:children] [{:op :cascade}])]))
+
+(defn continue-identity
+  "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
+  [] (fn [stmt] [nil (concat-in stmt [:children] [{:op :continue-identity}])]))
+
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
   [expr] (assoc (parse-expr expr) :direction :desc))
@@ -54,9 +62,7 @@
 
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
-  [& exprs]
-  (fn [stmt]
-    [nil (concat-in stmt [:group-by] (map parse-expr exprs))]))
+  [& exprs] (fn [stmt] [nil (concat-in stmt [:group-by] (map parse-expr exprs))]))
 
 (defn insert
   "Returns a INSERT statement."
@@ -68,15 +74,19 @@
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
-  [& exprs]
-  (fn [stmt]
-    [nil (concat-in stmt [:order-by] (map parse-expr exprs))]))
+  [& exprs] (fn [stmt] [nil (concat-in stmt [:order-by] (map parse-expr exprs))]))
+
+(defn restart-identity
+  "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
+  [] (fn [stmt] [nil (concat-in stmt [:children] [{:op :restart-identity}])]))
+
+(defn restrict
+  "Returns a fn that adds a RESTRICT clause to an SQL statement."
+  [] (fn [stmt] [nil (concat-in stmt [:children] [{:op :restrict}])]))
 
 (defn returning
   "Add the RETURNING clause the SQL statement."
-  [& exprs]
-  (fn [stmt]
-    [nil (concat-in stmt [:returning] (map parse-expr exprs))]))
+  [& exprs] (fn [stmt] [nil (concat-in stmt [:returning] (map parse-expr exprs))]))
 
 (defn select
   "Returns a SELECT statement."
@@ -87,6 +97,13 @@
                         exprs)
             :exprs (if (sequential? exprs)
                      (map parse-expr exprs))})))
+
+(defn truncate
+  "Returns a TRUNCATE statement."
+  [tables & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :truncate
+            :tables (map parse-table tables)})))
 
 (defn update
   "Returns a UPDATE statement."

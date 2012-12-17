@@ -41,18 +41,18 @@
   (are [stmt expected]
        (is (= expected (sql stmt)))
        (-> (insert :films
-                   (-> (select *)
-                       (from :tmp-films)
-                       (where '(< :date-prod "2004-05-07")))))
+               (-> (select *)
+                   (from :tmp-films)
+                   (where '(< :date-prod "2004-05-07")))))
        ["INSERT INTO films SELECT * FROM tmp-films WHERE (date-prod < ?)" "2004-05-07"]
        (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
-               (-> (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code]))
-                   (from (as :natural-earth.airports :a))
-                   (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
-                   (join :airports '(on (= :airports.iata-code :a.iata-code)) :type :left)
-                   (where '(and (is-not-null :a.gps-code)
-                                (is-not-null :a.iata-code)
-                                (is-null :airports.iata-code)))))
+         (-> (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code]))
+             (from (as :natural-earth.airports :a))
+             (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
+             (join :airports '(on (= :airports.iata-code :a.iata-code)) :type :left)
+             (where '(and (is-not-null :a.gps-code)
+                          (is-not-null :a.iata-code)
+                          (is-null :airports.iata-code)))))
        [(str "INSERT INTO airports (country-id, name, gps-code, iata-code, wikipedia-url, location) "
              "SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
              "FROM natural-earth.airports AS a "
@@ -190,18 +190,6 @@
        ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
        ))
 
-(deftest test-truncate
-  (are [stmt expected]
-       (is (= expected (sql stmt)))
-       (truncate :continents)
-       ["TRUNCATE TABLE continents"]
-       (truncate [:continents :countries])
-       ["TRUNCATE TABLE continents, countries"]
-       (truncate :continents :cascade true :continue-identity true :restart-identity true :restrict true)
-       ["TRUNCATE TABLE continents RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]
-       (truncate [:continents :countries] :cascade true :continue-identity true :restart-identity true :restrict true)
-       ["TRUNCATE TABLE continents, countries RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
-
 (deftest test-update
   (are [stmt expected]
        (is (= expected (sql stmt)))
@@ -225,11 +213,11 @@
              "FROM (SELECT id, ((close / lag(close) over (partition by quote-id order by date desc)) - 1) AS daily-return "
              "FROM prices WHERE (prices.quote-id = 1)) AS u WHERE ((prices.id = u.id) and (prices.quote-id = 1))")]
        (-> (update
-            :airports
-            '((= :country-id :u.id)
-              (= :gps-code :u.gps-code)
-              (= :wikipedia-url :u.wikipedia)
-              (= :location :u.geom)))
+               :airports
+               '((= :country-id :u.id)
+                 (= :gps-code :u.gps-code)
+                 (= :wikipedia-url :u.wikipedia)
+                 (= :location :u.geom)))
            (from (-> (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code]))
                      (from (as :natural-earth.airports :a))
                      (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
