@@ -135,6 +135,12 @@
   (is (= :select (:op stmt)))
   (is (= [(select [1])] (:exprs stmt))))
 
+(deftest-stmt test-select-select-1-select-x
+  ["SELECT (SELECT 1), (SELECT ?)" "x"]
+  (select [(select [1]) (select ["x"])])
+  (is (= :select (:op stmt)))
+  (is (= [(select [1]) (select ["x"])] (:exprs stmt))))
+
 (deftest-stmt test-select-continents
   ["SELECT * FROM continents"]
   (select [*]

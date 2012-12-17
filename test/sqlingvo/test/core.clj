@@ -222,8 +222,6 @@
        ["SELECT 1 WHERE (1 < 2) AND (2 < 3)"]
        (-> (select 1) (where '(and (= 1 1))))
        ["SELECT 1 WHERE (1 = 1)"]
-       (select (select 1) (select "x"))
-       ["SELECT (SELECT 1), (SELECT ?)" "x"]
        (union (select 1) (select 2))
        ["SELECT 1 UNION SELECT 2"]
        (union (select 1) (select 2) :all true)
