@@ -58,8 +58,8 @@ Insert multiple rows into the table films using the multirow VALUES syntax.
 
 Insert a row consisting entirely of default values.
 
-    (sql (insert :films)
-         (default-values))
+    (sql (insert :films
+           (values :default)))
     ;=> ["INSERT INTO films DEFAULT VALUES"]
 
 

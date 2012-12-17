@@ -58,6 +58,14 @@
   (fn [stmt]
     [nil (concat-in stmt [:group-by] (map parse-expr exprs))]))
 
+(defn insert
+  "Returns a INSERT statement."
+  [table columns & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :insert
+            :table (parse-table table)
+            :columns (map parse-column columns)})))
+
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
@@ -88,6 +96,12 @@
             :table (parse-table table)
             :exprs (if (sequential? row) (map parse-expr row))
             :row (if (map? row) row)})))
+
+(defn values
+  "Returns a fn that adds a VALUES clause to an SQL statement."
+  [& values]
+  (fn [stmt]
+    [nil (concat-in stmt [:values] values)]))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."

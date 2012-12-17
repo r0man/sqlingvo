@@ -45,6 +45,11 @@
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr 1)] (:order-by stmt))))
 
+(deftest-stmt test-insert-default-values
+  ["INSERT INTO films DEFAULT VALUES"]
+  (insert :films []
+    (values :default)))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))
