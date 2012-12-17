@@ -162,6 +162,22 @@
   (is (= [(parse-expr '(= :kind "Comedy"))] (:where stmt)))
   (is (= [(parse-from :films)] (:from stmt))))
 
+(deftest-stmt test-select-is-null
+  ["SELECT 1 WHERE (NULL IS NULL)"]
+  (select [1]
+    (where '(is-null nil)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= [(parse-expr '(is-null nil))] (:where stmt))))
+
+(deftest-stmt test-select-is-not-null
+  ["SELECT 1 WHERE (NULL IS NOT NULL)"]
+  (select [1]
+    (where '(is-not-null nil)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= [(parse-expr '(is-not-null nil))] (:where stmt))))
+
 (deftest-stmt test-select-most-recent-weather-report
   ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
   (select (distinct [:location :time :report] :on [:location])
