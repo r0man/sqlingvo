@@ -12,12 +12,16 @@
        (is (= ~sql (compile-stmt ~stmt)))
        ~@body)))
 
+;; COPY
+
 (deftest-stmt test-copy-country
   ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
   (copy :country []
     (from "/usr1/proj/bray/sql/country_data"))
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
+
+;; DELETE
 
 (deftest-stmt test-delete-films
   ["DELETE FROM films"]
@@ -43,16 +47,7 @@
   (is (= [(parse-expr '(= status "DONE"))] (:where stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
-(deftest-stmt test-group-by-a-order-by-1
-  ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
-  (select [:a '(max :b)]
-    (from :table-1)
-    (group-by :a)
-    (order-by 1))
-  (is (= :select (:op stmt)))
-  (is (= [(parse-expr :a) (parse-expr '(max :b))] (:exprs stmt)))
-  (is (= [(parse-from :table-1)] (:from stmt)))
-  (is (= [(parse-expr 1)] (:order-by stmt))))
+;; INSERT
 
 (deftest-stmt test-insert-default-values
   ["INSERT INTO films DEFAULT VALUES"]
@@ -97,6 +92,8 @@
           {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]
          (:values stmt)))
   (is (= (parse-table :films) (:table stmt))))
+
+;; SELECT
 
 (deftest-stmt test-select-1
   ["SELECT 1"]
@@ -227,16 +224,18 @@
   (is (= [(parse-from :weather-reports)] (:from stmt)))
   (is (= [(parse-expr :location) (desc :time)] (:order-by stmt))))
 
-(deftest-stmt test-update-drama-to-dramatic
-  ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
-  (update :films {:kind "Dramatic"}
-    (where '(= :kind "Drama")))
-  (is (= :update (:op stmt)))
-  (is (= (parse-table :films) (:table stmt)))
-  (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
-  (is (= {:kind "Dramatic"} (:row stmt))))
+(deftest-stmt test-select-group-by-a-order-by-1
+  ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
+  (select [:a '(max :b)]
+    (from :table-1)
+    (group-by :a)
+    (order-by 1))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr :a) (parse-expr '(max :b))] (:exprs stmt)))
+  (is (= [(parse-from :table-1)] (:from stmt)))
+  (is (= [(parse-expr 1)] (:order-by stmt))))
 
-(deftest-stmt test-order-by-query-select
+(deftest-stmt select-test-order-by-query-select
   ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
   (select [:a :b]
     (from :table-1)
@@ -246,7 +245,7 @@
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr '(+ :a :b)) (parse-expr :c)] (:order-by stmt))))
 
-(deftest-stmt test-order-by-sum
+(deftest-stmt select-test-order-by-sum
   ["SELECT (a + b) AS sum, c FROM table-1 ORDER BY sum"]
   (select [(as '(+ :a :b) :sum) :c]
     (from :table-1)
@@ -255,3 +254,14 @@
   (is (= [(parse-expr (as '(+ :a :b) :sum)) (parse-expr :c)] (:exprs stmt)))
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr :sum)] (:order-by stmt))))
+
+;; UPDATE
+
+(deftest-stmt test-update-drama-to-dramatic
+  ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
+  (update :films {:kind "Dramatic"}
+    (where '(= :kind "Drama")))
+  (is (= :update (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
+  (is (= {:kind "Dramatic"} (:row stmt))))
