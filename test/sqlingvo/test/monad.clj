@@ -122,6 +122,13 @@
   (is (= :select (:op stmt)))
   (is (= (map parse-expr [1 2 3]) (:exprs stmt))))
 
+(deftest-stmt test-select-1-2-3-as
+  ["SELECT 1 AS a, 2 AS b, 3 AS c"]
+  (select [(as 1 :a) (as 2 :b) (as 3 :c)])
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr (as 1 :a)) (parse-expr (as 2 :b)) (parse-expr (as 3 :c))]
+         (:exprs stmt))))
+
 (deftest-stmt test-select-films
   ["SELECT * FROM films"]
   (select [*] (from :films))
