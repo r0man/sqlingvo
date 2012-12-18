@@ -4,10 +4,6 @@
   (:use clojure.test
         sqlingvo.core))
 
-(defmacro with-database [& body]
-  `(jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
-     ~@body))
-
 (deftest test-insert
   (are [stmt expected]
        (is (= expected (sql stmt)))
@@ -177,52 +173,3 @@
              "FROM natural-earth.airports AS a LEFT JOIN airports ON (lower(airports.iata-code) = lower(a.iata-code)) "
              "JOIN countries AS c ON (c.geography && a.geom) WHERE ((a.gps-code IS NOT NULL) and "
              "(a.iata-code IS NOT NULL) and (airports.iata-code IS NOT NULL))) AS u WHERE (airports.iata-code = u.iata-code)")]))
-
-(deftest test-run-stmt
-  (with-database
-    (are [stmt expected]
-         (is (= expected (run-stmt stmt)))
-         (select 1)
-         [{:1 1}]
-         (select (as 1 :n))
-         [{:n 1}]
-         (select (as "s" :s))
-         [{:s "s"}]
-         (select 1 2 3)
-         [{:1 1 :2 2 :3 3}]
-         (select (as 1 :a) (as 2 :b) (as 3 :c))
-         [{:a 1 :b 2 :c 3}]
-         (select '(lower "X"))
-         [(assoc nil (keyword "lower(?)") "x")]
-         (-> (select *) (from (as (select 1 2 3) :x)))
-         [{:1 1 :2 2 :3 3}]
-         (-> (select *) (from (as (select 1) :x) (as (select 2) :y)))
-         [{:1 1 :2 2}]
-         (-> (select 1) (where '(= 1 1)))
-         [{:1 1}]
-         (-> (select 1) (where '(!= 1 1)))
-         nil
-         (-> (select 1) (where '(= 1 2 3)))
-         nil
-         (-> (select 1) (where '(< 1 2)))
-         [{:1 1}]
-         (-> (select 1) (where '(< 1 2 3)))
-         [{:1 1}]
-         (select (select 1))
-         [(assoc nil (keyword "(select 1)") 1)]
-         (select (select 1) (select "x"))
-         [(assoc nil (keyword "(select 1)") 1 (keyword "(select ?)") "x")]
-         (union (select 1) (select 1))
-         [{:1 1}]
-         (union (select 1) (select 1) :all true)
-         [{:1 1} {:1 1}]
-         (union (select 1) (select 2) :all true)
-         [{:1 1} {:1 2}]
-         (intersect (select 1) (select 2))
-         nil
-         (intersect (select 1) (select 1))
-         [{:1 1}]
-         (except (select 1) (select 2))
-         [{:1 1}]
-         (except (select 1) (select 1))
-         nil)))
