@@ -34,10 +34,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (-> (select *)) (from :continents) (offset 1))
-       ["SELECT * FROM continents OFFSET 1"]
-       (-> (-> (select *)) (from :continents) (limit 1) (offset 2))
-       ["SELECT * FROM continents LIMIT 1 OFFSET 2"]
        (-> (select *) (from :continents) (order-by :created-at))
        ["SELECT * FROM continents ORDER BY created-at"]
        (-> (select *) (from :continents) (order-by "created-at"))

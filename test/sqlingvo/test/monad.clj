@@ -390,13 +390,36 @@
   (is (= [(parse-table :continents)] (:from stmt))))
 
 (deftest-stmt test-select-limit
-  ["SELECT * FROM continents LIMIT 1"]
+  ["SELECT * FROM continents LIMIT 10"]
   (select [*]
     (from :continents)
-    (limit 1))
+    (limit 10))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr *)] (:exprs stmt)))
-  (is (= [(parse-table :continents)] (:from stmt))))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= {:op :limit :count 10} (:limit stmt))))
+
+(deftest-stmt test-select-offset
+  ["SELECT * FROM continents OFFSET 15"]
+  (select [*]
+    (from :continents)
+    (offset 15))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= {:op :offset :start 15} (:offset stmt))))
+
+(deftest-stmt test-select-limit-offset
+  ["SELECT * FROM continents LIMIT 10 OFFSET 20"]
+  (select [*]
+    (from :continents)
+    (limit 10)
+    (offset 20))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= {:op :limit :count 10} (:limit stmt)))
+  (is (= {:op :offset :start 20} (:offset stmt))))
 
 (deftest-stmt test-select-column-max
   ["SELECT max(created-at) FROM continents"]

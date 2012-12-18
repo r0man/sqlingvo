@@ -128,6 +128,12 @@
   (fn [stmt]
     [nil (assoc stmt :limit {:op :limit :count count})]))
 
+(defn offset
+  "Returns a fn that adds a OFFSET clause to an SQL statement."
+  [start]
+  (fn [stmt]
+    [nil (assoc stmt :offset {:op :offset :start start})]))
+
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs] (fn [stmt] [nil (concat-in stmt [:order-by] (map parse-expr exprs))]))
