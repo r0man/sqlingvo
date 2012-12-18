@@ -314,8 +314,9 @@
           (concat (mapcat rest on)
                   (mapcat rest exprs)))))
 
-(defmethod compile-sql :select [{:keys [exprs distinct from where group-by limit offset order-by set]}]
+(defmethod compile-sql :select [{:keys [exprs distinct joins from where group-by limit offset order-by set]}]
   (let [[distinct-sql & distinct-args] (if distinct (compile-sql distinct))
+        joins (if joins (map compile-sql joins))
         exprs (map compile-expr exprs)
         from (map compile-sql from)
         where (map compile-sql where)
@@ -325,6 +326,8 @@
                distinct-sql
                (if-not (empty? from)
                  (str " FROM " (join ", " (map first from))))
+               (if-not (empty? joins)
+                 (str " " (join " " (map first joins))))
                (if-not (empty? where)
                  (str " WHERE " (join ", " (map first where))))
                (if-not (empty? group-by)
@@ -335,6 +338,7 @@
                (if offset (str " " (first (compile-sql offset)))))
           (concat (mapcat rest exprs)
                   (mapcat rest from)
+                  (mapcat rest joins)
                   (mapcat rest where)
                   (mapcat rest group-by)
                   (mapcat rest order-by)))))

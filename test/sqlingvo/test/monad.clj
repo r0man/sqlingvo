@@ -567,7 +567,25 @@
   ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
   (select [:id :symbol :quote]
     (from :quotes)
-    (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)")))))
+    (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :quotes)] (:from stmt)))
+  (is (= (map parse-expr [:id :symbol :quote]) (:exprs stmt)))
+  (is (= [(parse-expr '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)")))] (:where stmt)))  )
+
+(deftest-stmt test-select-join-on
+  ["SELECT * FROM countries JOIN continents ON (continents.id = countries.continent-id)"]
+  (select [*]
+    (from :countries)
+    (join :continents '(on (= :continents.id :countries.continent-id))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :countries)] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= :on (:how join)))
+    (is (= (parse-from :continents) (:from join)))
+    (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:condition join)))))
 
 ;; TRUNCATE
 

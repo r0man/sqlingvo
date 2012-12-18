@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
-            [sqlingvo.util :refer [as-keyword parse-expr parse-column parse-from parse-table]]))
+            [sqlingvo.util :refer [as-keyword parse-expr parse-exprs parse-column parse-from parse-table]]))
 
 (defn- concat-in [m ks & args]
   (apply update-in m ks concat args))
@@ -114,6 +114,19 @@
            {:op :insert
             :table (parse-table table)
             :columns (map parse-column columns)})))
+
+(defn join
+  "Returns a fn that adds a JOIN clause to an SQL statement."
+  [from [how & [condition]] & {:keys [type outer]}]
+  (fn [stmt]
+    [nil (update-in
+          stmt [:joins] conj
+          {:op :join
+           :from (parse-from from)
+           :type type
+           :how (keyword (name how))
+           :condition (parse-expr condition)
+           :outer outer})]))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
