@@ -15,7 +15,7 @@ Via Clojars: https://clojars.org/sqlingvo
 
 ### [Copy](http://www.postgresql.org/docs/9.2/static/sql-copy.html)
 
-Copy from stdandard input.
+Copy from standard input.
 
     (sql (copy :country []
            (from :stdin)))
