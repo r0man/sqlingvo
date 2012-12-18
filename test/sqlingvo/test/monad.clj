@@ -369,6 +369,12 @@
   (is (= [(parse-table :continents)] (:from stmt)))
   (is (= [(parse-expr (as :created-at :c))] (:exprs stmt))))
 
+(deftest-stmt test-select-multiple-fns
+  ["SELECT greatest(1, 2), lower(?)" "X"]
+  (select ['(greatest 1 2) '(lower "X")])
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr ['(greatest 1 2) '(lower "X")]) (:exprs stmt))))
+
 (deftest-stmt test-select-column-max
   ["SELECT max(created-at) FROM continents"]
   (select ['(max :created-at)]
