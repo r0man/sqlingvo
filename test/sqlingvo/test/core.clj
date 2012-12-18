@@ -120,10 +120,6 @@
            (from :countries)
            (join :continents '(using :id :created-at)))
        ["SELECT * FROM countries JOIN continents USING (id, created-at)"]
-       (-> (select *)
-           (from :countries)
-           (where `(> :created-at ~(java.sql.Date. 0))))
-       ["SELECT * FROM countries WHERE (created-at > ?)" (java.sql.Date. 0)]
        (-> (select :id '((lag :close) over (partition by :company-id order by :date desc))) (from :quotes))
        ["SELECT id, lag(close) over (partition by company-id order by date desc) FROM quotes"]
        (-> (select :id '(- ((lag :close) over (partition by :company-id order by :date desc)) 1)) (from :quotes))

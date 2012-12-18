@@ -330,6 +330,15 @@
   (is (= [(parse-expr 1)] (:exprs stmt)))
   (is (= [(parse-expr '(is-not-null nil))] (:where stmt))))
 
+(deftest-stmt test-select-backquote-date
+  ["SELECT * FROM countries WHERE (created-at > ?)" (java.sql.Date. 0)]
+  (select [*]
+    (from :countries)
+    (where `(> :created-at ~(java.sql.Date. 0))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-expr `(> :created-at ~(java.sql.Date. 0)))] (:where stmt))))
+
 (deftest-stmt test-select-most-recent-weather-report
   ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
   (select (distinct [:location :time :report] :on [:location])
