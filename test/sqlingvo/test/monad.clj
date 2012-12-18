@@ -361,6 +361,14 @@
   (is (= [(parse-table :continents)] (:from stmt)))
   (is (= (map parse-expr [:name :created-at]) (:exprs stmt))))
 
+(deftest-stmt test-select-column-alias
+  ["SELECT created-at AS c FROM continents"]
+  (select [(as :created-at :c)]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= [(parse-expr (as :created-at :c))] (:exprs stmt))))
+
 (deftest-stmt test-select-most-recent-weather-report
   ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
   (select (distinct [:location :time :report] :on [:location])
