@@ -73,10 +73,6 @@
                  '(on (and (= :quotes.company-id :start-dates.company-id)
                            (= :quotes.date :start-dates.start-date)))))
        ["SELECT quotes.*, start-date FROM quotes JOIN (SELECT company-id, min(date) AS start-date FROM quotes GROUP BY company-id) AS start-dates ON ((quotes.company-id = start-dates.company-id) and (quotes.date = start-dates.start-date))"]
-       (-> (select :id :symbol :quote)
-           (from :quotes)
-           (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
-       ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
        (-> (select (distinct [:x.a :x.b]))
            (from (as (select (as 1 :a) (as 2 :b)) :x)))
        ["SELECT DISTINCT x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]

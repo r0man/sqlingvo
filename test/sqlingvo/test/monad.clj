@@ -536,7 +536,7 @@
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr 1)] (:order-by stmt))))
 
-(deftest-stmt select-test-order-by-query-select
+(deftest-stmt test-select-order-by-query-select
   ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
   (select [:a :b]
     (from :table-1)
@@ -546,7 +546,7 @@
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr '(+ :a :b)) (parse-expr :c)] (:order-by stmt))))
 
-(deftest-stmt select-test-order-by-sum
+(deftest-stmt test-select-order-by-sum
   ["SELECT (a + b) AS sum, c FROM table-1 ORDER BY sum"]
   (select [(as '(+ :a :b) :sum) :c]
     (from :table-1)
@@ -563,6 +563,11 @@
   (is (= (map parse-expr [`(setval :continentd-id-seq ~(select [`(max :id)] (from :continents)))])
          (:exprs stmt))))
 
+(deftest-stmt test-select-regex-match
+  ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
+  (select [:id :symbol :quote]
+    (from :quotes)
+    (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)")))))
 
 ;; TRUNCATE
 
