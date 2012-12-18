@@ -34,10 +34,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select * 1 "x") (from :continents))
-       ["SELECT *, 1, ? FROM continents" "x"]
-       (-> (select :created-at) (from :continents))
-       ["SELECT created-at FROM continents"]
        (-> (select :created-at/c) (from :continents))
        ["SELECT created-at AS c FROM continents"]
        (-> (select :name :created-at) (from :continents))

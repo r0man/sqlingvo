@@ -339,6 +339,20 @@
   (is (= [(parse-expr *)] (:exprs stmt)))
   (is (= [(parse-expr `(> :created-at ~(java.sql.Date. 0)))] (:where stmt))))
 
+(deftest-stmt test-select-star-number-string
+  ["SELECT *, 1, ?" "x"]
+  (select [* 1 "x"])
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [* 1 "x"]) (:exprs stmt))))
+
+(deftest-stmt test-select-column
+  ["SELECT created-at FROM continents"]
+  (select [:created-at]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= [(parse-expr :created-at)] (:exprs stmt))))
+
 (deftest-stmt test-select-most-recent-weather-report
   ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
   (select (distinct [:location :time :report] :on [:location])
