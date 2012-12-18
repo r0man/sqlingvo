@@ -442,6 +442,26 @@
   (is (= [(parse-from :weather-reports)] (:from stmt)))
   (is (= [(parse-expr :location) (desc :time)] (:order-by stmt))))
 
+(deftest-stmt test-select-oder-by-asc
+  ["SELECT * FROM continents ORDER BY created-at ASC"]
+  (select [*]
+    (from :continents)
+    (order-by (asc :created-at)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr (asc :created-at))] (:order-by stmt))))
+
+(deftest-stmt test-select-oder-by-desc
+  ["SELECT * FROM continents ORDER BY created-at DESC"]
+  (select [*]
+    (from :continents)
+    (order-by (desc :created-at)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr (desc :created-at))] (:order-by stmt))))
+
 (deftest-stmt test-select-group-by-a-order-by-1
   ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
   (select [:a '(max :b)]
