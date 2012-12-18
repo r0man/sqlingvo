@@ -34,8 +34,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select :name '(max :created-at)) (from :continents))
-       ["SELECT name, max(created-at) FROM continents"]
        (select '(greatest 1 2) '(lower "X"))
        ["SELECT greatest(1, 2), lower(?)" "X"]
        (select '(+ 1 (greatest 2 3)))
