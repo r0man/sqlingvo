@@ -257,6 +257,15 @@
   (is (= :select (:op stmt)))
   (is (= [(select [1]) (select ["x"])] (:exprs stmt))))
 
+(deftest-stmt test-select-string
+  ["SELECT * FROM continents WHERE (name = ?)" "Europe"]
+  (select [*]
+    (from :continents)
+    (where '(= :name "Europe")))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-expr '(= :name "Europe"))] (:where stmt))))
+
 (deftest-stmt test-select-where-single-arg-and
   ["SELECT 1 WHERE (1 = 1)"]
   (select [1]
