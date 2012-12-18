@@ -251,9 +251,10 @@
 (defmethod compile-sql :intersect [node]
   (compile-set-op :intersect node))
 
-(defmethod compile-sql :join [{:keys [condition from how type outer]}]
-  (let [[cond-sql & cond-args] (compile-sql condition)
-        [from-sql & from-args] (compile-from from)]
+(defmethod compile-sql :join [{:keys [on using from how type outer]}]
+  (let [[on-sql & on-args] (if on (compile-sql on))
+        [from-sql & from-args] (compile-from from)
+        using (if using (map compile-sql using))]
     (cons (str (case type
                  :cross "CROSS "
                  :inner "INNER "
@@ -261,11 +262,12 @@
                  :right "RIGHT "
                  nil "")
                (if outer "OUTER ")
-               "JOIN " from-sql " " (upper-case (name how)) " "
-               (case how
-                 :on cond-sql
-                 :using (str "(" cond-sql ")")))
-          (concat from-args cond-args))))
+               "JOIN " from-sql
+               (if on
+                 (str " ON " on-sql))
+               (if using
+                 (str " USING (" (join ", " (map first using)) ")")))
+          (concat from-args on-args (mapcat rest using)))))
 
 (defmethod compile-sql :keyword [{:keys [form]}]
   [(as-identifier form)])

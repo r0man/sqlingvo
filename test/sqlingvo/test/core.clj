@@ -52,10 +52,6 @@
            (from (as :countries :c))
            (join :continents '(on (= :continents.id :c.continent-id))))
        ["SELECT * FROM countries AS c JOIN continents ON (continents.id = c.continent-id)"]
-       (-> (select *)
-           (from :countries)
-           (join :continents '(using :id :created-at)))
-       ["SELECT * FROM countries JOIN continents USING (id, created-at)"]
        (-> (select :quotes.* :start-date)
            (from :quotes)
            (join (as (-> (select :company-id (as '(min :date) :start-date))

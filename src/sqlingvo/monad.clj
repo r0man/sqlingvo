@@ -117,16 +117,17 @@
 
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
-  [from [how & [condition]] & {:keys [type outer]}]
-  (fn [stmt]
-    [nil (update-in
-          stmt [:joins] conj
-          {:op :join
-           :from (parse-from from)
-           :type type
-           :how (keyword (name how))
-           :condition (parse-expr condition)
-           :outer outer})]))
+  [from [how & condition] & {:keys [type outer]}]
+  (let [how (keyword how)]
+    (fn [stmt]
+      [nil (update-in
+            stmt [:joins] conj
+            {:op :join
+             :from (parse-from from)
+             :type type
+             :on (if (= :on how) (parse-expr (first condition)))
+             :using (if (= :using how) (map parse-expr condition))
+             :outer outer})])))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."

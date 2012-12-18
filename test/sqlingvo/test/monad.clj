@@ -583,9 +583,8 @@
   (is (= [(parse-expr *)] (:exprs stmt)))
   (let [join (first (:joins stmt))]
     (is (= :join (:op join)))
-    (is (= :on (:how join)))
     (is (= (parse-from :continents) (:from join)))
-    (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:condition join)))))
+    (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:on join)))))
 
 (deftest-stmt test-select-join-using-column
   ["SELECT * FROM countries JOIN continents USING (id)"]
@@ -597,9 +596,21 @@
   (is (= [(parse-expr *)] (:exprs stmt)))
   (let [join (first (:joins stmt))]
     (is (= :join (:op join)))
-    (is (= :using (:how join)))
     (is (= (parse-from :continents) (:from join)))
-    (is (= (parse-expr :id) (:condition join)))))
+    (is (= (map parse-expr [:id]) (:using join)))))
+
+(deftest-stmt test-select-join-using-columns
+  ["SELECT * FROM countries JOIN continents USING (id, created-at)"]
+  (select [*]
+    (from :countries)
+    (join :continents '(using :id :created-at)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :countries)] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= (parse-from :continents) (:from join)))
+    (is (= (map parse-expr [:id :created-at]) (:using join)))))
 
 ;; TRUNCATE
 
