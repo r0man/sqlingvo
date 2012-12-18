@@ -51,6 +51,13 @@
             :table (parse-table table)
             :columns (map parse-column columns)})))
 
+(defn create-table
+  "Returns a CREATE TABLE statement."
+  [table & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :create-table
+            :table (parse-table table)})))
+
 (defn delete
   "Returns a DELETE statement."
   [table & body]
@@ -87,6 +94,19 @@
       [nil (assoc stmt :if-exists {:op :if-exists})]
       [nil stmt])))
 
+(defn if-not-exists
+  "Returns a fn that adds a IF EXISTS clause to an SQL statement."
+  [if-not-exists?]
+  (fn [stmt]
+    (if if-not-exists?
+      [nil (assoc stmt :if-not-exists {:op :if-not-exists})]
+      [nil stmt])))
+
+(defn inherits
+  [& tables]
+  (fn [stmt]
+    [nil (assoc stmt :inherits (map parse-table tables))]))
+
 (defn insert
   "Returns a INSERT statement."
   [table columns & body]
@@ -94,6 +114,13 @@
            {:op :insert
             :table (parse-table table)
             :columns (map parse-column columns)})))
+
+(defn like
+  "Returns a fn that adds a LIKE clause to an SQL statement."
+  [table & {:as opts}]
+  (fn [stmt]
+    (let [like (assoc opts :op :like :table (parse-table table))]
+      [nil (assoc stmt :like like)])))
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
@@ -128,6 +155,14 @@
                         exprs)
             :exprs (if (sequential? exprs)
                      (map parse-expr exprs))})))
+
+(defn temporary
+  "Returns a fn that adds a TEMPORARY clause to an SQL statement."
+  [temporary?]
+  (fn [stmt]
+    (if temporary?
+      [nil (assoc stmt :temporary {:op :temporary})]
+      [nil stmt])))
 
 (defn truncate
   "Returns a TRUNCATE statement."

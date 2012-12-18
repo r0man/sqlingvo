@@ -273,15 +273,12 @@
   [(str "LIMIT " (if (number? count) count "ALL"))])
 
 (defmethod compile-sql :like [{:keys [excluding including table]}]
-  (letfn [(options [type opts]
-            (str " " (join " " (map #(str (upper-case (name type)) " "
-                                          (upper-case (name %1))) opts))))]
-    [(str "LIKE "
-          (first (compile-sql table))
-          (if-not (empty? including)
-            (options :including including))
-          (if-not (empty? excluding)
-            (options :excluding excluding)))]))
+  [(str "LIKE "
+        (first (compile-sql table))
+        (if-not (empty? including)
+          (str " INCLUDING " (join " " (map keyword-sql including))))
+        (if-not (empty? excluding)
+          (str " EXCLUDING " (join " " (map keyword-sql excluding)))))])
 
 (defmethod compile-sql :nil [_] ["NULL"])
 

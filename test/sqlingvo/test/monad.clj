@@ -12,6 +12,39 @@
        (is (= ~sql (compile-stmt ~stmt)))
        ~@body)))
 
+;; CREATE TABLE
+
+(deftest-stmt test-create-table-tmp-if-not-exists-inherits
+  ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]
+  (create-table :import
+    (temporary true)
+    (if-not-exists true)
+    (inherits :quotes))
+  (is (= :create-table (:op stmt)))
+  (is (= {:op :temporary} (:temporary stmt)))
+  (is (= {:op :if-not-exists} (:if-not-exists stmt)))
+  (is (= [(parse-table :quotes)] (:inherits stmt))))
+
+(deftest-stmt test-create-table-like-including-defaults
+  ["CREATE TABLE tmp-films (LIKE films INCLUDING DEFAULTS)"]
+  (create-table :tmp-films
+    (like :films :including [:defaults]))
+  (is (= :create-table (:op stmt)))
+  (let [like (:like stmt)]
+    (is (= :like (:op like)))
+    (is (= (parse-table :films) (:table like)))
+    (is (= [:defaults] (:including like)))))
+
+(deftest-stmt test-create-table-like-excluding-indexes
+  ["CREATE TABLE tmp-films (LIKE films EXCLUDING INDEXES)"]
+  (create-table :tmp-films
+    (like :films :excluding [:indexes]))
+  (is (= :create-table (:op stmt)))
+  (let [like (:like stmt)]
+    (is (= :like (:op like)))
+    (is (= (parse-table :films) (:table like)))
+    (is (= [:indexes] (:excluding like)))))
+
 ;; COPY
 
 (deftest-stmt test-copy-stdin

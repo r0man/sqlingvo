@@ -8,23 +8,6 @@
   `(jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
      ~@body))
 
-(deftest test-create-table
-  (are [stmt expected]
-       (is (= expected (sql stmt)))
-       (-> (create-table :import)
-           (if-not-exists true)
-           (inherits :quotes)
-           (temporary true))
-       ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]
-       (-> (create-table :tmp-films) (like :films))
-       ["CREATE TABLE tmp-films (LIKE films)"]
-       (-> (create-table :tmp-films) (like :films :including [:all]))
-       ["CREATE TABLE tmp-films (LIKE films INCLUDING ALL)"]
-       (-> (create-table :tmp-films) (like :films :including [:defaults :constraints]))
-       ["CREATE TABLE tmp-films (LIKE films INCLUDING DEFAULTS INCLUDING CONSTRAINTS)"]
-       (-> (create-table :tmp-films) (like :films :excluding [:defaults :constraints]))
-       ["CREATE TABLE tmp-films (LIKE films EXCLUDING DEFAULTS EXCLUDING CONSTRAINTS)"]))
-
 (deftest test-insert
   (are [stmt expected]
        (is (= expected (sql stmt)))
