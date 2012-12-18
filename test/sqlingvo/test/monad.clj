@@ -108,7 +108,7 @@
 (deftest-stmt test-drop-continents-if-exists
   ["DROP TABLE IF EXISTS continents"]
   (drop-table [:continents]
-    (if-exists))
+    (if-exists true))
   (is (= :drop-table (:op stmt)))
   (is (= {:op :if-exists} (:if-exists stmt)))
   (is (= [(parse-table :continents)] (:tables stmt))))
@@ -116,8 +116,8 @@
 (deftest-stmt test-drop-continents-countries-if-exists-restrict
   ["DROP TABLE IF EXISTS continents, countries RESTRICT"]
   (drop-table [:continents :countries]
-    (if-exists)
-    (restrict))
+    (if-exists true)
+    (restrict true))
   (is (= :drop-table (:op stmt)))
   (is (= {:op :if-exists} (:if-exists stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
@@ -360,8 +360,8 @@
 (deftest-stmt test-truncate-continents-restart-restrict
   ["TRUNCATE TABLE continents RESTART IDENTITY RESTRICT"]
   (truncate [:continents]
-    (restart-identity)
-    (restrict))
+    (restart-identity true)
+    (restrict true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
   (is (= {:op :restrict} (:restrict stmt)))
@@ -370,8 +370,8 @@
 (deftest-stmt test-truncate-continents-continue-cascade
   ["TRUNCATE TABLE continents CONTINUE IDENTITY CASCADE"]
   (truncate [:continents]
-    (continue-identity)
-    (cascade))
+    (continue-identity true)
+    (cascade true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
   (is (= {:op :cascade} (:cascade stmt)))

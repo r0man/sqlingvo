@@ -18,11 +18,19 @@
 
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
-  [] (fn [stmt] [nil (assoc stmt :cascade {:op :cascade})]))
+  [cascade?]
+  (fn [stmt]
+    (if cascade?
+      [nil (assoc stmt :cascade {:op :cascade})]
+      [nil stmt])))
 
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
-  [] (fn [stmt] [nil (assoc stmt :continue-identity {:op :continue-identity})]))
+  [continue-identity?]
+  (fn [stmt]
+    (if continue-identity?
+      [nil (assoc stmt :continue-identity {:op :continue-identity})]
+      [nil stmt])))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -73,7 +81,11 @@
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
-  [] (fn [stmt] [nil (assoc stmt :if-exists {:op :if-exists})]))
+  [if-exists?]
+  (fn [stmt]
+    (if if-exists?
+      [nil (assoc stmt :if-exists {:op :if-exists})]
+      [nil stmt])))
 
 (defn insert
   "Returns a INSERT statement."
@@ -89,11 +101,19 @@
 
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
-  [] (fn [stmt] [nil (assoc stmt :restart-identity {:op :restart-identity})]))
+  [restart-identity?]
+  (fn [stmt]
+    (if restart-identity?
+      [nil (assoc stmt :restart-identity {:op :restart-identity})]
+      [nil stmt])))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
-  [] (fn [stmt] [nil (assoc stmt :restrict {:op :restrict})]))
+  [restrict?]
+  (fn [stmt]
+    (if restrict?
+      [nil (assoc stmt :restrict {:op :restrict})]
+      [nil stmt])))
 
 (defn returning
   "Add the RETURNING clause the SQL statement."
