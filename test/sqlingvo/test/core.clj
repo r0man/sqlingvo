@@ -77,10 +77,6 @@
            (from :quotes)
            (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
        ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
-       (select `(setval :continentd-id-seq
-                        ~(-> (select `(max :id))
-                             (from :continents))))
-       ["SELECT setval(continentd-id-seq, (SELECT max(id) FROM continents))"]
        (-> (select (distinct [:x.a :x.b]))
            (from (as (select (as 1 :a) (as 2 :b)) :x)))
        ["SELECT DISTINCT x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]

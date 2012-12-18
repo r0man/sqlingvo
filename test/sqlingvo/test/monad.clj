@@ -556,6 +556,14 @@
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr :sum)] (:order-by stmt))))
 
+(deftest-stmt test-select-setval
+  ["SELECT setval(continentd-id-seq, (SELECT max(id) FROM continents))"]
+  (select [`(setval :continentd-id-seq ~(select [`(max :id)] (from :continents)))])
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [`(setval :continentd-id-seq ~(select [`(max :id)] (from :continents)))])
+         (:exprs stmt))))
+
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
