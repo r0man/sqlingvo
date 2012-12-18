@@ -573,7 +573,7 @@
   (is (= (map parse-expr [:id :symbol :quote]) (:exprs stmt)))
   (is (= [(parse-expr '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)")))] (:where stmt)))  )
 
-(deftest-stmt test-select-join-on
+(deftest-stmt test-select-join-on-columns
   ["SELECT * FROM countries JOIN continents ON (continents.id = countries.continent-id)"]
   (select [*]
     (from :countries)
@@ -586,6 +586,20 @@
     (is (= :on (:how join)))
     (is (= (parse-from :continents) (:from join)))
     (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:condition join)))))
+
+(deftest-stmt test-select-join-using-column
+  ["SELECT * FROM countries JOIN continents USING (id)"]
+  (select [*]
+    (from :countries)
+    (join :continents '(using :id)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :countries)] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= :using (:how join)))
+    (is (= (parse-from :continents) (:from join)))
+    (is (= (parse-expr :id) (:condition join)))))
 
 ;; TRUNCATE
 

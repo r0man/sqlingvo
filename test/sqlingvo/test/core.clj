@@ -54,10 +54,6 @@
        ["SELECT * FROM countries AS c JOIN continents ON (continents.id = c.continent-id)"]
        (-> (select *)
            (from :countries)
-           (join :continents '(using :id)))
-       ["SELECT * FROM countries JOIN continents USING (id)"]
-       (-> (select *)
-           (from :countries)
            (join :continents '(using :id :created-at)))
        ["SELECT * FROM countries JOIN continents USING (id, created-at)"]
        (-> (select :quotes.* :start-date)
