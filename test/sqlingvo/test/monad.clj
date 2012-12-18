@@ -381,13 +381,21 @@
   (is (= :select (:op stmt)))
   (is (= [(parse-expr '(+ 1 (greatest 2 3)))] (:exprs stmt))))
 
+(deftest-stmt test-select-fn-alias
+  ["SELECT max(created-at) AS m FROM continents"]
+  (select [(as '(max :created-at) :m)]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr (as '(max :created-at) :m))] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt))))
+
 (deftest-stmt test-select-column-max
   ["SELECT max(created-at) FROM continents"]
   (select ['(max :created-at)]
     (from :continents))
   (is (= :select (:op stmt)))
-  (is (= [(parse-table :continents)] (:from stmt)))
-  (is (= [(parse-expr '(max :created-at))] (:exprs stmt))))
+  (is (= [(parse-expr '(max :created-at))] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt))))
 
 (deftest-stmt test-select-most-recent-weather-report
   ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]

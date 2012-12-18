@@ -34,8 +34,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select (as '(max :created-at) :m)) (from :continents))
-       ["SELECT max(created-at) AS m FROM continents"]
        (-> (select *) (from :continents) (limit 1))
        ["SELECT * FROM continents LIMIT 1"]
        (-> (-> (select *)) (from :continents) (offset 1))
