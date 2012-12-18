@@ -182,10 +182,11 @@
           (concat (mapcat rest where)
                   (mapcat rest returning)))))
 
-(defmethod compile-sql :column [{:keys [as schema name table direction]}]
+(defmethod compile-sql :column [{:keys [as schema name table direction nulls]}]
   [(str (join "." (map as-identifier (remove nil? [schema table name])))
         (if as (str " AS " (as-identifier as)))
-        (if direction (str " " (upper-case (core/name direction)))))])
+        (if direction (str " " (upper-case (core/name direction))))
+        (if nulls (str " NULLS " (keyword-sql nulls))))])
 
 (defmethod compile-sql :constant [node]
   (compile-const node))
@@ -287,16 +288,7 @@
 
 (defmethod compile-sql :order-by [{:keys [exprs direction nulls using]}]
   (let [[sql & args] (compile-sql exprs)]
-    (cons (str "ORDER BY " sql
-               (case direction
-                 :asc " ASC"
-                 :desc " DESC"
-                 nil "")
-               (case nulls
-                 :first " NULLS FIRST"
-                 :last " NULLS LAST"
-                 nil ""))
-          args)))
+    (cons (str "ORDER BY " sql) args)))
 
 (defmethod compile-sql :table [{:keys [as schema name]}]
   [(str (join "." (map as-identifier (remove nil? [schema name])))

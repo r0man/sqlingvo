@@ -462,6 +462,69 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr (desc :created-at))] (:order-by stmt))))
 
+(deftest-stmt test-select-oder-by-nulls-first
+  ["SELECT * FROM continents ORDER BY created-at NULLS FIRST"]
+  (select [*]
+    (from :continents)
+    (order-by (nulls :created-at :first)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr (nulls :created-at :first))] (:order-by stmt))))
+
+(deftest-stmt test-select-oder-by-nulls-last
+  ["SELECT * FROM continents ORDER BY created-at NULLS LAST"]
+  (select [*]
+    (from :continents)
+    (order-by (nulls :created-at :last)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr (nulls :created-at :last))] (:order-by stmt))))
+
+(deftest-stmt test-select-1-where-1-is-1
+  ["SELECT 1 WHERE (1 = 1)"]
+  (select [1]
+    (where '(= 1 1)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= [(parse-expr '(= 1 1))] (:where stmt))))
+
+(deftest-stmt test-select-1-where-1-is-2-is-3
+  ["SELECT 1 WHERE (1 = 2) AND (2 = 3)"]
+  (select [1]
+    (where '(= 1 2 3)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= [(parse-expr '(= 1 2 3))] (:where stmt))))
+
+(deftest-stmt test-select-parition-by
+  ["SELECT id, lag(close) over (partition by company-id order by date desc) FROM quotes"]
+  (select [:id '((lag :close) over (partition by :company-id order by :date desc))]
+    (from :quotes))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [:id '((lag :close) over (partition by :company-id order by :date desc))])
+         (:exprs stmt)))
+  (is (= [(parse-from :quotes)] (:from stmt))))
+
+(deftest-stmt test-select-total-return
+  ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) FROM quotes"]
+  (select [:id '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))]
+    (from :quotes))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [:id '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))])
+         (:exprs stmt)))
+  (is (= [(parse-from :quotes)] (:from stmt))))
+
+(deftest-stmt test-select-total-return-alias
+  ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) AS daily-return FROM quotes"]
+  (select [:id (as '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)]
+    (from :quotes))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [:id (as '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)])
+         (:exprs stmt)))
+  (is (= [(parse-from :quotes)] (:from stmt))))
+
 (deftest-stmt test-select-group-by-a-order-by-1
   ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
   (select [:a '(max :b)]

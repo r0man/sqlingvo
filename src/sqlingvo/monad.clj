@@ -128,6 +128,10 @@
   (fn [stmt]
     [nil (assoc stmt :limit {:op :limit :count count})]))
 
+(defn nulls
+  "Parse `expr` and return an NULLS FIRST/LAST expr."
+  [expr where] (assoc (parse-expr expr) :nulls where))
+
 (defn offset
   "Returns a fn that adds a OFFSET clause to an SQL statement."
   [start]

@@ -30,29 +30,10 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select *) (from :continents) (order-by :created-at :nulls :first))
-       ["SELECT * FROM continents ORDER BY created-at NULLS FIRST"]
-       (-> (select *) (from :continents) (order-by :created-at :nulls :last))
-       ["SELECT * FROM continents ORDER BY created-at NULLS LAST"]
-       (-> (select *) (from :continents) (order-by [:name :created-at] :direction :asc))
-       ["SELECT * FROM continents ORDER BY name, created-at ASC"]
        (-> (select *) (from (as (select 1 2 3) :x)))
        ["SELECT * FROM (SELECT 1, 2, 3) AS x"]
        (-> (select *) (from (as (select 1) :x) (as (select 2) :y)))
        ["SELECT * FROM (SELECT 1) AS x, (SELECT 2) AS y"]
-       (-> (select *) (from :continents) (group-by :created-at))
-       ["SELECT * FROM continents GROUP BY created-at"]
-       (-> (select *) (from :continents) (group-by :name :created-at))
-       ["SELECT * FROM continents GROUP BY name, created-at"]
-       (-> (select 1) (where '(= 1 1)))
-       ["SELECT 1 WHERE (1 = 1)"]
-       (-> (select 1) (where (list '= 1 1)))
-       ["SELECT 1 WHERE (1 = 1)"]
-       (-> (select 1) (where (list 'and (list '= 1 1) (list '= 1 2))))
-       ["SELECT 1 WHERE ((1 = 1) and (1 = 2))"]
-       (-> (select 1) (where '(= 1 2 3)))
-       ["SELECT 1 WHERE (1 = 2) AND (2 = 3)"]
-
        (union (select 1) (select 2))
        ["SELECT 1 UNION SELECT 2"]
        (union (select 1) (select 2) :all true)
@@ -83,14 +64,6 @@
            (from :countries)
            (join :continents '(using :id :created-at)))
        ["SELECT * FROM countries JOIN continents USING (id, created-at)"]
-       (-> (select :id '((lag :close) over (partition by :company-id order by :date desc))) (from :quotes))
-       ["SELECT id, lag(close) over (partition by company-id order by date desc) FROM quotes"]
-       (-> (select :id '(- ((lag :close) over (partition by :company-id order by :date desc)) 1)) (from :quotes))
-       ["SELECT id, (lag(close) over (partition by company-id order by date desc) - 1) FROM quotes"]
-       (-> (select :id '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))) (from :quotes))
-       ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) FROM quotes"]
-       (-> (select :id (as '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)) (from :quotes))
-       ["SELECT id, (close / (lag(close) over (partition by company-id order by date desc) - 1)) AS daily-return FROM quotes"]
        (-> (select :quotes.* :start-date)
            (from :quotes)
            (join (as (-> (select :company-id (as '(min :date) :start-date))
