@@ -13,6 +13,9 @@
 
 (defmulti compile-sql :op)
 
+(defn keyword-sql [k]
+  (replace (upper-case (name k)) #"-" " "))
+
 (defn stmt? [arg]
   (and (sequential? arg) (string? (first arg))))
 
@@ -349,9 +352,8 @@
                   (mapcat rest group-by)
                   (mapcat rest order-by)))))
 
-
 (defmethod compile-sql :default [{:keys [op]}]
-  [(replace (upper-case (name op)) #"-" " ")])
+  [(keyword-sql op)])
 
 (defmethod compile-sql :truncate [{:keys [tables continue-identity restart-identity cascade restrict]}]
   (join-stmt
