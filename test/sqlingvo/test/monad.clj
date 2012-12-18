@@ -375,6 +375,12 @@
   (is (= :select (:op stmt)))
   (is (= (map parse-expr ['(greatest 1 2) '(lower "X")]) (:exprs stmt))))
 
+(deftest-stmt test-select-nested-fns
+  ["SELECT (1 + greatest(2, 3))"]
+  (select ['(+ 1 (greatest 2 3))])
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr '(+ 1 (greatest 2 3)))] (:exprs stmt))))
+
 (deftest-stmt test-select-column-max
   ["SELECT max(created-at) FROM continents"]
   (select ['(max :created-at)]
