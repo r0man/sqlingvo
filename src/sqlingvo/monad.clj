@@ -122,6 +122,12 @@
     (let [like (assoc opts :op :like :table (parse-table table))]
       [nil (assoc stmt :like like)])))
 
+(defn limit
+  "Returns a fn that adds a LIMIT clause to an SQL statement."
+  [count]
+  (fn [stmt]
+    [nil (assoc stmt :limit {:op :limit :count count})]))
+
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs] (fn [stmt] [nil (concat-in stmt [:order-by] (map parse-expr exprs))]))

@@ -389,6 +389,15 @@
   (is (= [(parse-expr (as '(max :created-at) :m))] (:exprs stmt)))
   (is (= [(parse-table :continents)] (:from stmt))))
 
+(deftest-stmt test-select-limit
+  ["SELECT * FROM continents LIMIT 1"]
+  (select [*]
+    (from :continents)
+    (limit 1))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt))))
+
 (deftest-stmt test-select-column-max
   ["SELECT max(created-at) FROM continents"]
   (select ['(max :created-at)]

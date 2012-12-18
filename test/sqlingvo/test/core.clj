@@ -34,8 +34,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select *) (from :continents) (limit 1))
-       ["SELECT * FROM continents LIMIT 1"]
        (-> (-> (select *)) (from :continents) (offset 1))
        ["SELECT * FROM continents OFFSET 1"]
        (-> (-> (select *)) (from :continents) (limit 1) (offset 2))

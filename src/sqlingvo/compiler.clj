@@ -302,10 +302,6 @@
   [(str (join "." (map as-identifier (remove nil? [schema name])))
         (if as (str " AS " (as-identifier as))))])
 
-;; (defmethod compile-sql :select [{:keys [exprs from condition group-by limit offset order-by set]}]
-;;   (apply stmt ["SELECT"] exprs from condition group-by order-by
-;;   limit offset (map compile-sql set)))
-
 (defmethod compile-sql :distinct [{:keys [exprs on]}]
   (let [[expr-sql & expr-args] (compile-sql exprs)
         [on-sql & on-args] (if on (compile-sql on))]
@@ -342,7 +338,8 @@
                (if-not (empty? group-by)
                  (str " GROUP BY " (join ", " (map first group-by))))
                (if-not (empty? order-by)
-                 (str " ORDER BY " (join ", " (map first order-by)))))
+                 (str " ORDER BY " (join ", " (map first order-by))))
+               (if limit (str " " (first (compile-sql limit)))))
           (concat (mapcat rest exprs)
                   (mapcat rest from)
                   (mapcat rest where)
