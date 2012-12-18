@@ -612,6 +612,18 @@
     (is (= (parse-from :continents) (:from join)))
     (is (= (map parse-expr [:id :created-at]) (:using join)))))
 
+(deftest-stmt test-select-join-subselect-alias
+  [(str "SELECT quotes.*, start-date FROM quotes JOIN (SELECT company-id, min(date) AS start-date "
+        "FROM quotes GROUP BY company-id) AS start-dates ON ((quotes.company-id = start-dates.company-id) and (quotes.date = start-dates.start-date))")]
+  (select [:quotes.* :start-date]
+    (from :quotes)
+    (join (as (select [:company-id (as '(min :date) :start-date)]
+                (from :quotes)
+                (group-by :company-id))
+              :start-dates)
+          '(on (and (= :quotes.company-id :start-dates.company-id)
+                    (= :quotes.date :start-dates.start-date))))))
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
