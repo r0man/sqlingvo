@@ -36,8 +36,6 @@
        (is (= expected (sql stmt)))
        (-> (select :created-at/c) (from :continents))
        ["SELECT created-at AS c FROM continents"]
-       (-> (select :name :created-at) (from :continents))
-       ["SELECT name, created-at FROM continents"]
        (-> (select :name '(max :created-at)) (from :continents))
        ["SELECT name, max(created-at) FROM continents"]
        (select '(greatest 1 2) '(lower "X"))
