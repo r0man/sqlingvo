@@ -297,21 +297,12 @@
         (if as (str " AS " (as-identifier as))))])
 
 (defmethod compile-sql :distinct [{:keys [exprs on]}]
-  (let [[expr-sql & expr-args] (compile-sql exprs)
-        [on-sql & on-args] (if on (compile-sql on))]
-    (cons (str "DISTINCT "
-               (if on
-                 (str "ON (" on-sql ") "))
-               expr-sql)
-          (concat expr-args on-args))))
-
-(defmethod compile-sql :distinct [{:keys [exprs on]}]
   (let [exprs (if exprs (map compile-sql exprs))
         on (if on (map compile-sql on))]
     (cons (str "DISTINCT "
                (if-not (empty? on)
                  (str "ON (" (join ", " (map first on)) ") "))
-               (if-not (empty? on)
+               (if-not (empty? exprs)
                  (join ", " (map first exprs))))
           (concat (mapcat rest on)
                   (mapcat rest exprs)))))
