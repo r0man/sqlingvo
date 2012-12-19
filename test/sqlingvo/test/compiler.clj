@@ -107,26 +107,6 @@
     (is (= ["\"public\".\"continents\" AS \"c\""]
            (compile-sql {:op :table :schema :public :name :continents :as :c})))))
 
-(deftest test-compile-truncate
-  (are [ast expected]
-       (is (= expected (compile-sql ast)))
-       {:op :truncate :tables [{:op :table :name :continents}]}
-       ["TRUNCATE TABLE continents"]
-       {:op :truncate :tables [{:op :table :name :continents}] :cascade {:op :cascade :cascade true}}
-       ["TRUNCATE TABLE continents CASCADE"]
-       {:op :truncate :tables [{:op :table :name :continents}] :restrict {:op :restrict :restrict true}}
-       ["TRUNCATE TABLE continents RESTRICT"]
-       {:op :truncate :tables [{:op :table :name :continents}] :restart-identity {:op :restart-identity :restart-identity true}}
-       ["TRUNCATE TABLE continents RESTART IDENTITY"]
-       {:op :truncate :tables [{:op :table :name :continents}] :continue-identity {:op :continue-identity :continue-identity true}}
-       ["TRUNCATE TABLE continents CONTINUE IDENTITY"]
-       {:op :truncate :tables [{:op :table :name :continents}]
-        :restart-identity {:op :restart-identity :restart-identity true}
-        :continue-identity {:op :continue-identity :continue-identity true}
-        :cascade {:op :cascade :cascade true}
-        :restrict {:op :restrict :restrict true}}
-       ["TRUNCATE TABLE continents RESTART IDENTITY CONTINUE IDENTITY CASCADE RESTRICT"]))
-
 (deftest test-wrap-stmt
   (are [stmt expected]
        (is (= expected (wrap-stmt stmt)))

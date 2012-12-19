@@ -1,204 +1,248 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by])
-  (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :as s]
-            [sqlingvo.compiler :refer [compile-stmt]]
-            [sqlingvo.util :refer [parse-expr parse-exprs parse-column parse-from parse-table]]))
+  (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
+            [sqlingvo.compiler :refer [compile-sql compile-stmt]]
+            [sqlingvo.util :refer [as-keyword parse-expr parse-exprs parse-column parse-from parse-table]]))
 
-(defmacro sql
-  "Compile `stmts` into a vector, where the first element is the SQL
-  stmt and the rest are the prepared stmt arguments."
-  [& stmts] `(compile-stmt (-> ~@stmts identity)))
-
-(defn run-stmt
-  "Compile and run `stmt` against the current clojure.java.jdbc
-  database connection."
-  [stmt]
-  (let [compiled (compile-stmt stmt)]
-    (if (or (= :select (:op stmt)) (:returning stmt))
-      (jdbc/with-query-results results
-        compiled (doall results))
-      (map #(hash-map :count %1)
-           (jdbc/do-prepared (first compiled) (rest compiled))))))
-
-(defmacro run
-  "Run `stmts` against the current clojure.java.jdbc database
-  connection and return all rows."
-  [& stmts] `(run-stmt (-> ~@stmts identity)))
-
-(defmacro run1
-  "Run `stmts` against the current clojure.java.jdbc database
-  connection and return the first row."
-  [& stmts] `(first (run ~@stmts)))
-
-(defn- assoc-op [stmt op & {:as opts}]
-  (assoc stmt op (assoc opts :op op)))
-
-(defn- wrap-seq [s]
-  (if (vector? s) s [s]))
+(defn- concat-in [m ks & args]
+  (apply update-in m ks concat args))
 
 (defn as
-  "Add an AS clause to the SQL statement."
-  [stmt alias]
-  (assoc (parse-expr stmt) :as alias))
+  "Parse `expr` and return an expr with and AS clause using `alias`."
+  [expr alias]
+  (assoc (parse-expr expr) :as (as-keyword alias)))
+
+(defn asc
+  "Parse `expr` and return an ORDER BY expr using ascending order."
+  [expr] (assoc (parse-expr expr) :direction :asc))
+
+(defn cascade
+  "Returns a fn that adds a CASCADE clause to an SQL statement."
+  [cascade?]
+  (fn [stmt]
+    (if cascade?
+      [nil (assoc stmt :cascade {:op :cascade})]
+      [nil stmt])))
+
+(defn continue-identity
+  "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
+  [continue-identity?]
+  (fn [stmt]
+    (if continue-identity?
+      [nil (assoc stmt :continue-identity {:op :continue-identity})]
+      [nil stmt])))
+
+(defn desc
+  "Parse `expr` and return an ORDER BY expr using descending order."
+  [expr] (assoc (parse-expr expr) :direction :desc))
 
 (defn distinct
-  "Add a DISTINCT clause to the SQL statement."
+  "Parse `exprs` and retuern a DISTINCT clause."
   [exprs & {:keys [on]}]
   {:op :distinct
-   :exprs (parse-exprs exprs)
-   :on (parse-exprs on)})
-
-(defn create-table
-  "Define a new table."
-  [table]
-  {:op :create-table :table (parse-table table)})
+   :exprs (map parse-expr exprs)
+   :on (map parse-expr on)})
 
 (defn copy
-  "Copy data from or to a database table."
-  [table & [columns]]
-  {:op :copy
-   :table (parse-table table)
-   :columns (map parse-column columns)})
+  "Returns a COPY statement."
+  [table columns & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :copy
+            :table (parse-table table)
+            :columns (map parse-column columns)})))
+
+(defn create-table
+  "Returns a CREATE TABLE statement."
+  [table & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :create-table
+            :table (parse-table table)})))
 
 (defn delete
-  "Delete rows of a database table."
-  [table] {:op :delete :table (parse-table table)})
-
-(defn except
-  "Select the SQL set difference between `stmt-1` and `stmt-2`."
-  [stmt-1 stmt-2 & {:keys [all]}]
-  (update-in stmt-1 [:set] conj {:op :except :stmt stmt-2 :all all}))
-
-(defn default-values
-  "Add the DEFAULT VALUES clause to `stmt`."
-  ([stmt]
-     (default-values stmt true))
-  ([stmt enabled]
-     (assoc stmt :default-values enabled)))
+  "Returns a DELETE statement."
+  [table & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :delete
+            :table (parse-table table)})))
 
 (defn drop-table
-  "Drop the database `tables`."
-  [tables & {:as opts}]
-  (merge opts {:op :drop-table :tables (map parse-table (wrap-seq tables))}))
+  "Returns a DROP TABLE statement."
+  [tables & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :drop-table
+            :tables (map parse-table tables)})))
+
+(defn except
+  "Returns a fn that adds a EXCEPT clause to an SQL statement."
+  [stmt-2 & {:keys [all]}]
+  (fn [stmt-1]
+    [nil (update-in stmt-1 [:set] conj {:op :except :stmt stmt-2 :all all})]))
 
 (defn from
-  "Add the FROM item to the SQL statement."
-  [stmt & from]
-  (condp = (:op stmt)
-    :copy (assoc stmt :from (first from))
-    (assoc-op stmt :from :clause (map parse-from from))))
+  "Returns a fn that adds a FROM clause to an SQL statement."
+  [& from]
+  (fn [stmt]
+    [nil (concat-in
+          stmt [:from]
+          (case (:op stmt)
+            :copy [(first from)]
+            (map parse-from from)))]))
 
 (defn group-by
-  "Add the GROUP BY clause to the SQL statement."
-  [stmt & exprs]
-  (assoc-op stmt :group-by :exprs (parse-exprs exprs)))
+  "Returns a fn that adds a GROUP BY clause to an SQL statement."
+  [& exprs] (fn [stmt] [nil (concat-in stmt [:group-by] (map parse-expr exprs))]))
 
-(defn inherits
-  [stmt & tables]
-  (assoc stmt :inherits (map parse-table tables)))
-
-(defn insert
-  "Insert rows into the database `table`."
-  ([table]
-     (insert table []))
-  ([table what]
-     (insert table nil what))
-  ([table columns what]
-     (let [stmt {:op :insert
-                 :table (parse-table table)
-                 :columns (map parse-column columns)}]
-       (cond
-        (sequential? what)
-        (assoc stmt :rows what)
-        (and (map? what)
-             (= :select (:op what)))
-        (assoc stmt :query what)))))
+(defn if-exists
+  "Returns a fn that adds a IF EXISTS clause to an SQL statement."
+  [if-exists?]
+  (fn [stmt]
+    (if if-exists?
+      [nil (assoc stmt :if-exists {:op :if-exists})]
+      [nil stmt])))
 
 (defn if-not-exists
-  "Add a IF NOT EXISTS clause to statement."
-  [stmt bool] (assoc stmt :if-not-exists bool))
+  "Returns a fn that adds a IF EXISTS clause to an SQL statement."
+  [if-not-exists?]
+  (fn [stmt]
+    (if if-not-exists?
+      [nil (assoc stmt :if-not-exists {:op :if-not-exists})]
+      [nil stmt])))
+
+(defn inherits
+  [& tables]
+  (fn [stmt]
+    [nil (assoc stmt :inherits (map parse-table tables))]))
+
+(defn insert
+  "Returns a INSERT statement."
+  [table columns & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :insert
+            :table (parse-table table)
+            :columns (map parse-column columns)})))
 
 (defn intersect
-  "Select the SQL set intersection between `stmt-1` and `stmt-2`."
-  [stmt-1 stmt-2 & {:keys [all]}]
-  (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all}))
+  "Returns a fn that adds a INTERSECT clause to an SQL statement."
+  [stmt-2 & {:keys [all]}]
+  (fn [stmt-1]
+    [nil (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all})]))
 
 (defn join
-  "Add a JOIN clause to the SQL statement."
-  [stmt from [how & condition] & {:keys [type outer]}]
-  (update-in
-   stmt [:from :joins] conj
-   {:op :join
-    :from (parse-from from)
-    :type type
-    :how (keyword (name how))
-    :condition (parse-exprs condition)
-    :outer outer}))
-
-(defn limit
-  "Add the LIMIT clause to the SQL statement."
-  [stmt count]
-  (assoc-op stmt :limit :count count))
+  "Returns a fn that adds a JOIN clause to an SQL statement."
+  [from [how & condition] & {:keys [type outer]}]
+  (let [how (keyword how)]
+    (fn [stmt]
+      [nil (update-in
+            stmt [:joins] conj
+            {:op :join
+             :from (parse-from from)
+             :type type
+             :on (if (= :on how) (parse-expr (first condition)))
+             :using (if (= :using how) (map parse-expr condition))
+             :outer outer})])))
 
 (defn like
-  "Add the LIKE clause to a create table statement."
-  [stmt table & {:keys [including excluding]}]
-  (assoc stmt
-    :like {:op :like
-           :including including
-           :excluding excluding
-           :table (parse-table table)}))
+  "Returns a fn that adds a LIKE clause to an SQL statement."
+  [table & {:as opts}]
+  (fn [stmt]
+    (let [like (assoc opts :op :like :table (parse-table table))]
+      [nil (assoc stmt :like like)])))
+
+(defn limit
+  "Returns a fn that adds a LIMIT clause to an SQL statement."
+  [count]
+  (fn [stmt]
+    [nil (assoc stmt :limit {:op :limit :count count})]))
+
+(defn nulls
+  "Parse `expr` and return an NULLS FIRST/LAST expr."
+  [expr where] (assoc (parse-expr expr) :nulls where))
 
 (defn offset
-  "Add the OFFSET clause to the SQL statement."
-  [stmt start]
-  (assoc-op stmt :offset :start start))
+  "Returns a fn that adds a OFFSET clause to an SQL statement."
+  [start]
+  (fn [stmt]
+    [nil (assoc stmt :offset {:op :offset :start start})]))
 
 (defn order-by
-  "Add the ORDER BY clause to the SQL statement."
-  [stmt exprs & {:as opts}]
-  (let [exprs (map #(if (string? %1)
-                      (binding [*read-eval* false]
-                        (parse-expr (read-string %1)))
-                      %1) (wrap-seq exprs))
-        exprs (parse-exprs exprs)]
-    (assoc stmt :order-by (merge opts {:op :order-by :exprs exprs}))))
+  "Returns a fn that adds a ORDER BY clause to an SQL statement."
+  [& exprs] (fn [stmt] [nil (concat-in stmt [:order-by] (map parse-expr exprs))]))
+
+(defn restart-identity
+  "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
+  [restart-identity?]
+  (fn [stmt]
+    (if restart-identity?
+      [nil (assoc stmt :restart-identity {:op :restart-identity})]
+      [nil stmt])))
+
+(defn restrict
+  "Returns a fn that adds a RESTRICT clause to an SQL statement."
+  [restrict?]
+  (fn [stmt]
+    (if restrict?
+      [nil (assoc stmt :restrict {:op :restrict})]
+      [nil stmt])))
 
 (defn returning
-  "Add the RETURNING clause the SQL statement."
-  [stmt exprs]
-  (assoc-op stmt :returning :exprs (parse-exprs (wrap-seq exprs))))
+  "Returns a fn that adds a RETURNING clause to an SQL statement."
+  [& exprs] (fn [stmt] [nil (concat-in stmt [:returning] (map parse-expr exprs))]))
 
 (defn select
-  "Select `exprs` from the database."
-  [& exprs]
-  {:op :select :exprs (parse-exprs exprs)})
+  "Returns a SELECT statement."
+  [exprs & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :select
+            :distinct (if (= :distinct (:op exprs))
+                        exprs)
+            :exprs (if (sequential? exprs)
+                     (map parse-expr exprs))})))
 
 (defn temporary
-  "Create a temporary table."
-  [stmt temporary]
-  (assoc stmt :temporary temporary))
+  "Returns a fn that adds a TEMPORARY clause to an SQL statement."
+  [temporary?]
+  (fn [stmt]
+    (if temporary?
+      [nil (assoc stmt :temporary {:op :temporary})]
+      [nil stmt])))
 
 (defn truncate
-  "Truncate the database `tables`."
-  [tables & {:as opts}]
-  (merge opts {:op :truncate :tables (map parse-table (wrap-seq tables))}))
+  "Returns a TRUNCATE statement."
+  [tables & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :truncate
+            :tables (map parse-table tables)})))
 
 (defn union
-  "Select the SQL set union between `stmt-1` and `stmt-2`."
-  [stmt-1 stmt-2 & {:keys [all]}]
-  (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all}))
+  "Returns a fn that adds a UNION clause to an SQL statement."
+  [stmt-2 & {:keys [all]}]
+  (fn [stmt-1]
+    [nil (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all})]))
 
 (defn update
-  "Update rows of the database `table`."
-  [table row]
-  {:op :update
-   :table (parse-table table)
-   :exprs (if (sequential? row) (map parse-expr row))
-   :row (if (map? row) row)})
+  "Returns a UPDATE statement."
+  [table row & body]
+  (second ((with-monad state-m (m-seq body))
+           {:op :update
+            :table (parse-table table)
+            :exprs (if (sequential? row) (map parse-expr row))
+            :row (if (map? row) row)})))
+
+(defn values
+  "Returns a fn that adds a VALUES clause to an SQL statement."
+  [values]
+  (fn [stmt]
+    [nil (case values
+           :default (assoc stmt :default-values true)
+           (concat-in
+            stmt [:values]
+            (if (sequential? values) values [values])))]))
 
 (defn where
-  "Add the WHERE `condition` to the SQL statement."
-  [stmt condition]
-  (assoc-op stmt :condition :condition (parse-expr condition)))
+  "Returns a fn that adds a WHERE clause to an SQL statement."
+  [& exprs]
+  (fn [stmt]
+    [nil (concat-in stmt [:where] (map parse-expr exprs))]))
+
+(defn sql [stmt]
+  (compile-stmt stmt))
