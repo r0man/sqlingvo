@@ -645,9 +645,24 @@
     (union (select [2])))
   (is (= :select (:op stmt)))
   (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [stmt (:stmt (first (:set stmt)))]
-    (is (= :select (:op stmt)))
-    (is (= (map parse-expr [2]) (:exprs stmt)))))
+  (let [union (first (:set stmt))]
+    (is (= :union (:op union)))
+    (let [stmt (:stmt union)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
+
+(deftest-stmt test-select-union-all
+  ["SELECT 1 UNION ALL SELECT 2"]
+  (select [1]
+    (union (select [2]) :all true))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [union (first (:set stmt))]
+    (is (= :union (:op union)))
+    (is (= true (:all union)))
+    (let [stmt (:stmt union)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
 
 ;; TRUNCATE
 
