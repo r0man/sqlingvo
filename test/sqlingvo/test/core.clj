@@ -34,10 +34,6 @@
        ["SELECT * FROM (SELECT 1, 2, 3) AS x"]
        (-> (select *) (from (as (select 1) :x) (as (select 2) :y)))
        ["SELECT * FROM (SELECT 1) AS x, (SELECT 2) AS y"]
-       (intersect (select 1) (select 2))
-       ["SELECT 1 INTERSECT SELECT 2"]
-       (intersect (select 1) (select 2) :all true)
-       ["SELECT 1 INTERSECT ALL SELECT 2"]
        (-> (select *) (from :continents) (where '(= :name "Europe")))
        ["SELECT * FROM continents WHERE (name = ?)" "Europe"]
        (-> (select *)

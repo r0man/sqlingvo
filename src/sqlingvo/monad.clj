@@ -121,6 +121,12 @@
             :table (parse-table table)
             :columns (map parse-column columns)})))
 
+(defn intersect
+  "Returns a fn that adds a INTERSECT clause to an SQL statement."
+  [stmt-2 & {:keys [all]}]
+  (fn [stmt-1]
+    [nil (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all})]))
+
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from [how & condition] & {:keys [type outer]}]

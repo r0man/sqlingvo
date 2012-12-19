@@ -639,31 +639,6 @@
           '(on (and (= :quotes.company-id :start-dates.company-id)
                     (= :quotes.date :start-dates.start-date))))))
 
-(deftest-stmt test-select-union
-  ["SELECT 1 UNION SELECT 2"]
-  (select [1]
-    (union (select [2])))
-  (is (= :select (:op stmt)))
-  (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [union (first (:set stmt))]
-    (is (= :union (:op union)))
-    (let [stmt (:stmt union)]
-      (is (= :select (:op stmt)))
-      (is (= (map parse-expr [2]) (:exprs stmt))))))
-
-(deftest-stmt test-select-union-all
-  ["SELECT 1 UNION ALL SELECT 2"]
-  (select [1]
-    (union (select [2]) :all true))
-  (is (= :select (:op stmt)))
-  (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [union (first (:set stmt))]
-    (is (= :union (:op union)))
-    (is (= true (:all union)))
-    (let [stmt (:stmt union)]
-      (is (= :select (:op stmt)))
-      (is (= (map parse-expr [2]) (:exprs stmt))))))
-
 (deftest-stmt test-select-except
   ["SELECT 1 EXCEPT SELECT 2"]
   (select [1]
@@ -686,6 +661,56 @@
     (is (= :except (:op except)))
     (is (= true (:all except)))
     (let [stmt (:stmt except)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
+
+(deftest-stmt test-select-intersect
+  ["SELECT 1 INTERSECT SELECT 2"]
+  (select [1]
+    (intersect (select [2])))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [intersect (first (:set stmt))]
+    (is (= :intersect (:op intersect)))
+    (let [stmt (:stmt intersect)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
+
+(deftest-stmt test-select-intersect-all
+  ["SELECT 1 INTERSECT ALL SELECT 2"]
+  (select [1]
+    (intersect (select [2]) :all true))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [intersect (first (:set stmt))]
+    (is (= :intersect (:op intersect)))
+    (is (= true (:all intersect)))
+    (let [stmt (:stmt intersect)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
+
+(deftest-stmt test-select-union
+  ["SELECT 1 UNION SELECT 2"]
+  (select [1]
+    (union (select [2])))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [union (first (:set stmt))]
+    (is (= :union (:op union)))
+    (let [stmt (:stmt union)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
+
+(deftest-stmt test-select-union-all
+  ["SELECT 1 UNION ALL SELECT 2"]
+  (select [1]
+    (union (select [2]) :all true))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [union (first (:set stmt))]
+    (is (= :union (:op union)))
+    (is (= true (:all union)))
+    (let [stmt (:stmt union)]
       (is (= :select (:op stmt)))
       (is (= (map parse-expr [2]) (:exprs stmt))))))
 
