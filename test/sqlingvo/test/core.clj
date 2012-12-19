@@ -30,10 +30,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select *) (from (as (select 1) :x) (as (select 2) :y)))
-       ["SELECT * FROM (SELECT 1) AS x, (SELECT 2) AS y"]
-       (-> (select *) (from :continents) (where '(= :name "Europe")))
-       ["SELECT * FROM continents WHERE (name = ?)" "Europe"]
        (-> (select *)
            (from (as :countries :c))
            (join :continents '(on (= :continents.id :c.continent-id))))
