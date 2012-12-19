@@ -17,9 +17,9 @@
 (deftest-stmt test-create-table-tmp-if-not-exists-inherits
   ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]
   (create-table :import
-    (temporary true)
-    (if-not-exists true)
-    (inherits :quotes))
+                (temporary true)
+                (if-not-exists true)
+                (inherits :quotes))
   (is (= :create-table (:op stmt)))
   (is (= {:op :temporary} (:temporary stmt)))
   (is (= {:op :if-not-exists} (:if-not-exists stmt)))
@@ -28,7 +28,7 @@
 (deftest-stmt test-create-table-like-including-defaults
   ["CREATE TABLE tmp-films (LIKE films INCLUDING DEFAULTS)"]
   (create-table :tmp-films
-    (like :films :including [:defaults]))
+                (like :films :including [:defaults]))
   (is (= :create-table (:op stmt)))
   (let [like (:like stmt)]
     (is (= :like (:op like)))
@@ -38,7 +38,7 @@
 (deftest-stmt test-create-table-like-excluding-indexes
   ["CREATE TABLE tmp-films (LIKE films EXCLUDING INDEXES)"]
   (create-table :tmp-films
-    (like :films :excluding [:indexes]))
+                (like :films :excluding [:indexes]))
   (is (= :create-table (:op stmt)))
   (let [like (:like stmt)]
     (is (= :like (:op like)))
@@ -141,7 +141,7 @@
 (deftest-stmt test-drop-continents-if-exists
   ["DROP TABLE IF EXISTS continents"]
   (drop-table [:continents]
-    (if-exists true))
+              (if-exists true))
   (is (= :drop-table (:op stmt)))
   (is (= {:op :if-exists} (:if-exists stmt)))
   (is (= [(parse-table :continents)] (:tables stmt))))
@@ -149,8 +149,8 @@
 (deftest-stmt test-drop-continents-countries-if-exists-restrict
   ["DROP TABLE IF EXISTS continents, countries RESTRICT"]
   (drop-table [:continents :countries]
-    (if-exists true)
-    (restrict true))
+              (if-exists true)
+              (restrict true))
   (is (= :drop-table (:op stmt)))
   (is (= {:op :if-exists} (:if-exists stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
@@ -639,6 +639,16 @@
           '(on (and (= :quotes.company-id :start-dates.company-id)
                     (= :quotes.date :start-dates.start-date))))))
 
+(deftest-stmt test-select-union
+  ["SELECT 1 UNION SELECT 2"]
+  (select [1]
+    (union (select [2])))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [stmt (:stmt (first (:set stmt)))]
+    (is (= :select (:op stmt)))
+    (is (= (map parse-expr [2]) (:exprs stmt)))))
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
@@ -658,8 +668,8 @@
 (deftest-stmt test-truncate-continents-restart-restrict
   ["TRUNCATE TABLE continents RESTART IDENTITY RESTRICT"]
   (truncate [:continents]
-    (restart-identity true)
-    (restrict true))
+            (restart-identity true)
+            (restrict true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
   (is (= {:op :restrict} (:restrict stmt)))
@@ -668,8 +678,8 @@
 (deftest-stmt test-truncate-continents-continue-cascade
   ["TRUNCATE TABLE continents CONTINUE IDENTITY CASCADE"]
   (truncate [:continents]
-    (continue-identity true)
-    (cascade true))
+            (continue-identity true)
+            (cascade true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
   (is (= {:op :cascade} (:cascade stmt)))

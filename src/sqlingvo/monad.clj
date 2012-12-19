@@ -173,7 +173,7 @@
       [nil stmt])))
 
 (defn returning
-  "Add the RETURNING clause the SQL statement."
+  "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs] (fn [stmt] [nil (concat-in stmt [:returning] (map parse-expr exprs))]))
 
 (defn select
@@ -200,6 +200,12 @@
   (second ((with-monad state-m (m-seq body))
            {:op :truncate
             :tables (map parse-table tables)})))
+
+(defn union
+  "Returns a fn that adds a RETURNING clause to an SQL statement."
+  [stmt-2 & {:keys [all]}]
+  (fn [stmt-1]
+    [nil (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all})]))
 
 (defn update
   "Returns a UPDATE statement."

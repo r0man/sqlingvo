@@ -323,7 +323,8 @@
         from (map compile-sql from)
         where (map compile-sql where)
         group-by (map compile-sql group-by)
-        order-by (map compile-sql order-by)]
+        order-by (map compile-sql order-by)
+        set (map compile-sql set)]
     (cons (str "SELECT " (join ", " (map first exprs))
                distinct-sql
                (if-not (empty? from)
@@ -337,13 +338,16 @@
                (if-not (empty? order-by)
                  (str " ORDER BY " (join ", " (map first order-by))))
                (if limit (str " " (first (compile-sql limit))))
-               (if offset (str " " (first (compile-sql offset)))))
+               (if offset (str " " (first (compile-sql offset))))
+               (if-not (empty? set)
+                 (str " " (join ", " (map first set)))))
           (concat (mapcat rest exprs)
                   (mapcat rest from)
                   (mapcat rest joins)
                   (mapcat rest where)
                   (mapcat rest group-by)
-                  (mapcat rest order-by)))))
+                  (mapcat rest order-by)
+                  (mapcat rest set)))))
 
 (defmethod compile-sql :default [{:keys [op]}]
   [(keyword-sql op)])
