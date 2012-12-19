@@ -320,7 +320,7 @@
   (let [[distinct-sql & distinct-args] (if distinct (compile-sql distinct))
         joins (if joins (map compile-sql joins))
         exprs (map compile-expr exprs)
-        from (map compile-sql from)
+        from (map compile-from from)
         where (map compile-sql where)
         group-by (map compile-sql group-by)
         order-by (map compile-sql order-by)

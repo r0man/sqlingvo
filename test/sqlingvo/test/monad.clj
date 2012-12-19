@@ -507,6 +507,17 @@
   (is (= [(parse-expr 1)] (:exprs stmt)))
   (is (= [(parse-expr '(= 1 2 3))] (:where stmt))))
 
+(deftest-stmt test-select-subquery-alias
+  ["SELECT * FROM (SELECT 1, 2, 3) AS x"]
+  (select [*]
+    (from (as (select [1 2 3]) :x)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [from (first (:from stmt))]
+    (is (= :select (:op from)))
+    (is (= :x (:as from)))
+    (is (= (map parse-expr [1 2 3]) (:exprs from)))))
+
 (deftest-stmt test-select-parition-by
   ["SELECT id, lag(close) over (partition by company-id order by date desc) FROM quotes"]
   (select [:id '((lag :close) over (partition by :company-id order by :date desc))]

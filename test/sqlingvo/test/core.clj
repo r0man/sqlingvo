@@ -30,8 +30,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select *) (from (as (select 1 2 3) :x)))
-       ["SELECT * FROM (SELECT 1, 2, 3) AS x"]
        (-> (select *) (from (as (select 1) :x) (as (select 2) :y)))
        ["SELECT * FROM (SELECT 1) AS x, (SELECT 2) AS y"]
        (-> (select *) (from :continents) (where '(= :name "Europe")))
@@ -51,9 +49,6 @@
 (deftest test-update
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (update :films {:kind "Dramatic"})
-           (where '(= :kind "Drama")))
-       ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
        (-> (update :quotes '((= :daily-return :u.daily-return)))
            (where '(= :quotes.id :u.id))
            (from (as (-> (select :id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return))
