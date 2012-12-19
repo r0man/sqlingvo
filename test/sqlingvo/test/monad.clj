@@ -664,6 +664,31 @@
       (is (= :select (:op stmt)))
       (is (= (map parse-expr [2]) (:exprs stmt))))))
 
+(deftest-stmt test-select-except
+  ["SELECT 1 EXCEPT SELECT 2"]
+  (select [1]
+    (except (select [2])))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [except (first (:set stmt))]
+    (is (= :except (:op except)))
+    (let [stmt (:stmt except)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
+
+(deftest-stmt test-select-except-all
+  ["SELECT 1 EXCEPT ALL SELECT 2"]
+  (select [1]
+    (except (select [2]) :all true))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [except (first (:set stmt))]
+    (is (= :except (:op except)))
+    (is (= true (:all except)))
+    (let [stmt (:stmt except)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents

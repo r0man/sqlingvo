@@ -72,6 +72,12 @@
            {:op :drop-table
             :tables (map parse-table tables)})))
 
+(defn except
+  "Returns a fn that adds a EXCEPT clause to an SQL statement."
+  [stmt-2 & {:keys [all]}]
+  (fn [stmt-1]
+    [nil (update-in stmt-1 [:set] conj {:op :except :stmt stmt-2 :all all})]))
+
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement."
   [& from]
@@ -202,7 +208,7 @@
             :tables (map parse-table tables)})))
 
 (defn union
-  "Returns a fn that adds a RETURNING clause to an SQL statement."
+  "Returns a fn that adds a UNION clause to an SQL statement."
   [stmt-2 & {:keys [all]}]
   (fn [stmt-1]
     [nil (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all})]))
