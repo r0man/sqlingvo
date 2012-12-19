@@ -622,6 +622,19 @@
     (is (= (parse-from :continents) (:from join)))
     (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:on join)))))
 
+(deftest-stmt test-select-join-on-columns-alias
+  ["SELECT * FROM countries AS c JOIN continents ON (continents.id = c.continent-id)"]
+  (select [*]
+    (from (as :countries :c))
+    (join :continents '(on (= :continents.id :c.continent-id))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from (as :countries :c))] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= (parse-from :continents) (:from join)))
+    (is (= (parse-expr '(= :continents.id :c.continent-id)) (:on join)))))
+
 (deftest-stmt test-select-join-using-column
   ["SELECT * FROM countries JOIN continents USING (id)"]
   (select [*]

@@ -30,10 +30,6 @@
 (deftest test-select
   (are [stmt expected]
        (is (= expected (sql stmt)))
-       (-> (select *)
-           (from (as :countries :c))
-           (join :continents '(on (= :continents.id :c.continent-id))))
-       ["SELECT * FROM countries AS c JOIN continents ON (continents.id = c.continent-id)"]
        (-> (select (distinct [:x.a :x.b]))
            (from (as (select (as 1 :a) (as 2 :b)) :x)))
        ["SELECT DISTINCT x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]
