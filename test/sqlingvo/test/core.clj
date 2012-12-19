@@ -27,14 +27,6 @@
              "JOIN countries AS c ON (c.geography && a.geom) "
              "WHERE ((a.gps-code IS NOT NULL) and (a.iata-code IS NOT NULL) and (airports.iata-code IS NULL))")]))
 
-(deftest test-select
-  (are [stmt expected]
-       (is (= expected (sql stmt)))
-       (-> (select (distinct [:x.a :x.b] :on [:x.a :x.b]))
-           (from (as (select (as 1 :a) (as 2 :b)) :x)))
-       ["SELECT DISTINCT ON (x.a, x.b) x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]
-       ))
-
 (deftest test-update
   (are [stmt expected]
        (is (= expected (sql stmt)))

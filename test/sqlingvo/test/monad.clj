@@ -452,6 +452,20 @@
     (is (= :x (:as from)))
     (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from)))))
 
+(deftest-stmt test-select-distinct-on-subquery-alias
+  ["SELECT DISTINCT ON (x.a, x.b) x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]
+  (select (distinct [:x.a :x.b] :on [:x.a :x.b])
+    (from (as (select [(as 1 :a) (as 2 :b)]) :x)))
+  (is (= :select (:op stmt)))
+  (let [distinct (:distinct stmt)]
+    (is (= :distinct (:op distinct)))
+    (is (= (map parse-expr [:x.a :x.b]) (:exprs distinct)))
+    (is (= (map parse-expr [:x.a :x.b]) (:on distinct))))
+  (let [from (first (:from stmt))]
+    (is (= :select (:op from)))
+    (is (= :x (:as from)))
+    (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from)))))
+
 (deftest-stmt test-select-most-recent-weather-report
   ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
   (select (distinct [:location :time :report] :on [:location])
