@@ -11,7 +11,7 @@ Via Clojars: https://clojars.org/sqlingvo
     (refer-clojure :exclude '[distinct group-by])
     (use 'sqlingvo.core)
 
-## Compiling SQL
+## Compiling to SQL
 
 ### [Copy](http://www.postgresql.org/docs/9.2/static/sql-copy.html)
 
