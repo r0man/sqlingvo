@@ -48,7 +48,7 @@
    :on (map parse-expr on)})
 
 (defn copy
-  "Returns a COPY statement."
+  "Returns a fn that returns a COPY statement."
   [table columns & body]
   (fn [stmt]
     (let [[_ copy]
@@ -59,7 +59,7 @@
       [copy (assoc stmt (:op copy) copy)])))
 
 (defn create-table
-  "Returns a CREATE TABLE statement."
+  "Returns a fn that returns a CREATE TABLE statement."
   [table & body]
   (fn [stmt]
     (let [[_ create-table]
@@ -69,7 +69,7 @@
       [create-table (assoc stmt (:op create-table) create-table)])))
 
 (defn delete
-  "Returns a DELETE statement."
+  "Returns a fn that returns a DELETE statement."
   [table & body]
   (fn [stmt]
     (let [[_ delete]
@@ -79,7 +79,7 @@
       [delete (assoc stmt (:op delete) delete)]))  )
 
 (defn drop-table
-  "Returns a DROP TABLE statement."
+  "Returns a fn that returns a DROP TABLE statement."
   [tables & body]
   (fn [stmt]
     (let [[_ drop-table]
@@ -131,7 +131,7 @@
     [nil (assoc stmt :inherits (map parse-table tables))]))
 
 (defn insert
-  "Returns a INSERT statement."
+  "Returns a fn that returns a INSERT statement."
   [table columns & body]
   (fn [stmt]
     (let [[_ insert]
@@ -210,7 +210,7 @@
   [& exprs] (fn [stmt] [nil (concat-in stmt [:returning] (map parse-expr exprs))]))
 
 (defn select
-  "Returns a SELECT statement."
+  "Returns a fn that returns a SELECT statement."
   [exprs & body]
   (fn [stmt]
     (let [[_ select]
@@ -231,7 +231,7 @@
       [nil stmt])))
 
 (defn truncate
-  "Returns a TRUNCATE statement."
+  "Returns a fn that returns a TRUNCATE statement."
   [tables & body]
   (fn [stmt]
     (let [[_ truncate]
@@ -248,7 +248,7 @@
       [nil (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all})])))
 
 (defn update
-  "Returns a UPDATE statement."
+  "Returns a fn that returns a UPDATE statement."
   [table row & body]
   (fn [stmt]
     (let [[_ update]
