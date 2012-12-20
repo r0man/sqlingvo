@@ -8,8 +8,8 @@
 
 (defmacro deftest-stmt [name sql stmt & body]
   `(deftest ~name
-     (let [~'stmt ~stmt]
-       (is (= ~sql (compile-stmt ~stmt)))
+     (let [~'stmt (ast ~stmt)]
+       (is (= ~sql (sql ~stmt)))
        ~@body)))
 
 ;; CREATE TABLE
@@ -17,9 +17,9 @@
 (deftest-stmt test-create-table-tmp-if-not-exists-inherits
   ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]
   (create-table :import
-                (temporary true)
-                (if-not-exists true)
-                (inherits :quotes))
+    (temporary true)
+    (if-not-exists true)
+    (inherits :quotes))
   (is (= :create-table (:op stmt)))
   (is (= {:op :temporary} (:temporary stmt)))
   (is (= {:op :if-not-exists} (:if-not-exists stmt)))
@@ -28,7 +28,7 @@
 (deftest-stmt test-create-table-like-including-defaults
   ["CREATE TABLE tmp-films (LIKE films INCLUDING DEFAULTS)"]
   (create-table :tmp-films
-                (like :films :including [:defaults]))
+    (like :films :including [:defaults]))
   (is (= :create-table (:op stmt)))
   (let [like (:like stmt)]
     (is (= :like (:op like)))
@@ -38,7 +38,7 @@
 (deftest-stmt test-create-table-like-excluding-indexes
   ["CREATE TABLE tmp-films (LIKE films EXCLUDING INDEXES)"]
   (create-table :tmp-films
-                (like :films :excluding [:indexes]))
+    (like :films :excluding [:indexes]))
   (is (= :create-table (:op stmt)))
   (let [like (:like stmt)]
     (is (= :like (:op like)))
@@ -141,7 +141,7 @@
 (deftest-stmt test-drop-continents-if-exists
   ["DROP TABLE IF EXISTS continents"]
   (drop-table [:continents]
-              (if-exists true))
+    (if-exists true))
   (is (= :drop-table (:op stmt)))
   (is (= {:op :if-exists} (:if-exists stmt)))
   (is (= [(parse-table :continents)] (:tables stmt))))
@@ -149,8 +149,8 @@
 (deftest-stmt test-drop-continents-countries-if-exists-restrict
   ["DROP TABLE IF EXISTS continents, countries RESTRICT"]
   (drop-table [:continents :countries]
-              (if-exists true)
-              (restrict true))
+    (if-exists true)
+    (restrict true))
   (is (= :drop-table (:op stmt)))
   (is (= {:op :if-exists} (:if-exists stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
@@ -249,13 +249,13 @@
   ["SELECT (SELECT 1)"]
   (select [(select [1])])
   (is (= :select (:op stmt)))
-  (is (= [(select [1])] (:exprs stmt))))
+  (is (= [(ast (select [1]))] (:exprs stmt))))
 
 (deftest-stmt test-select-select-1-select-x
   ["SELECT (SELECT 1), (SELECT ?)" "x"]
   (select [(select [1]) (select ["x"])])
   (is (= :select (:op stmt)))
-  (is (= [(select [1]) (select ["x"])] (:exprs stmt))))
+  (is (= [(ast (select [1])) (ast (select ["x"]))] (:exprs stmt))))
 
 (deftest-stmt test-select-string
   ["SELECT * FROM continents WHERE (name = ?)" "Europe"]
@@ -707,6 +707,15 @@
           '(on (and (= :quotes.company-id :start-dates.company-id)
                     (= :quotes.date :start-dates.start-date))))))
 
+(sql (select [:quotes.* :start-date]
+       (from :quotes)
+       (join (as (select [:company-id (as '(min :date) :start-date)]
+                   (from :quotes)
+                   (group-by :company-id))
+                 :start-dates)
+             '(on (and (= :quotes.company-id :start-dates.company-id)
+                       (= :quotes.date :start-dates.start-date))))))
+
 (deftest-stmt test-select-except
   ["SELECT 1 EXCEPT SELECT 2"]
   (select [1]
@@ -801,8 +810,8 @@
 (deftest-stmt test-truncate-continents-restart-restrict
   ["TRUNCATE TABLE continents RESTART IDENTITY RESTRICT"]
   (truncate [:continents]
-            (restart-identity true)
-            (restrict true))
+    (restart-identity true)
+    (restrict true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
   (is (= {:op :restrict} (:restrict stmt)))
@@ -811,8 +820,8 @@
 (deftest-stmt test-truncate-continents-continue-cascade
   ["TRUNCATE TABLE continents CONTINUE IDENTITY CASCADE"]
   (truncate [:continents]
-            (continue-identity true)
-            (cascade true))
+    (continue-identity true)
+    (cascade true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
   (is (= {:op :cascade} (:cascade stmt)))
@@ -891,3 +900,14 @@
 ;;              "FROM natural-earth.airports AS a LEFT JOIN airports ON (lower(airports.iata-code) = lower(a.iata-code)) "
 ;;              "JOIN countries AS c ON (c.geography && a.geom) WHERE ((a.gps-code IS NOT NULL) and "
 ;;              "(a.iata-code IS NOT NULL) and (airports.iata-code IS NOT NULL))) AS u WHERE (airports.iata-code = u.iata-code)")]))
+
+
+;; (pprint
+;;  (insert :films []
+;;    (select [*]
+;;      (from :tmp-films)
+;;      (where '(< :date-prod "2004-05-07")))))
+
+;; ((select [*]
+;;    (from :tmp-films)
+;;    (where '(< :date-prod "2004-05-07"))) {})

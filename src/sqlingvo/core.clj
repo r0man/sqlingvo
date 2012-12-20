@@ -1,11 +1,18 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
+            [clojure.pprint :refer [pprint]]
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer [as-keyword parse-expr parse-exprs parse-column parse-from parse-table]]))
 
 (defn- concat-in [m ks & args]
   (apply update-in m ks concat args))
+
+(defn ast
+  "Returns the abstract syntax tree of `stmt`."
+  [stmt]
+  (if (map? stmt)
+    stmt (first (stmt {}))))
 
 (defn as
   "Parse `expr` and return an expr with and AS clause using `alias`."
@@ -46,37 +53,52 @@
 (defn copy
   "Returns a COPY statement."
   [table columns & body]
-  (second ((with-monad state-m (m-seq body))
+  (fn [stmt]
+    (let [[_ copy]
+          ((with-monad state-m (m-seq body))
            {:op :copy
             :table (parse-table table)
-            :columns (map parse-column columns)})))
+            :columns (map parse-column columns)})]
+      [copy (assoc stmt (:op copy) copy)])))
 
 (defn create-table
   "Returns a CREATE TABLE statement."
   [table & body]
-  (second ((with-monad state-m (m-seq body))
+  (fn [stmt]
+    (let [[_ create-table]
+          ((with-monad state-m (m-seq body))
            {:op :create-table
-            :table (parse-table table)})))
+            :table (parse-table table)})]
+      [create-table (assoc stmt (:op create-table) create-table)])))
 
 (defn delete
   "Returns a DELETE statement."
   [table & body]
-  (second ((with-monad state-m (m-seq body))
+  (fn [stmt]
+    (let [[_ delete]
+          ((with-monad state-m (m-seq body))
            {:op :delete
-            :table (parse-table table)})))
+            :table (parse-table table)})]
+      [delete (assoc stmt (:op delete) delete)]))  )
 
 (defn drop-table
   "Returns a DROP TABLE statement."
   [tables & body]
-  (second ((with-monad state-m (m-seq body))
+  (fn [stmt]
+    (let [[_ drop-table]
+          ((with-monad state-m (m-seq body))
            {:op :drop-table
-            :tables (map parse-table tables)})))
+            :tables (map parse-table tables)})]
+      [drop-table (assoc stmt (:op drop-table) drop-table)])))
+
+(defn- realize [stmt])
 
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
   [stmt-2 & {:keys [all]}]
-  (fn [stmt-1]
-    [nil (update-in stmt-1 [:set] conj {:op :except :stmt stmt-2 :all all})]))
+  (let [stmt-2 (ast stmt-2)]
+    (fn [stmt-1]
+      [nil (update-in stmt-1 [:set] conj {:op :except :stmt stmt-2 :all all})])))
 
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement."
@@ -116,16 +138,20 @@
 (defn insert
   "Returns a INSERT statement."
   [table columns & body]
-  (second ((with-monad state-m (m-seq body))
+  (fn [stmt]
+    (let [[_ insert]
+          ((with-monad state-m (m-seq body))
            {:op :insert
             :table (parse-table table)
-            :columns (map parse-column columns)})))
+            :columns (map parse-column columns)})]
+      [insert (assoc stmt (:op insert) insert)])))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
   [stmt-2 & {:keys [all]}]
-  (fn [stmt-1]
-    [nil (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all})]))
+  (let [stmt-2 (ast stmt-2)]
+    (fn [stmt-1]
+      [nil (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all})])))
 
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
@@ -191,12 +217,15 @@
 (defn select
   "Returns a SELECT statement."
   [exprs & body]
-  (second ((with-monad state-m (m-seq body))
+  (fn [stmt]
+    (let [[_ select]
+          ((with-monad state-m (m-seq body))
            {:op :select
             :distinct (if (= :distinct (:op exprs))
                         exprs)
             :exprs (if (sequential? exprs)
-                     (map parse-expr exprs))})))
+                     (map parse-expr exprs))})]
+      [select (assoc stmt (:op select) select)])))
 
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
@@ -209,24 +238,31 @@
 (defn truncate
   "Returns a TRUNCATE statement."
   [tables & body]
-  (second ((with-monad state-m (m-seq body))
+  (fn [stmt]
+    (let [[_ truncate]
+          ((with-monad state-m (m-seq body))
            {:op :truncate
-            :tables (map parse-table tables)})))
+            :tables (map parse-table tables)})]
+      [truncate (assoc stmt (:op truncate) truncate)])))
 
 (defn union
   "Returns a fn that adds a UNION clause to an SQL statement."
   [stmt-2 & {:keys [all]}]
-  (fn [stmt-1]
-    [nil (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all})]))
+  (let [stmt-2 (ast stmt-2)]
+    (fn [stmt-1]
+      [nil (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all})])))
 
 (defn update
   "Returns a UPDATE statement."
   [table row & body]
-  (second ((with-monad state-m (m-seq body))
+  (fn [stmt]
+    (let [[_ update]
+          ((with-monad state-m (m-seq body))
            {:op :update
             :table (parse-table table)
             :exprs (if (sequential? row) (map parse-expr row))
-            :row (if (map? row) row)})))
+            :row (if (map? row) row)})]
+      [update (assoc stmt (:op update) update)])))
 
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
@@ -244,5 +280,6 @@
   (fn [stmt]
     [nil (concat-in stmt [:where] (map parse-expr exprs))]))
 
-(defn sql [stmt]
-  (compile-stmt stmt))
+(defn sql
+  "Compile `stmt` into a clojure.java.jdbc compatible vector."
+  [stmt] (compile-stmt (ast stmt)))

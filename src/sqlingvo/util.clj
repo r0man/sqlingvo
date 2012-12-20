@@ -108,7 +108,9 @@
   {:op :constant :form '*})
 
 (defmethod parse-expr :default [expr]
-  {:op :constant :form expr})
+  (if (fn? expr)
+    (first (expr {}))
+    {:op :constant :form expr}))
 
 (defn parse-exprs [exprs]
   (if exprs {:op :exprs :children (map parse-expr exprs)}))
