@@ -11,7 +11,7 @@ Via Clojars: https://clojars.org/sqlingvo
     (refer-clojure :exclude '[distinct group-by])
     (use 'sqlingvo.core)
 
-## Examples
+## Compiling into SQL
 
 ### [Copy](http://www.postgresql.org/docs/9.2/static/sql-copy.html)
 
@@ -136,6 +136,17 @@ or the number of an output column.
            (group-by :a)
            (order-by 1)))
     ;=> ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
+
+## Running SQL statements against a database
+
+SQLingvo uses the [clojure.java.jdbc](https://github.com/clojure/java.jdbc) library to
+run SQL statements against a database.
+
+    (require '[clojure.java.jdbc :as jdbc])
+
+    (jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
+      (run (select [1 2 3])))
+    ;=> ({:3 3, :2 2, :1 1})
 
 ## Tips & Tricks
 
