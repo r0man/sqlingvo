@@ -1,7 +1,7 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
-            [clojure.pprint :refer [pprint]]
+            [clojure.java.jdbc :as jdbc]
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer [as-keyword parse-expr parse-exprs parse-column parse-from parse-table]]))
 
@@ -283,3 +283,20 @@
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
   [stmt] (compile-stmt (ast stmt)))
+
+(defn run
+  "Compile and run `stmt` against the current clojure.java.jdbc
+  database connection."
+  [stmt]
+  (let [ast (ast stmt)
+        compiled (apply vector (compile-sql ast))]
+    (if (or (= :select (:op ast)) (:returning ast))
+      (jdbc/with-query-results results
+        compiled (doall results))
+      (map #(hash-map :count %1)
+           (jdbc/do-prepared (first compiled) (rest compiled))))))
+
+(defn run1
+  "Run `stmt` against the current clojure.java.jdbc database
+  connection and return the first row."
+  [stmt] (first (run stmt)))

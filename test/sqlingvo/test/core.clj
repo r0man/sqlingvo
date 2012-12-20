@@ -1,11 +1,16 @@
 (ns sqlingvo.test.core
   (:import java.sql.Date)
   (:refer-clojure :exclude [distinct group-by])
+  (:require [clojure.java.jdbc :as jdbc])
   (:use clojure.test
         clojure.pprint
         sqlingvo.compiler
         sqlingvo.util
         sqlingvo.core))
+
+(defmacro with-database [& body]
+  `(jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
+     ~@body))
 
 (defmacro deftest-stmt [name sql stmt & body]
   `(deftest ~name
@@ -910,3 +915,15 @@
                              (is-not-null :airports.iata-code))))
               :u))
     (where '(= :airports.iata-code :u.iata-code))))
+
+;; RUN
+
+(deftest test-run
+  (with-database
+    (is (= [{:1 1 :2 2 :3 3}]
+           (run (select [1 2 3]))))))
+
+(deftest test-run1
+  (with-database
+    (is (= {:1 1 :2 2 :3 3}
+           (run1 (select [1 2 3]))))))
