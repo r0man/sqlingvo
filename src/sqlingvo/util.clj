@@ -49,6 +49,9 @@
         (join ".")
         (keyword))))
 
+(defn concat-in [m ks & args]
+  (apply update-in m ks concat args))
+
 (defn qualified-name
   "Returns the qualified name of `k`."
   [k] (replace (str k) #"^:" ""))

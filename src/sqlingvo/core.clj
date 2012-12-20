@@ -3,10 +3,7 @@
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
             [clojure.java.jdbc :as jdbc]
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
-            [sqlingvo.util :refer [as-keyword parse-expr parse-exprs parse-column parse-from parse-table]]))
-
-(defn- concat-in [m ks & args]
-  (apply update-in m ks concat args))
+            [sqlingvo.util :refer :all]))
 
 (defn ast
   "Returns the abstract syntax tree of `stmt`."
