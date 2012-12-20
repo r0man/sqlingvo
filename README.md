@@ -159,9 +159,12 @@ For better indentation in clojure-mode add this to your Emacs config.
      (lambda ()
        (define-clojure-indent
          (copy 2)
+         (create-table 1)
          (delete 1)
+         (drop-table 1)
          (insert 2)
          (select 1)
+         (truncate 1)
          (update 2))))
 
 ## License
