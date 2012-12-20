@@ -91,8 +91,6 @@
             :tables (map parse-table tables)})]
       [drop-table (assoc stmt (:op drop-table) drop-table)])))
 
-(defn- realize [stmt])
-
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
   [stmt-2 & {:keys [all]}]
