@@ -1,4 +1,4 @@
-2(ns sqlingvo.compiler
+(ns sqlingvo.compiler
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
             [clojure.string :refer [blank? join replace upper-case]]
