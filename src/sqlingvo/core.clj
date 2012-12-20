@@ -283,9 +283,9 @@
   "Compile and run `stmt` against the current clojure.java.jdbc
   database connection."
   [stmt]
-  (let [ast (ast stmt)
-        compiled (apply vector (compile-sql ast))]
-    (if (or (= :select (:op ast)) (:returning ast))
+  (let [ast (ast stmt), compiled (apply vector (compile-sql ast))]
+    (if (or (= :select (:op ast))
+            (:returning ast))
       (jdbc/with-query-results results
         compiled (doall results))
       (map #(hash-map :count %1)
