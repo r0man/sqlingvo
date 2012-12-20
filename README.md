@@ -78,10 +78,10 @@ Insert a row consisting entirely of default values.
 
 Insert some rows into table films from a table tmp-films with the same column layout as films.
 
-    (sql (insert :films
-                 (-> (select *)
-                     (from :tmp-films)
-                     (where '(< :date-prod "2004-05-07")))))
+    (sql (insert :films []
+           (select [*]
+             (from :tmp-films)
+             (where '(< :date-prod "2004-05-07")))))
     ;=> ["INSERT INTO films (SELECT * FROM tmp-films WHERE (date-prod < ?))" "2004-05-07"]
 
 ### [Select](http://www.postgresql.org/docs/9.2/static/sql-select.html)

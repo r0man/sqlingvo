@@ -1,4 +1,5 @@
 (ns sqlingvo.test.core
+  (:import java.sql.Date)
   (:refer-clojure :exclude [distinct group-by])
   (:use clojure.test
         clojure.pprint
@@ -370,13 +371,13 @@
   (is (= [(parse-expr '(is-not-null nil))] (:where stmt))))
 
 (deftest-stmt test-select-backquote-date
-  ["SELECT * FROM countries WHERE (created-at > ?)" (java.sql.Date. 0)]
+  ["SELECT * FROM countries WHERE (created-at > ?)" (Date. 0)]
   (select [*]
     (from :countries)
-    (where `(> :created-at ~(java.sql.Date. 0))))
+    (where `(> :created-at ~(Date. 0))))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr *)] (:exprs stmt)))
-  (is (= [(parse-expr `(> :created-at ~(java.sql.Date. 0)))] (:where stmt))))
+  (is (= [(parse-expr `(> :created-at ~(Date. 0)))] (:where stmt))))
 
 (deftest-stmt test-select-star-number-string
   ["SELECT *, 1, ?" "x"]
@@ -889,28 +890,23 @@
       (where `(and (= :prices.id :u.id)
                    (= :prices.quote-id ~(:id quote)))))))
 
-(comment
-
-  (deftest test-update
-    (are [stmt expected]
-         (is (= expected (sql stmt)))
-         (-> (update
-                 :airports
-                 '((= :country-id :u.id)
-                   (= :gps-code :u.gps-code)
-                   (= :wikipedia-url :u.wikipedia)
-                   (= :location :u.geom)))
-             (from (-> (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code]))
-                       (from (as :natural-earth.airports :a))
-                       (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
-                       (join :airports '(on (= (lower :airports.iata-code) (lower :a.iata-code))) :type :left)
-                       (where '(and (is-not-null :a.gps-code)
-                                    (is-not-null :a.iata-code)
-                                    (is-not-null :airports.iata-code)))
-                       (as :u)))
-             (where '(= :airports.iata-code :u.iata-code)))
-         [(str "UPDATE airports SET country-id = u.id, gps-code = u.gps-code, wikipedia-url = u.wikipedia, location = u.geom "
-               "FROM (SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
-               "FROM natural-earth.airports AS a LEFT JOIN airports ON (lower(airports.iata-code) = lower(a.iata-code)) "
-               "JOIN countries AS c ON (c.geography && a.geom) WHERE ((a.gps-code IS NOT NULL) and "
-               "(a.iata-code IS NOT NULL) and (airports.iata-code IS NOT NULL))) AS u WHERE (airports.iata-code = u.iata-code)")])))
+(deftest-stmt test-update-airports
+  [(str "UPDATE airports SET country-id = u.id, gps-code = u.gps-code, wikipedia-url = u.wikipedia, location = u.geom "
+        "FROM (SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
+        "FROM natural-earth.airports AS a LEFT JOIN airports ON (lower(airports.iata-code) = lower(a.iata-code)) "
+        "JOIN countries AS c ON (c.geography && a.geom) WHERE ((a.gps-code IS NOT NULL) and "
+        "(a.iata-code IS NOT NULL) and (airports.iata-code IS NOT NULL))) AS u WHERE (airports.iata-code = u.iata-code)")]
+  (update :airports
+      '((= :country-id :u.id)
+        (= :gps-code :u.gps-code)
+        (= :wikipedia-url :u.wikipedia)
+        (= :location :u.geom))
+    (from (as (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
+                (from (as :natural-earth.airports :a))
+                (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
+                (join :airports '(on (= (lower :airports.iata-code) (lower :a.iata-code))) :type :left)
+                (where '(and (is-not-null :a.gps-code)
+                             (is-not-null :a.iata-code)
+                             (is-not-null :airports.iata-code))))
+              :u))
+    (where '(= :airports.iata-code :u.iata-code))))
