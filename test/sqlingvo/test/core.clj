@@ -212,6 +212,36 @@
   (is (= (parse-table :distributors) (:table stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
+(deftest-stmt test-insert-subselect
+  ["INSERT INTO films SELECT * FROM tmp-films WHERE (date-prod < ?)" "2004-05-07"]
+  (insert :films []
+    (select [*]
+      (from :tmp-films)
+      (where '(< :date-prod "2004-05-07"))))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= (ast (select [*]
+                (from :tmp-films)
+                (where '(< :date-prod "2004-05-07"))))
+         (:select stmt))))
+
+(deftest-stmt test-insert-airports
+  [(str "INSERT INTO airports (country-id, name, gps-code, iata-code, wikipedia-url, location) "
+        "SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
+        "FROM natural-earth.airports AS a "
+        "LEFT JOIN airports ON (airports.iata-code = a.iata-code) "
+        "JOIN countries AS c ON (c.geography && a.geom) "
+        "WHERE ((a.gps-code IS NOT NULL) and (a.iata-code IS NOT NULL) and (airports.iata-code IS NULL))")]
+  (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
+    (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
+      (from (as :natural-earth.airports :a))
+      (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
+      (join :airports '(on (= :airports.iata-code :a.iata-code)) :type :left)
+      (where '(and (is-not-null :a.gps-code)
+                   (is-not-null :a.iata-code)
+                   (is-null :airports.iata-code))))))
+
 ;; SELECT
 
 (deftest-stmt test-select-1
@@ -838,76 +868,44 @@
   (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
   (is (= {:kind "Dramatic"} (:row stmt))))
 
-;; (deftest test-insert
-;;   (are [stmt expected]
-;;        (is (= expected (sql stmt)))
-;;        (-> (insert :films
-;;                (-> (select *)
-;;                    (from :tmp-films)
-;;                    (where '(< :date-prod "2004-05-07")))))
-;;        ["INSERT INTO films SELECT * FROM tmp-films WHERE (date-prod < ?)" "2004-05-07"]
-;;        (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
-;;          (-> (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code]))
-;;              (from (as :natural-earth.airports :a))
-;;              (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
-;;              (join :airports '(on (= :airports.iata-code :a.iata-code)) :type :left)
-;;              (where '(and (is-not-null :a.gps-code)
-;;                           (is-not-null :a.iata-code)
-;;                           (is-null :airports.iata-code)))))
-;;        [(str "INSERT INTO airports (country-id, name, gps-code, iata-code, wikipedia-url, location) "
-;;              "SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
-;;              "FROM natural-earth.airports AS a "
-;;              "LEFT JOIN airports ON (airports.iata-code = a.iata-code) "
-;;              "JOIN countries AS c ON (c.geography && a.geom) "
-;;              "WHERE ((a.gps-code IS NOT NULL) and (a.iata-code IS NOT NULL) and (airports.iata-code IS NULL))")]))
+(comment
 
-;; (deftest test-update
-;;   (are [stmt expected]
-;;        (is (= expected (sql stmt)))
-;;        (-> (update :quotes '((= :daily-return :u.daily-return)))
-;;            (where '(= :quotes.id :u.id))
-;;            (from (as (-> (select :id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return))
-;;                          (from :quotes)) :u)))
-;;        ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over (partition by company-id order by date desc) AS daily-return FROM quotes) AS u WHERE (quotes.id = u.id)"]
-;;        (let [quote {:id 1}]
-;;          (-> (update :prices '((= :daily-return :u.daily-return)))
-;;              (from (as (-> (select :id (as '(- (/ close ((lag :close) over (partition by :quote-id order by :date desc))) 1)
-;;                                            :daily-return))
-;;                            (from :prices)
-;;                            (where `(= :prices.quote-id ~(:id quote)))) :u))
-;;              (where `(and (= :prices.id :u.id)
-;;                           (= :prices.quote-id ~(:id quote))))))
-;;        [(str "UPDATE prices SET daily-return = u.daily-return "
-;;              "FROM (SELECT id, ((close / lag(close) over (partition by quote-id order by date desc)) - 1) AS daily-return "
-;;              "FROM prices WHERE (prices.quote-id = 1)) AS u WHERE ((prices.id = u.id) and (prices.quote-id = 1))")]
-;;        (-> (update
-;;                :airports
-;;                '((= :country-id :u.id)
-;;                  (= :gps-code :u.gps-code)
-;;                  (= :wikipedia-url :u.wikipedia)
-;;                  (= :location :u.geom)))
-;;            (from (-> (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code]))
-;;                      (from (as :natural-earth.airports :a))
-;;                      (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
-;;                      (join :airports '(on (= (lower :airports.iata-code) (lower :a.iata-code))) :type :left)
-;;                      (where '(and (is-not-null :a.gps-code)
-;;                                   (is-not-null :a.iata-code)
-;;                                   (is-not-null :airports.iata-code)))
-;;                      (as :u)))
-;;            (where '(= :airports.iata-code :u.iata-code)))
-;;        [(str "UPDATE airports SET country-id = u.id, gps-code = u.gps-code, wikipedia-url = u.wikipedia, location = u.geom "
-;;              "FROM (SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
-;;              "FROM natural-earth.airports AS a LEFT JOIN airports ON (lower(airports.iata-code) = lower(a.iata-code)) "
-;;              "JOIN countries AS c ON (c.geography && a.geom) WHERE ((a.gps-code IS NOT NULL) and "
-;;              "(a.iata-code IS NOT NULL) and (airports.iata-code IS NOT NULL))) AS u WHERE (airports.iata-code = u.iata-code)")]))
-
-
-;; (pprint
-;;  (insert :films []
-;;    (select [*]
-;;      (from :tmp-films)
-;;      (where '(< :date-prod "2004-05-07")))))
-
-;; ((select [*]
-;;    (from :tmp-films)
-;;    (where '(< :date-prod "2004-05-07"))) {})
+  (deftest test-update
+    (are [stmt expected]
+         (is (= expected (sql stmt)))
+         (-> (update :quotes '((= :daily-return :u.daily-return)))
+             (where '(= :quotes.id :u.id))
+             (from (as (-> (select :id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return))
+                           (from :quotes)) :u)))
+         ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over (partition by company-id order by date desc) AS daily-return FROM quotes) AS u WHERE (quotes.id = u.id)"]
+         (let [quote {:id 1}]
+           (-> (update :prices '((= :daily-return :u.daily-return)))
+               (from (as (-> (select :id (as '(- (/ close ((lag :close) over (partition by :quote-id order by :date desc))) 1)
+                                             :daily-return))
+                             (from :prices)
+                             (where `(= :prices.quote-id ~(:id quote)))) :u))
+               (where `(and (= :prices.id :u.id)
+                            (= :prices.quote-id ~(:id quote))))))
+         [(str "UPDATE prices SET daily-return = u.daily-return "
+               "FROM (SELECT id, ((close / lag(close) over (partition by quote-id order by date desc)) - 1) AS daily-return "
+               "FROM prices WHERE (prices.quote-id = 1)) AS u WHERE ((prices.id = u.id) and (prices.quote-id = 1))")]
+         (-> (update
+                 :airports
+                 '((= :country-id :u.id)
+                   (= :gps-code :u.gps-code)
+                   (= :wikipedia-url :u.wikipedia)
+                   (= :location :u.geom)))
+             (from (-> (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code]))
+                       (from (as :natural-earth.airports :a))
+                       (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
+                       (join :airports '(on (= (lower :airports.iata-code) (lower :a.iata-code))) :type :left)
+                       (where '(and (is-not-null :a.gps-code)
+                                    (is-not-null :a.iata-code)
+                                    (is-not-null :airports.iata-code)))
+                       (as :u)))
+             (where '(= :airports.iata-code :u.iata-code)))
+         [(str "UPDATE airports SET country-id = u.id, gps-code = u.gps-code, wikipedia-url = u.wikipedia, location = u.geom "
+               "FROM (SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
+               "FROM natural-earth.airports AS a LEFT JOIN airports ON (lower(airports.iata-code) = lower(a.iata-code)) "
+               "JOIN countries AS c ON (c.geography && a.geom) WHERE ((a.gps-code IS NOT NULL) and "
+               "(a.iata-code IS NOT NULL) and (airports.iata-code IS NOT NULL))) AS u WHERE (airports.iata-code = u.iata-code)")])))

@@ -231,8 +231,8 @@
 (defmethod compile-sql :group-by [{:keys [exprs]}]
   (stmt ["GROUP BY"] exprs))
 
-(defmethod compile-sql :insert [{:keys [table columns rows default-values values returning query]}]
-  (let [[sql & args] (if query (compile-sql query))
+(defmethod compile-sql :insert [{:keys [table columns rows default-values values returning select]}]
+  (let [[sql & args] (if select (compile-sql select))
         returning (if returning (map compile-sql returning))]
     (cons (str "INSERT INTO " (first (compile-sql table))
                (if-not (empty? columns)
