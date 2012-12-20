@@ -137,6 +137,8 @@ or the number of an output column.
            (order-by 1)))
     ;=> ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
 
+For more complex examples, look at the tests.
+
 ## Running SQL statements against a database
 
 SQLingvo uses the [clojure.java.jdbc](https://github.com/clojure/java.jdbc) library to
