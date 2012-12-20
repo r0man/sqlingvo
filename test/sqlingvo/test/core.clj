@@ -868,16 +868,19 @@
   (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
   (is (= {:kind "Dramatic"} (:row stmt))))
 
+(deftest-stmt test-update-daily-return
+  ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over (partition by company-id order by date desc) AS daily-return FROM quotes) AS u WHERE (quotes.id = u.id)"]
+  (update :quotes '((= :daily-return :u.daily-return))
+    (where '(= :quotes.id :u.id))
+    (from (as (select [:id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return)]
+                (from :quotes))
+              :u))))
+
 (comment
 
   (deftest test-update
     (are [stmt expected]
          (is (= expected (sql stmt)))
-         (-> (update :quotes '((= :daily-return :u.daily-return)))
-             (where '(= :quotes.id :u.id))
-             (from (as (-> (select :id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return))
-                           (from :quotes)) :u)))
-         ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over (partition by company-id order by date desc) AS daily-return FROM quotes) AS u WHERE (quotes.id = u.id)"]
          (let [quote {:id 1}]
            (-> (update :prices '((= :daily-return :u.daily-return)))
                (from (as (-> (select :id (as '(- (/ close ((lag :close) over (partition by :quote-id order by :date desc))) 1)

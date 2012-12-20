@@ -1,4 +1,4 @@
-(ns sqlingvo.compiler
+2(ns sqlingvo.compiler
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
             [clojure.string :refer [blank? join replace upper-case]]
@@ -356,7 +356,7 @@
   (let [where (if where (map compile-sql where))
         columns (if row (map as-identifier (keys row)))
         exprs (if exprs (map (comp unwrap-stmt compile-expr) exprs))
-        from (if from (map compile-from (:clause from)))]
+        from (if from (map compile-from from))]
     (cons (str "UPDATE " (first (compile-sql table))
                " SET " (if row
                          (apply str (concat (interpose " = ?, " columns) " = ?"))
