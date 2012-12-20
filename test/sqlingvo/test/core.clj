@@ -876,22 +876,24 @@
                 (from :quotes))
               :u))))
 
+(deftest-stmt test-update-prices
+  [(str "UPDATE prices SET daily-return = u.daily-return "
+        "FROM (SELECT id, ((close / lag(close) over (partition by quote-id order by date desc)) - 1) AS daily-return "
+        "FROM prices WHERE (prices.quote-id = 1)) AS u WHERE ((prices.id = u.id) and (prices.quote-id = 1))")]
+  (let [quote {:id 1}]
+    (update :prices '((= :daily-return :u.daily-return))
+      (from (as (select [:id (as '(- (/ close ((lag :close) over (partition by :quote-id order by :date desc))) 1) :daily-return)]
+                  (from :prices)
+                  (where `(= :prices.quote-id ~(:id quote))))
+                :u))
+      (where `(and (= :prices.id :u.id)
+                   (= :prices.quote-id ~(:id quote)))))))
+
 (comment
 
   (deftest test-update
     (are [stmt expected]
          (is (= expected (sql stmt)))
-         (let [quote {:id 1}]
-           (-> (update :prices '((= :daily-return :u.daily-return)))
-               (from (as (-> (select :id (as '(- (/ close ((lag :close) over (partition by :quote-id order by :date desc))) 1)
-                                             :daily-return))
-                             (from :prices)
-                             (where `(= :prices.quote-id ~(:id quote)))) :u))
-               (where `(and (= :prices.id :u.id)
-                            (= :prices.quote-id ~(:id quote))))))
-         [(str "UPDATE prices SET daily-return = u.daily-return "
-               "FROM (SELECT id, ((close / lag(close) over (partition by quote-id order by date desc)) - 1) AS daily-return "
-               "FROM prices WHERE (prices.quote-id = 1)) AS u WHERE ((prices.id = u.id) and (prices.quote-id = 1))")]
          (-> (update
                  :airports
                  '((= :country-id :u.id)
