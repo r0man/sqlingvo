@@ -5,7 +5,7 @@
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer :all]))
 
-(defn- chain-state [body]
+(defn chain-state [body]
   (with-monad state-m (m-seq (remove nil? body))))
 
 (defn ast
@@ -190,7 +190,12 @@
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
-  [& exprs] (fn [stmt] [nil (concat-in stmt [:order-by] (map parse-expr exprs))]))
+  [& exprs]
+  (let [exprs (map parse-expr (remove nil? exprs))]
+    (fn [stmt]
+      (if-not (empty? exprs)
+        [nil (concat-in stmt [:order-by] exprs)]
+        [nil stmt]))))
 
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."

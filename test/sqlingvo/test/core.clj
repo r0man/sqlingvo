@@ -579,6 +579,16 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (nil? (:order-by stmt))))
 
+(deftest-stmt test-select-oder-by-nil
+  ["SELECT * FROM continents"]
+  (select [*]
+    (from :continents)
+    (order-by nil))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (nil? (:order-by stmt))))
+
 (deftest-stmt test-select-1-where-1-is-1
   ["SELECT 1 WHERE (1 = 1)"]
   (select [1]
