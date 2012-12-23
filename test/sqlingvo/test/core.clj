@@ -874,6 +874,17 @@
   (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
   (is (= {:kind "Dramatic"} (:row stmt))))
 
+(deftest-stmt test-update-drama-to-dramatic-returning
+  ["UPDATE films SET kind = ? WHERE (kind = ?) RETURNING *" "Dramatic" "Drama"]
+  (update :films {:kind "Dramatic"}
+    (where '(= :kind "Drama"))
+    (returning *))
+  (is (= :update (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
+  (is (= {:kind "Dramatic"} (:row stmt)))
+  (is (= [(parse-expr *)] (:returning stmt))))
+
 (deftest-stmt test-update-daily-return
   ["UPDATE quotes SET daily-return = u.daily-return FROM (SELECT id, lag(close) over (partition by company-id order by date desc) AS daily-return FROM quotes) AS u WHERE (quotes.id = u.id)"]
   (update :quotes '((= :daily-return :u.daily-return))

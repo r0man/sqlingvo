@@ -353,7 +353,8 @@
   (compile-set-op :union node))
 
 (defmethod compile-sql :update [{:keys [where from exprs table row returning]}]
-  (let [where (if where (map compile-sql where))
+  (let [returning (if returning (map compile-sql returning))
+        where (if where (map compile-sql where))
         columns (if row (map as-identifier (keys row)))
         exprs (if exprs (map (comp unwrap-stmt compile-expr) exprs))
         from (if from (map compile-from from))]
@@ -365,10 +366,12 @@
                  (str " FROM " (join " " (map first from))))
                (if-not (empty? where)
                  (str " WHERE " (join ", " (map first where))))
-               (if returning (apply str " RETURNING " (first (compile-sql (:exprs returning))))))
+               (if-not (empty? returning)
+                 (apply str " RETURNING " (join ", " (map first returning)))))
           (concat (vals row)
                   (mapcat rest (concat exprs from))
-                  (mapcat rest where)))))
+                  (mapcat rest where)
+                  (mapcat rest returning)))))
 
 ;; DEFINE SQL FN ARITY
 
