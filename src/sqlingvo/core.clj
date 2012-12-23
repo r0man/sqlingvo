@@ -52,7 +52,7 @@
   [table columns & body]
   (fn [stmt]
     (let [[_ copy]
-          ((with-monad state-m (m-seq body))
+          ((with-monad state-m (m-seq (remove nil? body)))
            {:op :copy
             :table (parse-table table)
             :columns (map parse-column columns)})]
@@ -63,7 +63,7 @@
   [table & body]
   (fn [stmt]
     (let [[_ create-table]
-          ((with-monad state-m (m-seq body))
+          ((with-monad state-m (m-seq (remove nil? body)))
            {:op :create-table
             :table (parse-table table)})]
       [create-table (assoc stmt (:op create-table) create-table)])))
@@ -73,7 +73,7 @@
   [table & body]
   (fn [stmt]
     (let [[_ delete]
-          ((with-monad state-m (m-seq body))
+          ((with-monad state-m (m-seq (remove nil? body)))
            {:op :delete
             :table (parse-table table)})]
       [delete (assoc stmt (:op delete) delete)]))  )
@@ -83,7 +83,7 @@
   [tables & body]
   (fn [stmt]
     (let [[_ drop-table]
-          ((with-monad state-m (m-seq body))
+          ((with-monad state-m (m-seq (remove nil? body)))
            {:op :drop-table
             :tables (map parse-table tables)})]
       [drop-table (assoc stmt (:op drop-table) drop-table)])))
@@ -135,7 +135,7 @@
   [table columns & body]
   (fn [stmt]
     (let [[_ insert]
-          ((with-monad state-m (m-seq body))
+          ((with-monad state-m (m-seq (remove nil? body)))
            {:op :insert
             :table (parse-table table)
             :columns (map parse-column columns)})]
@@ -214,7 +214,7 @@
   [exprs & body]
   (fn [stmt]
     (let [[_ select]
-          ((with-monad state-m (m-seq body))
+          ((with-monad state-m (m-seq (remove nil? body)))
            {:op :select
             :distinct (if (= :distinct (:op exprs))
                         exprs)
@@ -235,7 +235,7 @@
   [tables & body]
   (fn [stmt]
     (let [[_ truncate]
-          ((with-monad state-m (m-seq body))
+          ((with-monad state-m (m-seq (remove nil? body)))
            {:op :truncate
             :tables (map parse-table tables)})]
       [truncate (assoc stmt (:op truncate) truncate)])))
@@ -252,7 +252,7 @@
   [table row & body]
   (fn [stmt]
     (let [[_ update]
-          ((with-monad state-m (m-seq body))
+          ((with-monad state-m (m-seq (remove nil? body)))
            {:op :update
             :table (parse-table table)
             :exprs (if (sequential? row) (map parse-expr row))

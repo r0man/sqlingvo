@@ -555,6 +555,30 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr (nulls :created-at :last))] (:order-by stmt))))
 
+(deftest-stmt test-select-oder-by-if-true
+  ["SELECT * FROM continents ORDER BY name"]
+  (let [opts {:order-by :name}]
+    (select [*]
+      (from :continents)
+      (if (:order-by opts)
+        (order-by (:order-by opts)))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr :name)] (:order-by stmt))))
+
+(deftest-stmt test-select-oder-by-if-false
+  ["SELECT * FROM continents"]
+  (let [opts {}]
+    (select [*]
+      (from :continents)
+      (if (:order-by opts)
+        (order-by (:order-by opts)))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (nil? (:order-by stmt))))
+
 (deftest-stmt test-select-1-where-1-is-1
   ["SELECT 1 WHERE (1 = 1)"]
   (select [1]
