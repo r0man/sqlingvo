@@ -79,6 +79,8 @@
        {:op :fn :name := :args [{:op :column :schema nil :table nil :name :name :as nil} {:op :constant :form "Europe"}]}
        '(max 1 2)
        {:op :fn :name :max :args [{:op :constant :form 1} {:op :constant :form 2}]}
+       '(max 1 (max 2 3))
+       {:op :fn :name :max :args [{:op :constant :form 1} {:op :fn :name :max :args [{:op :constant :form 2}{:op :constant :form 3} ]}]}
        '((lag :close) over (partition by :company-id order by :date desc))
        '{:op :expr-list
          :as nil
@@ -96,6 +98,8 @@
             {:op :constant :form by}
             {:op :column :schema nil :table nil :name :date :as nil}
             {:op :constant :form desc}]}]}))
+
+
 
 (deftest test-qualified-name
   (are [arg expected]
