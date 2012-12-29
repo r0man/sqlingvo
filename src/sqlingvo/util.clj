@@ -115,9 +115,6 @@
     (first (expr {}))
     {:op :constant :form expr}))
 
-(defn parse-exprs [exprs]
-  (if exprs {:op :exprs :children (map parse-expr exprs)}))
-
 (defn parse-condition [condition]
   {:op :condition :condition (parse-expr condition)})
 
