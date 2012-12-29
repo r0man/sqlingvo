@@ -173,13 +173,13 @@
 
 (defmethod compile-sql :delete [{:keys [where table returning]}]
   (let [returning (if returning (map compile-sql returning))
-        where (if where (map compile-sql where))]
+        where (if where (compile-sql where))]
     (cons (str "DELETE FROM " (first (compile-sql table))
                (if-not (empty? where)
-                 (str " WHERE " (join ", " (map first where))))
+                 (str " WHERE " (first where)))
                (if-not (empty? returning)
                  (apply str " RETURNING " (join ", " (map first returning)))))
-          (concat (mapcat rest where)
+          (concat (rest where)
                   (mapcat rest returning)))))
 
 (defmethod compile-sql :column [{:keys [as schema name table direction nulls]}]
@@ -193,7 +193,7 @@
 
 (defmethod compile-sql :condition [{:keys [condition]}]
   (let [[sql & args] (compile-sql condition)]
-    (cons (str "WHERE " sql) args)))
+    (cons sql args)))
 
 (defmethod compile-sql :drop-table [{:keys [cascade if-exists restrict tables]}]
   (join-stmt
@@ -305,7 +305,7 @@
         joins (if joins (map compile-sql joins))
         exprs (map compile-expr exprs)
         from (map compile-from from)
-        where (map compile-sql where)
+        where (if where (compile-sql where))
         group-by (map compile-sql group-by)
         order-by (map compile-sql order-by)
         set (map compile-sql set)]
@@ -316,7 +316,7 @@
                (if-not (empty? joins)
                  (str " " (join " " (map first joins))))
                (if-not (empty? where)
-                 (str " WHERE " (join ", " (map first where))))
+                 (str " WHERE " (first where)))
                (if-not (empty? group-by)
                  (str " GROUP BY " (join ", " (map first group-by))))
                (if-not (empty? order-by)
@@ -328,7 +328,7 @@
           (concat (mapcat rest exprs)
                   (mapcat rest from)
                   (mapcat rest joins)
-                  (mapcat rest where)
+                  (rest where)
                   (mapcat rest group-by)
                   (mapcat rest order-by)
                   (mapcat rest set)))))
@@ -347,7 +347,7 @@
 
 (defmethod compile-sql :update [{:keys [where from exprs table row returning]}]
   (let [returning (if returning (map compile-sql returning))
-        where (if where (map compile-sql where))
+        where (if where (compile-sql where))
         columns (if row (map as-identifier (keys row)))
         exprs (if exprs (map (comp unwrap-stmt compile-expr) exprs))
         from (if from (map compile-from from))]
@@ -358,12 +358,12 @@
                (if from
                  (str " FROM " (join " " (map first from))))
                (if-not (empty? where)
-                 (str " WHERE " (join ", " (map first where))))
+                 (str " WHERE " (first where)))
                (if-not (empty? returning)
                  (apply str " RETURNING " (join ", " (map first returning)))))
           (concat (vals row)
                   (mapcat rest (concat exprs from))
-                  (mapcat rest where)
+                  (rest where)
                   (mapcat rest returning)))))
 
 ;; DEFINE SQL FN ARITY

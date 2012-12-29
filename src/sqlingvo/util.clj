@@ -118,6 +118,9 @@
 (defn parse-exprs [exprs]
   (if exprs {:op :exprs :children (map parse-expr exprs)}))
 
+(defn parse-condition [condition]
+  {:op :condition :condition (parse-expr condition)})
+
 (defn parse-from [forms]
   (cond
    (keyword? forms)

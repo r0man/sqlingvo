@@ -89,7 +89,7 @@
     (where '(<> :kind "Musical")))
   (is (= :delete (:op stmt)))
   (is (= (parse-table :films) (:table stmt)))
-  (is (= [(parse-expr '(<> :kind "Musical"))] (:where stmt))))
+  (is (= (parse-condition '(<> :kind "Musical")) (:where stmt))))
 
 (deftest-stmt test-delete-completed-tasks-returning-all
   ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
@@ -98,7 +98,7 @@
     (returning *))
   (is (= :delete (:op stmt)))
   (is (= (parse-table :tasks) (:table stmt)))
-  (is (= [(parse-expr '(= status "DONE"))] (:where stmt)))
+  (is (= (parse-condition '(= status "DONE")) (:where stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-delete-films-by-producer-name
@@ -110,10 +110,10 @@
                    (where '(= name "foo"))))))
   (is (= :delete (:op stmt)))
   (is (= (parse-table :films) (:table stmt)))
-  (is (= [(parse-expr `(in :producer-id
-                           ~(select [:id]
-                              (from :producers)
-                              (where '(= name "foo")))))]
+  (is (= (parse-condition `(in :producer-id
+                               ~(select [:id]
+                                  (from :producers)
+                                  (where '(= name "foo")))))
          (:where stmt))))
 
 (deftest-stmt test-delete-quotes
@@ -125,9 +125,9 @@
                  (> :date ~(select ['(max :date)] (from :import))))))
   (is (= :delete (:op stmt)))
   (is (= (parse-table :quotes) (:table stmt)))
-  (is (= [(parse-expr `(and (= :company-id 1)
-                            (> :date ~(select ['(min :date)] (from :import)))
-                            (> :date ~(select ['(max :date)] (from :import)))))]
+  (is (= (parse-condition `(and (= :company-id 1)
+                                (> :date ~(select ['(min :date)] (from :import)))
+                                (> :date ~(select ['(max :date)] (from :import)))))
          (:where stmt))))
 
 ;; DROP TABLE
@@ -300,7 +300,7 @@
     (where '(= :name "Europe")))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr *)] (:exprs stmt)))
-  (is (= [(parse-expr '(= :name "Europe"))] (:where stmt))))
+  (is (= (parse-condition '(= :name "Europe")) (:where stmt))))
 
 (deftest-stmt test-select-where-single-arg-and
   ["SELECT 1 WHERE (1 = 1)"]
@@ -308,7 +308,7 @@
     (where '(and (= 1 1))))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr 1)] (:exprs stmt)))
-  (is (= [(parse-expr '(and (= 1 1)))] (:where stmt))))
+  (is (= (parse-condition '(and (= 1 1))) (:where stmt))))
 
 (deftest-stmt test-select-less-2-arity
   ["SELECT 1 WHERE (1 < 2)"]
@@ -316,7 +316,7 @@
     (where '(< 1 2)))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr 1)] (:exprs stmt)))
-  (is (= [(parse-expr '(< 1 2))] (:where stmt))))
+  (is (= (parse-condition '(< 1 2)) (:where stmt))))
 
 (deftest-stmt test-select-less-3-arity
   ["SELECT 1 WHERE (1 < 2) AND (2 < 3)"]
@@ -324,7 +324,7 @@
     (where '(< 1 2 3)))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr 1)] (:exprs stmt)))
-  (is (= [(parse-expr '(< 1 2 3))] (:where stmt))))
+  (is (= (parse-condition '(< 1 2 3)) (:where stmt))))
 
 (deftest-stmt test-select-continents
   ["SELECT * FROM continents"]
@@ -356,7 +356,7 @@
     (where '(= :kind "Comedy")))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr *)] (:exprs stmt)))
-  (is (= [(parse-expr '(= :kind "Comedy"))] (:where stmt)))
+  (is (= (parse-condition '(= :kind "Comedy")) (:where stmt)))
   (is (= [(parse-from :films)] (:from stmt))))
 
 (deftest-stmt test-select-is-null
@@ -365,7 +365,7 @@
     (where '(is-null nil)))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr 1)] (:exprs stmt)))
-  (is (= [(parse-expr '(is-null nil))] (:where stmt))))
+  (is (= (parse-condition '(is-null nil)) (:where stmt))))
 
 (deftest-stmt test-select-is-not-null
   ["SELECT 1 WHERE (NULL IS NOT NULL)"]
@@ -373,7 +373,7 @@
     (where '(is-not-null nil)))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr 1)] (:exprs stmt)))
-  (is (= [(parse-expr '(is-not-null nil))] (:where stmt))))
+  (is (= (parse-condition '(is-not-null nil)) (:where stmt))))
 
 (deftest-stmt test-select-backquote-date
   ["SELECT * FROM countries WHERE (created-at > ?)" (Date. 0)]
@@ -382,7 +382,7 @@
     (where `(> :created-at ~(Date. 0))))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr *)] (:exprs stmt)))
-  (is (= [(parse-expr `(> :created-at ~(Date. 0)))] (:where stmt))))
+  (is (= (parse-condition `(> :created-at ~(Date. 0))) (:where stmt))))
 
 (deftest-stmt test-select-star-number-string
   ["SELECT *, 1, ?" "x"]
@@ -595,7 +595,7 @@
     (where '(= 1 1)))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr 1)] (:exprs stmt)))
-  (is (= [(parse-expr '(= 1 1))] (:where stmt))))
+  (is (= (parse-condition '(= 1 1)) (:where stmt))))
 
 (deftest-stmt test-select-1-where-1-is-2-is-3
   ["SELECT 1 WHERE (1 = 2) AND (2 = 3)"]
@@ -603,7 +603,7 @@
     (where '(= 1 2 3)))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr 1)] (:exprs stmt)))
-  (is (= [(parse-expr '(= 1 2 3))] (:where stmt))))
+  (is (= (parse-condition '(= 1 2 3)) (:where stmt))))
 
 (deftest-stmt test-select-subquery-alias
   ["SELECT * FROM (SELECT 1, 2, 3) AS x"]
@@ -705,7 +705,7 @@
   (is (= :select (:op stmt)))
   (is (= [(parse-from :quotes)] (:from stmt)))
   (is (= (map parse-expr [:id :symbol :quote]) (:exprs stmt)))
-  (is (= [(parse-expr '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)")))] (:where stmt)))  )
+  (is (= (parse-condition '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))) (:where stmt)))  )
 
 (deftest-stmt test-select-join-on-columns
   ["SELECT * FROM countries JOIN continents ON (continents.id = countries.continent-id)"]
@@ -776,15 +776,6 @@
               :start-dates)
           '(on (and (= :quotes.company-id :start-dates.company-id)
                     (= :quotes.date :start-dates.start-date))))))
-
-(sql (select [:quotes.* :start-date]
-       (from :quotes)
-       (join (as (select [:company-id (as '(min :date) :start-date)]
-                   (from :quotes)
-                   (group-by :company-id))
-                 :start-dates)
-             '(on (and (= :quotes.company-id :start-dates.company-id)
-                       (= :quotes.date :start-dates.start-date))))))
 
 (deftest-stmt test-select-except
   ["SELECT 1 EXCEPT SELECT 2"]
@@ -905,7 +896,7 @@
     (where '(= :kind "Drama")))
   (is (= :update (:op stmt)))
   (is (= (parse-table :films) (:table stmt)))
-  (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
+  (is (= (parse-condition '(= :kind "Drama")) (:where stmt)))
   (is (= {:kind "Dramatic"} (:row stmt))))
 
 (deftest-stmt test-update-drama-to-dramatic-returning
@@ -915,7 +906,7 @@
     (returning *))
   (is (= :update (:op stmt)))
   (is (= (parse-table :films) (:table stmt)))
-  (is (= [(parse-expr '(= :kind "Drama"))] (:where stmt)))
+  (is (= (parse-condition '(= :kind "Drama")) (:where stmt)))
   (is (= {:kind "Dramatic"} (:row stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 

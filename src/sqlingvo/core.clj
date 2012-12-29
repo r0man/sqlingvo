@@ -287,10 +287,10 @@
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
-  [& exprs]
-  (let [where (map parse-expr exprs)]
+  [condition]
+  (let [condition (parse-condition condition)]
     (fn [stmt]
-      [nil (concat-in stmt [:where] where)])))
+      [nil (assoc stmt :where condition)])))
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
