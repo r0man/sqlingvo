@@ -16,7 +16,7 @@
 (defn keyword-sql [k]
   (replace (upper-case (name k)) #"-" " "))
 
-(defn stmt? [arg]
+(defn compiled? [arg]
   (and (sequential? arg) (string? (first arg))))
 
 (defn wrap-stmt [stmt]
@@ -28,7 +28,7 @@
     (cons (replace sql #"^\(|\)$" "") args)))
 
 (defn- join-stmt [separator & stmts]
-  (let [stmts (map #(if (stmt? %1) %1 (compile-sql %1)) (remove empty? stmts))
+  (let [stmts (map #(if (compiled? %1) %1 (compile-sql %1)) (remove empty? stmts))
         stmts (remove (comp blank? first) stmts)]
     (cons (join separator (map first stmts))
           (apply concat (map rest stmts)))))
