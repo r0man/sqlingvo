@@ -53,42 +53,42 @@
 (defn copy
   "Returns a fn that builds a COPY statement."
   [table columns & body]
-  (fn [stmt]
-    (let [[_ copy]
-          ((chain-state body)
-           {:op :copy
-            :table (parse-table table)
-            :columns (map parse-column columns)})]
+  (let [[_ copy]
+        ((chain-state body)
+         {:op :copy
+          :table (parse-table table)
+          :columns (map parse-column columns)})]
+    (fn [stmt]
       [copy (assoc stmt (:op copy) copy)])))
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
   [table & body]
-  (fn [stmt]
-    (let [[_ create-table]
-          ((chain-state body)
-           {:op :create-table
-            :table (parse-table table)})]
+  (let [[_ create-table]
+        ((chain-state body)
+         {:op :create-table
+          :table (parse-table table)})]
+    (fn [stmt]
       [create-table (assoc stmt (:op create-table) create-table)])))
 
 (defn delete
   "Returns a fn that builds a DELETE statement."
   [table & body]
-  (fn [stmt]
-    (let [[_ delete]
-          ((chain-state body)
-           {:op :delete
-            :table (parse-table table)})]
-      [delete (assoc stmt (:op delete) delete)]))  )
+  (let [[_ delete]
+        ((chain-state body)
+         {:op :delete
+          :table (parse-table table)})]
+    (fn [stmt]
+      [delete (assoc stmt (:op delete) delete)])))
 
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
   [tables & body]
-  (fn [stmt]
-    (let [[_ drop-table]
-          ((chain-state body)
-           {:op :drop-table
-            :tables (map parse-table tables)})]
+  (let [[_ drop-table]
+        ((chain-state body)
+         {:op :drop-table
+          :tables (map parse-table tables)})]
+    (fn [stmt]
       [drop-table (assoc stmt (:op drop-table) drop-table)])))
 
 (defn except
@@ -110,7 +110,10 @@
 
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
-  [& exprs] (fn [stmt] [nil (concat-in stmt [:group-by] (map parse-expr exprs))]))
+  [& exprs]
+  (let [group-by (map parse-expr exprs)]
+    (fn [stmt]
+      [nil (concat-in stmt [:group-by] group-by)])))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
@@ -129,19 +132,21 @@
       [nil stmt])))
 
 (defn inherits
+  "Returns a fn that adds an INHERITS clause to an SQL statement."
   [& tables]
-  (fn [stmt]
-    [nil (assoc stmt :inherits (map parse-table tables))]))
+  (let [inherits (map parse-table tables)]
+    (fn [stmt]
+      [nil (assoc stmt :inherits inherits)])))
 
 (defn insert
   "Returns a fn that builds a INSERT statement."
   [table columns & body]
-  (fn [stmt]
-    (let [[_ insert]
-          ((chain-state body)
-           {:op :insert
-            :table (parse-table table)
-            :columns (map parse-column columns)})]
+  (let [[_ insert]
+        ((chain-state body)
+         {:op :insert
+          :table (parse-table table)
+          :columns (map parse-column columns)})]
+    (fn [stmt]
       [insert (assoc stmt (:op insert) insert)])))
 
 (defn intersect
@@ -154,22 +159,22 @@
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from [how & condition] & {:keys [type outer]}]
-  (let [how (keyword how)]
+  (let [how (keyword how)
+        join {:op :join
+              :from (parse-from from)
+              :type type
+              :on (if (= :on how) (parse-expr (first condition)))
+              :using (if (= :using how) (map parse-expr condition))
+              :outer outer}]
     (fn [stmt]
       [nil (update-in
-            stmt [:joins] conj
-            {:op :join
-             :from (parse-from from)
-             :type type
-             :on (if (= :on how) (parse-expr (first condition)))
-             :using (if (= :using how) (map parse-expr condition))
-             :outer outer})])))
+            stmt [:joins] conj join)])))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
   [table & {:as opts}]
-  (fn [stmt]
-    (let [like (assoc opts :op :like :table (parse-table table))]
+  (let [like (assoc opts :op :like :table (parse-table table))]
+    (fn [stmt]
       [nil (assoc stmt :like like)])))
 
 (defn limit
@@ -215,19 +220,22 @@
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
-  [& exprs] (fn [stmt] [nil (concat-in stmt [:returning] (map parse-expr exprs))]))
+  [& exprs]
+  (let [returning (map parse-expr exprs)]
+    (fn [stmt]
+      [nil (concat-in stmt [:returning] returning)])))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
   [exprs & body]
-  (fn [stmt]
-    (let [[_ select]
-          ((chain-state body)
-           {:op :select
-            :distinct (if (= :distinct (:op exprs))
-                        exprs)
-            :exprs (if (sequential? exprs)
-                     (map parse-expr exprs))})]
+  (let [[_ select]
+        ((chain-state body)
+         {:op :select
+          :distinct (if (= :distinct (:op exprs))
+                      exprs)
+          :exprs (if (sequential? exprs)
+                   (map parse-expr exprs))})]
+    (fn [stmt]
       [select (assoc stmt (:op select) select)])))
 
 (defn temporary
@@ -241,11 +249,11 @@
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement."
   [tables & body]
-  (fn [stmt]
-    (let [[_ truncate]
-          ((chain-state body)
-           {:op :truncate
-            :tables (map parse-table tables)})]
+  (let [[_ truncate]
+        ((chain-state body)
+         {:op :truncate
+          :tables (map parse-table tables)})]
+    (fn [stmt]
       [truncate (assoc stmt (:op truncate) truncate)])))
 
 (defn union
@@ -258,13 +266,13 @@
 (defn update
   "Returns a fn that builds a UPDATE statement."
   [table row & body]
-  (fn [stmt]
-    (let [[_ update]
-          ((chain-state body)
-           {:op :update
-            :table (parse-table table)
-            :exprs (if (sequential? row) (map parse-expr row))
-            :row (if (map? row) row)})]
+  (let [[_ update]
+        ((chain-state body)
+         {:op :update
+          :table (parse-table table)
+          :exprs (if (sequential? row) (map parse-expr row))
+          :row (if (map? row) row)})]
+    (fn [stmt]
       [update (assoc stmt (:op update) update)])))
 
 (defn values
@@ -280,8 +288,9 @@
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
   [& exprs]
-  (fn [stmt]
-    [nil (concat-in stmt [:where] (map parse-expr exprs))]))
+  (let [where (map parse-expr exprs)]
+    (fn [stmt]
+      [nil (concat-in stmt [:where] where)])))
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
