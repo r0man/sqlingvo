@@ -209,13 +209,6 @@
     (cons (str sql (if as (str " AS " (as-identifier as))))
           args)))
 
-(defmethod compile-sql :exprs [{:keys [children]}]
-  (let [children (map compile-expr children)]
-    (if (empty? children)
-      ["*"]
-      (cons (join ", " (map first children))
-            (apply concat (map rest children))))))
-
 (defmethod compile-sql :fn [node]
   (compile-fn node))
 

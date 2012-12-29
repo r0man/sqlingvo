@@ -37,12 +37,6 @@
        ["1"]
        {:op :keyword :form :continents.created-at}
        ["continents.created-at"]
-       {:op :exprs :children [{:op :constant :form 1}]}
-       ["1"]
-       {:op :exprs :children [{:op :constant :form "x"}]}
-       ["?" "x"]
-       {:op :exprs :children [{:op :constant :form 1} {:op :constant :form "x"}]}
-       ["1, ?" "x"]
        {:op :fn :name 'max :args [{:op :keyword :form :created-at}]}
        ["max(created-at)"]
        {:op :fn :name 'greatest :args [{:op :constant :form 1} {:op :constant :form 2}]}
@@ -52,14 +46,6 @@
   (jdbc/with-quoted-identifiers \"
     (is (= ["\"continents\".\"created-at\""]
            (compile-sql {:op :keyword :form :continents.created-at})))))
-
-(deftest test-compile-exprs
-  (are [ast expected]
-       (is (= expected (compile-sql ast)))
-       {:op :exprs :children [{:op :keyword :form :created-at}]}
-       ["created-at"]
-       {:op :exprs :children [{:op :keyword :form :name} {:op :keyword :form :created-at}]}
-       ["name, created-at"]))
 
 (deftest test-compile-drop-table
   (are [ast expected]
