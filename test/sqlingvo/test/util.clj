@@ -65,12 +65,20 @@
 (deftest test-parse-expr
   (are [expr expected]
        (is (= expected (parse-expr expr)))
-       '(= 1 1)
-       {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}
+       *
+       {:op :constant :form '*}
+       1
+       {:op :constant :form 1}
+       1.0
+       {:op :constant :form 1.0}
+       "x"
+       {:op :constant :form "x"}
        `(= 1 1)
        {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}
        '(= :name "Europe")
        {:op :fn :name := :args [{:op :column :schema nil :table nil :name :name :as nil} {:op :constant :form "Europe"}]}
+       '(max 1 2)
+       {:op :fn :name :max :args [{:op :constant :form 1} {:op :constant :form 2}]}
        '((lag :close) over (partition by :company-id order by :date desc))
        '{:op :expr-list
          :as nil
