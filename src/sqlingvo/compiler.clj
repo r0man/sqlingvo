@@ -336,6 +336,11 @@
 (defmethod compile-sql :default [{:keys [op]}]
   [(keyword-sql op)])
 
+(defmethod compile-sql :list [{:keys [children]}]
+  (let [children (map compile-sql children)]
+    (cons (str "(" (join ", " (map first children)) ")")
+          (mapcat rest children))))
+
 (defmethod compile-sql :truncate [{:keys [tables continue-identity restart-identity cascade restrict]}]
   (join-stmt
    " " ["TRUNCATE TABLE"]

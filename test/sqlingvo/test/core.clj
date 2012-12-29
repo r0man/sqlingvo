@@ -287,6 +287,14 @@
   (is (= :select (:op stmt)))
   (is (= [(ast (select [1]))] (:exprs stmt))))
 
+(deftest-stmt test-select-1-in-1-2-3
+  ["SELECT 1 WHERE (1 in (1, 2, 3))"]
+  (select [1]
+    (where '(in 1 (1 2 3))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(in 1 (1 2 3))) (:where stmt))))
+
 (deftest-stmt test-select-select-1-select-x
   ["SELECT (SELECT 1), (SELECT ?)" "x"]
   (select [(select [1]) (select ["x"])])
@@ -701,11 +709,11 @@
   ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
   (select [:id :symbol :quote]
     (from :quotes)
-    (where '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
+    (where `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
   (is (= :select (:op stmt)))
   (is (= [(parse-from :quotes)] (:from stmt)))
   (is (= (map parse-expr [:id :symbol :quote]) (:exprs stmt)))
-  (is (= (parse-condition '("~" "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))) (:where stmt)))  )
+  (is (= (parse-condition `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))) (:where stmt)))  )
 
 (deftest-stmt test-select-join-on-columns
   ["SELECT * FROM countries JOIN continents ON (continents.id = countries.continent-id)"]

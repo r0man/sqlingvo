@@ -80,7 +80,17 @@
        '(max 1 2)
        {:op :fn :name :max :args [{:op :constant :form 1} {:op :constant :form 2}]}
        '(max 1 (max 2 3))
-       {:op :fn :name :max :args [{:op :constant :form 1} {:op :fn :name :max :args [{:op :constant :form 2}{:op :constant :form 3} ]}]}
+       {:op :fn :name :max :args [{:op :constant :form 1}
+                                  {:op :fn :name :max
+                                   :args [{:op :constant :form 2}{:op :constant :form 3} ]}]}
+       '(in 1 (1 2 3))
+       {:op :fn
+        :name :in
+        :args [{:op :constant :form 1}
+               {:op :list
+                :children [{:op :constant :form 1}
+                           {:op :constant :form 2}
+                           {:op :constant :form 3}] :as nil}]}
        '((lag :close) over (partition by :company-id order by :date desc))
        '{:op :expr-list
          :as nil

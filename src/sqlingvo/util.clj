@@ -97,9 +97,13 @@
   (parse-fn-expr expr))
 
 (defmethod parse-expr clojure.lang.PersistentList [expr]
-  (if (list? (first expr))
-    {:op :expr-list :children (map parse-expr expr) :as (:as expr)}
-    (parse-fn-expr expr)))
+  (cond
+   (or (keyword? (first expr))
+       (symbol? (first expr)))
+   (parse-fn-expr expr)
+   (list? (first expr))
+   {:op :expr-list :children (map parse-expr expr) :as (:as expr)}
+   :else {:op :list :children (map parse-expr expr) :as (:as expr)}))
 
 (defmethod parse-expr clojure.lang.IPersistentMap [expr]
   expr)
