@@ -82,7 +82,7 @@
 
 (defmulti parse-expr class)
 
-(defn parse-fn-expr [expr]
+(defn- parse-fn-expr [expr]
   {:op :fn
    :name (keyword (name (first expr)))
    :args (map parse-expr (rest expr))})
@@ -93,10 +93,7 @@
 (defmethod parse-expr clojure.lang.Cons [expr]
   (parse-fn-expr expr))
 
-(defmethod parse-expr clojure.lang.LazySeq [expr]
-  (parse-fn-expr expr))
-
-(defmethod parse-expr clojure.lang.PersistentList [expr]
+(defmethod parse-expr clojure.lang.ISeq [expr]
   (cond
    (or (keyword? (first expr))
        (symbol? (first expr)))
