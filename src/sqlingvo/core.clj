@@ -167,8 +167,7 @@
               :using (if (= :using how) (map parse-expr condition))
               :outer outer}]
     (fn [stmt]
-      [nil (update-in
-            stmt [:joins] conj join)])))
+      [nil (update-in stmt [:joins] #(concat %1 [join]))])))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."

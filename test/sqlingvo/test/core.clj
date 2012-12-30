@@ -235,9 +235,8 @@
 (deftest-stmt test-insert-airports
   [(str "INSERT INTO airports (country-id, name, gps-code, iata-code, wikipedia-url, location) "
         "SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
-        "FROM natural-earth.airports AS a "
+        "FROM natural-earth.airports AS a JOIN countries AS c ON (c.geography && a.geom) "
         "LEFT JOIN airports ON (airports.iata-code = a.iata-code) "
-        "JOIN countries AS c ON (c.geography && a.geom) "
         "WHERE ((a.gps-code IS NOT NULL) and (a.iata-code IS NOT NULL) and (airports.iata-code IS NULL))")]
   (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
     (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
@@ -985,9 +984,10 @@
 (deftest-stmt test-update-airports
   [(str "UPDATE airports SET country-id = u.id, gps-code = u.gps-code, wikipedia-url = u.wikipedia, location = u.geom "
         "FROM (SELECT DISTINCT ON (a.iata-code) c.id, a.name, a.gps-code, a.iata-code, a.wikipedia, a.geom "
-        "FROM natural-earth.airports AS a LEFT JOIN airports ON (lower(airports.iata-code) = lower(a.iata-code)) "
-        "JOIN countries AS c ON (c.geography && a.geom) WHERE ((a.gps-code IS NOT NULL) and "
-        "(a.iata-code IS NOT NULL) and (airports.iata-code IS NOT NULL))) AS u WHERE (airports.iata-code = u.iata-code)")]
+        "FROM natural-earth.airports AS a JOIN countries AS c ON (c.geography && a.geom) "
+        "LEFT JOIN airports ON (lower(airports.iata-code) = lower(a.iata-code)) "
+        "WHERE ((a.gps-code IS NOT NULL) and (a.iata-code IS NOT NULL) and (airports.iata-code IS NOT NULL))) AS u "
+        "WHERE (airports.iata-code = u.iata-code)")]
   (update :airports
       '((= :country-id :u.id)
         (= :gps-code :u.gps-code)
