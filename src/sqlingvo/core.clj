@@ -287,10 +287,20 @@
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
-  [condition]
+  [condition & [combine]]
   (let [condition (parse-condition condition)]
     (fn [stmt]
-      [nil (assoc stmt :where condition)])))
+      (cond
+       (or (nil? combine)
+           (nil? (:condition (:where stmt))))
+       [nil (assoc stmt :where condition)]
+       :else
+       [nil (assoc-in stmt [:where :condition]
+                      {:op :condition
+                       :condition {:op :fn
+                                   :name combine
+                                   :args [(:condition (:where stmt))
+                                          (:condition condition)]}})]))))
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."

@@ -860,6 +860,49 @@
       (is (= :select (:op stmt)))
       (is (= (map parse-expr [2]) (:exprs stmt))))))
 
+(deftest-stmt test-select-where-combine-and-1
+  ["SELECT 1 WHERE (1 = 1)"]
+  (select [1]
+    (where '(= 1 1) :and)))
+
+(deftest-stmt test-select-where-combine-and-2
+  ["SELECT 1 WHERE ((1 = 1) and (2 = 2))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :and)))
+
+(deftest-stmt test-select-where-combine-and-3
+  ["SELECT 1 WHERE (((1 = 1) and (2 = 2)) and (3 = 3))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :and)
+    (where '(= 3 3) :and)))
+
+(deftest-stmt test-select-where-combine-or-1
+  ["SELECT 1 WHERE (1 = 1)"]
+  (select [1]
+    (where '(= 1 1) :or)))
+
+(deftest-stmt test-select-where-combine-or-2
+  ["SELECT 1 WHERE ((1 = 1) or (2 = 2))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :or)))
+
+(deftest-stmt test-select-where-combine-or-3
+  ["SELECT 1 WHERE (((1 = 1) or (2 = 2)) or (3 = 3))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :or)
+    (where '(= 3 3) :or)))
+
+(deftest-stmt test-select-where-combine-mixed
+  ["SELECT 1 WHERE (((1 = 1) and (2 = 2)) or (3 = 3))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :and)
+    (where '(= 3 3) :or)))
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
