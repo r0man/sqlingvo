@@ -381,13 +381,13 @@
               (~arity-fn ~'node)))))
 
 (defarity compile-2-ary
-  := :!= :<> :< :> :<= :>= :!~ :!~* :&& "/" "^" "~" "~*" :like :ilike :in)
+  "=" "!=" "<>" "<" ">" "<=" ">=" "&&" "/" "^" "~" "~*" "like" "ilike" "in")
 
 (defarity compile-infix
-  :+ :- :* :& "%" :and :or :union)
+  "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union")
 
 (defarity compile-whitespace-args
-  :partition)
+  "partition")
 
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
