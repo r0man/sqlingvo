@@ -114,11 +114,12 @@
   "Compile a SQL function node into a SQL statement."
   (fn [node] (keyword (:name node))))
 
-(defmethod compile-fn :default [{:keys [as args name]}]
-  (let [args (map compile-expr args)]
-    (cons (str (as-identifier name) "(" (join ", " (map first args)) ")"
-               (if as (str " AS " (as-identifier as))))
-          (apply concat (map rest args)))))
+(defmethod compile-fn :count [{:keys [args]}]
+  (let [distinct? (= 'distinct (:form (first args)))
+        args (map compile-sql (remove #(= 'distinct (:form %1)) args))]
+    (cons (str "count(" (if distinct? "DISTINCT ")
+               (join ", " (map first args)) ")")
+          (mapcat rest args))))
 
 (defmethod compile-fn :is-null [{:keys [args]}]
   (let [[sql & args] (compile-expr (first args))]
@@ -127,6 +128,12 @@
 (defmethod compile-fn :is-not-null [{:keys [args]}]
   (let [[sql & args] (compile-expr (first args))]
     (cons (str "(" sql " IS NOT NULL)") args)))
+
+(defmethod compile-fn :default [{:keys [as args name]}]
+  (let [args (map compile-expr args)]
+    (cons (str (as-identifier name) "(" (join ", " (map first args)) ")"
+               (if as (str " AS " (as-identifier as))))
+          (apply concat (map rest args)))))
 
 ;; COMPILE FROM CLAUSE
 
