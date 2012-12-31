@@ -732,6 +732,19 @@
     (is (= (parse-from :continents) (:from join)))
     (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:on join)))))
 
+(deftest-stmt test-select-join-with-keywords
+  ["SELECT * FROM continents JOIN countries ON (countries.continent-id = continents.id)"]
+  (select [*]
+    (from :continents)
+    (join :countries :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= (parse-from :countries) (:from join)))
+    (is (= (parse-expr '(= :countries.continent-id :continents.id)) (:on join)))))
+
 (deftest-stmt test-select-join-on-columns-alias
   ["SELECT * FROM countries AS c JOIN continents ON (continents.id = c.continent-id)"]
   (select [*]

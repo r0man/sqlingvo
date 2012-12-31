@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
             [clojure.java.jdbc :as jdbc]
+            [inflections.core :refer [foreign-key]]
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer :all]))
 
@@ -158,14 +159,27 @@
 
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
-  [from [how & condition] & {:keys [type outer]}]
-  (let [how (keyword how)
-        join {:op :join
+  [from condition & {:keys [type outer pk]}]
+  (let [join {:op :join
               :from (parse-from from)
               :type type
-              :on (if (= :on how) (parse-expr (first condition)))
-              :using (if (= :using how) (map parse-expr condition))
-              :outer outer}]
+              :outer outer}
+        join (cond
+              (and (sequential? condition)
+                   (= 'on (first condition)))
+              (assoc join
+                :on (parse-expr (first (rest condition))))
+              (and (sequential? condition)
+                   (= 'using (first condition)))
+              (assoc join
+                :using (map parse-expr (rest condition)))
+              (and (keyword? from)
+                   (keyword? condition))
+              (assoc join
+                :on (parse-expr
+                     `(= ~(keyword (str (name from) "." (foreign-key (name condition) "-")))
+                         ~(keyword (str (name condition) "." (name (or pk "id")))))))
+              :else (throw (IllegalArgumentException. (format "Invalid JOIN condition: %s" condition))))]
     (fn [stmt]
       [nil (update-in stmt [:joins] #(concat %1 [join]))])))
 
