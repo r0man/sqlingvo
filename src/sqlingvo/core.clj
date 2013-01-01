@@ -1,7 +1,8 @@
 (ns sqlingvo.core
-  (:refer-clojure :exclude [distinct group-by])
+  (:refer-clojure :exclude [distinct group-by replace])
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
             [clojure.java.jdbc :as jdbc]
+            [clojure.string :refer [replace]]
             [inflections.core :refer [foreign-key]]
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer :all]))
@@ -176,9 +177,10 @@
               (and (keyword? from)
                    (keyword? condition))
               (assoc join
+                :from (parse-table (replace (name from) #"\.[^.]+" ""))
                 :on (parse-expr
-                     `(= ~(keyword (str (name from) "." (foreign-key (name condition) "-")))
-                         ~(keyword (str (name condition) "." (name (or pk "id")))))))
+                     `(= ~(as-keyword (parse-column from))
+                         ~(as-keyword (parse-column condition)))))
               :else (throw (IllegalArgumentException. (format "Invalid JOIN condition: %s" condition))))]
     (fn [stmt]
       [nil (update-in stmt [:joins] #(concat %1 [join]))])))

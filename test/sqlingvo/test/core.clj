@@ -736,7 +736,7 @@
   ["SELECT * FROM continents JOIN countries ON (countries.continent-id = continents.id)"]
   (select [*]
     (from :continents)
-    (join :countries :continents))
+    (join :countries.continent-id :continents.id))
   (is (= :select (:op stmt)))
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr *)] (:exprs stmt)))
