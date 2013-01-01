@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [distinct group-by replace])
   (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
             [clojure.java.jdbc :as jdbc]
-            [clojure.string :refer [replace]]
+            [clojure.string :as str]
             [inflections.core :refer [foreign-key]]
             [sqlingvo.compiler :refer [compile-sql compile-stmt]]
             [sqlingvo.util :refer :all]))
@@ -177,7 +177,7 @@
               (and (keyword? from)
                    (keyword? condition))
               (assoc join
-                :from (parse-table (replace (name from) #"\.[^.]+" ""))
+                :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
                 :on (parse-expr
                      `(= ~(as-keyword (parse-column from))
                          ~(as-keyword (parse-column condition)))))
