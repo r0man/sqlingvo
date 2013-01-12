@@ -921,19 +921,25 @@
     (where '(= 3 3) :or)))
 
 (deftest-stmt test-substring-from-to
-  ["SELECT (substring ? from 2 for 3)" "Thomas"]
+  ["SELECT substring(? from 2 for 3)" "Thomas"]
   (select ['(substring "Thomas" from 2 for 3)]))
 
+(deftest-stmt test-substring-from-to-lower
+  ["SELECT lower(substring(? from 2 for 3))" "Thomas"]
+  (select ['(lower (substring "Thomas" from 2 for 3))]))
+
+;; (sql (select ['(lower (substring "Thomas" from 2 for 3))]))
+
 (deftest-stmt test-substring-from-pattern
-  ["SELECT (substring ? from ?)" "Thomas" "...$"]
+  ["SELECT substring(? from ?)" "Thomas" "...$"]
   (select ['(substring "Thomas" from "...$")]))
 
 (deftest-stmt test-substring-from-pattern-for-escape
-  ["SELECT (substring ? from ? for ?)" "Thomas" "%##\"o_a#\"_" "#"]
+  ["SELECT substring(? from ? for ?)" "Thomas" "%##\"o_a#\"_" "#"]
   (select ['(substring "Thomas" from "%##\"o_a#\"_" for "#")]))
 
 (deftest-stmt test-trim
-  ["SELECT (trim both ? from ?)" "x" "xTomxx"]
+  ["SELECT trim(both ? from ?)" "x" "xTomxx"]
   (select ['(trim both "x" from "xTomxx")]))
 
 ;; TRUNCATE

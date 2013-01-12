@@ -104,9 +104,15 @@
                 (if as (str " AS " (as-identifier as))))
            (apply concat (map rest args))))))
 
-(defn compile-whitespace-args [{:keys [as args name] :as node}]
+(defn compile-complex-args [{:keys [as args name] :as node}]
   (let [[sql & args] (apply join-stmt " " args)]
     (cons (str "(" (core/name name) " " sql ")"
+               (if as (str " AS " (as-identifier as))))
+          args)))
+
+(defn compile-whitespace-args [{:keys [as args name] :as node}]
+  (let [[sql & args] (apply join-stmt " " args)]
+    (cons (str (core/name name) "(" sql ")"
                (if as (str " AS " (as-identifier as))))
           args)))
 
@@ -393,8 +399,10 @@
 (defarity compile-infix
   "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union")
 
+(defarity compile-complex-args
+  "partition")
+
 (defarity compile-whitespace-args
-  "partition"
   "substring"
   "trim")
 
