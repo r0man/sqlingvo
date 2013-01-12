@@ -932,6 +932,10 @@
   ["SELECT (substring ? from ? for ?)" "Thomas" "%##\"o_a#\"_" "#"]
   (select ['(substring "Thomas" from "%##\"o_a#\"_" for "#")]))
 
+(deftest-stmt test-trim
+  ["SELECT (trim both ? from ?)" "x" "xTomxx"]
+  (select ['(trim both "x" from "xTomxx")]))
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
