@@ -394,7 +394,7 @@
   "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union")
 
 (defarity compile-whitespace-args
-  "partition")
+  "partition" "substring")
 
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
