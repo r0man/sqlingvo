@@ -14,7 +14,7 @@
   "Returns the abstract syntax tree of `stmt`."
   [stmt]
   (if (map? stmt)
-    stmt (first (stmt {}))))
+    stmt (second (stmt nil))))
 
 (defn as
   "Parse `expr` and return an expr with and AS clause using `alias`."
@@ -61,7 +61,7 @@
           :table (parse-table table)
           :columns (map parse-column columns)})]
     (fn [stmt]
-      [copy (assoc stmt (:op copy) copy)])))
+      [copy copy])))
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
@@ -71,7 +71,7 @@
          {:op :create-table
           :table (parse-table table)})]
     (fn [stmt]
-      [create-table (assoc stmt (:op create-table) create-table)])))
+      [create-table create-table])))
 
 (defn delete
   "Returns a fn that builds a DELETE statement."
@@ -81,7 +81,7 @@
          {:op :delete
           :table (parse-table table)})]
     (fn [stmt]
-      [delete (assoc stmt (:op delete) delete)])))
+      [delete delete])))
 
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
@@ -91,7 +91,7 @@
          {:op :drop-table
           :tables (map parse-table tables)})]
     (fn [stmt]
-      [drop-table (assoc stmt (:op drop-table) drop-table)])))
+      [drop-table drop-table])))
 
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
@@ -149,7 +149,7 @@
           :table (parse-table table)
           :columns (map parse-column columns)})]
     (fn [stmt]
-      [insert (assoc stmt (:op insert) insert)])))
+      [insert insert])))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
@@ -251,7 +251,9 @@
           :exprs (if (sequential? exprs)
                    (map parse-expr exprs))})]
     (fn [stmt]
-      [select (assoc stmt (:op select) select)])))
+      (case (:op stmt)
+        nil [select select]
+        :insert (repeat 2 (assoc stmt :select select))))))
 
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
@@ -269,7 +271,7 @@
          {:op :truncate
           :tables (map parse-table tables)})]
     (fn [stmt]
-      [truncate (assoc stmt (:op truncate) truncate)])))
+      [truncate truncate])))
 
 (defn union
   "Returns a fn that adds a UNION clause to an SQL statement."
@@ -288,7 +290,7 @@
           :exprs (if (sequential? row) (map parse-expr row))
           :row (if (map? row) row)})]
     (fn [stmt]
-      [update (assoc stmt (:op update) update)])))
+      [update update])))
 
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
