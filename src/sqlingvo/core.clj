@@ -190,15 +190,16 @@
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
   [table & {:as opts}]
-  (let [like (assoc opts :op :like :table (parse-table table))]
-    (fn [stmt]
-      [nil (assoc stmt :like like)])))
+  (domonad state-m
+    [_ (set-val :like (assoc opts :op :like :table (parse-table table)))]
+    nil))
 
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
   [count]
-  (fn [stmt]
-    [nil (assoc stmt :limit {:op :limit :count count})]))
+  (domonad state-m
+    [_ (set-val :limit {:op :limit :count count})]
+    nil))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
@@ -207,8 +208,9 @@
 (defn offset
   "Returns a fn that adds a OFFSET clause to an SQL statement."
   [start]
-  (fn [stmt]
-    [nil (assoc stmt :offset {:op :offset :start start})]))
+  (domonad state-m
+    [_ (set-val :offset {:op :offset :start start})]
+    nil))
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
@@ -238,9 +240,9 @@
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (let [returning (map parse-expr exprs)]
-    (fn [stmt]
-      [nil (concat-in stmt [:returning] returning)])))
+  (domonad state-m
+    [_ (concat-val :returning (map parse-expr exprs))]
+    nil))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
