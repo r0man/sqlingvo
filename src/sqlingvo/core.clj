@@ -114,9 +114,9 @@
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (let [group-by (map parse-expr exprs)]
-    (fn [stmt]
-      [nil (concat-in stmt [:group-by] group-by)])))
+  (domonad state-m
+    [_ (concat-val :group-by (map parse-expr exprs))]
+    nil))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
