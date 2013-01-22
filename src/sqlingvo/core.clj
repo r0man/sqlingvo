@@ -183,8 +183,9 @@
                      `(= ~(as-keyword (parse-column from))
                          ~(as-keyword (parse-column condition)))))
               :else (throw (IllegalArgumentException. (format "Invalid JOIN condition: %s" condition))))]
-    (fn [stmt]
-      [nil (update-in stmt [:joins] #(concat %1 [join]))])))
+    (domonad state-m
+      [_ (concat-val :joins [join])]
+      nil)))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
