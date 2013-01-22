@@ -1,6 +1,6 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by replace])
-  (:require [clojure.algo.monads :refer [state-m m-seq with-monad]]
+  (:require [clojure.algo.monads :refer :all]
             [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [inflections.core :refer [foreign-key]]
@@ -103,12 +103,13 @@
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement."
   [& from]
-  (fn [stmt]
-    [nil (concat-in
-          stmt [:from]
-          (case (:op stmt)
-            :copy [(first from)]
-            (map parse-from from)))]))
+  (domonad state-m
+    [op (fetch-val :op)
+     from (concat-val
+           :from (case op
+                   :copy [(first from)]
+                   (map parse-from from)))]
+    from))
 
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."

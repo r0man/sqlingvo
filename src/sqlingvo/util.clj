@@ -52,6 +52,12 @@
 (defn concat-in [m ks & args]
   (apply update-in m ks concat args))
 
+(defn concat-val [k v]
+  (fn [s]
+    (let [old-val (get s k)
+          new-s (assoc s k (concat old-val v))]
+      [old-val new-s])))
+
 (defn qualified-name
   "Returns the qualified name of `k`."
   [k] (replace (str k) #"^:" ""))
