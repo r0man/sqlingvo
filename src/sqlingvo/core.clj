@@ -159,30 +159,33 @@
     (fn [stmt-1]
       [nil (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all})])))
 
-(defn join
-  "Returns a fn that adds a JOIN clause to an SQL statement."
-  [from condition & {:keys [type outer pk]}]
+(defn- make-join [from condition & {:keys [type outer pk]}]
   (let [join {:op :join
               :from (parse-from from)
               :type type
-              :outer outer}
-        join (cond
-              (and (sequential? condition)
-                   (= 'on (first condition)))
-              (assoc join
-                :on (parse-expr (first (rest condition))))
-              (and (sequential? condition)
-                   (= 'using (first condition)))
-              (assoc join
-                :using (map parse-expr (rest condition)))
-              (and (keyword? from)
-                   (keyword? condition))
-              (assoc join
-                :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
-                :on (parse-expr
-                     `(= ~(as-keyword (parse-column from))
-                         ~(as-keyword (parse-column condition)))))
-              :else (throw (IllegalArgumentException. (format "Invalid JOIN condition: %s" condition))))]
+              :outer outer}]
+    (cond
+     (and (sequential? condition)
+          (= 'on (first condition)))
+     (assoc join
+       :on (parse-expr (first (rest condition))))
+     (and (sequential? condition)
+          (= 'using (first condition)))
+     (assoc join
+       :using (map parse-expr (rest condition)))
+     (and (keyword? from)
+          (keyword? condition))
+     (assoc join
+       :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
+       :on (parse-expr
+            `(= ~(as-keyword (parse-column from))
+                ~(as-keyword (parse-column condition)))))
+     :else (throw (IllegalArgumentException. (format "Invalid JOIN condition: %s" condition))))))
+
+(defn join
+  "Returns a fn that adds a JOIN clause to an SQL statement."
+  [from condition & {:keys [type outer pk]}]
+  (let [join (make-join from condition :type type :outer outer :pk pk)]
     (domonad state-m
       [_ (concat-val :joins [join])]
       nil)))
