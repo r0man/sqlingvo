@@ -285,14 +285,13 @@
 (defn update
   "Returns a fn that builds a UPDATE statement."
   [table row & body]
-  (let [[_ update]
-        ((chain-state body)
-         {:op :update
-          :table (parse-table table)
-          :exprs (if (sequential? row) (map parse-expr row))
-          :row (if (map? row) row)})]
-    (fn [stmt]
-      [update update])))
+  (fn [stmt]
+    (with-monad state-m
+      ((chain-state body)
+       {:op :update
+        :table (parse-table table)
+        :exprs (if (sequential? row) (map parse-expr row))
+        :row (if (map? row) row)}))))
 
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
