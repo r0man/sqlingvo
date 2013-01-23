@@ -110,9 +110,8 @@
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (domonad state-m
-    [_ (concat-val :group-by (map parse-expr exprs))]
-    nil))
+  (with-monad state-m
+    (concat-val :group-by (map parse-expr exprs))))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
@@ -133,9 +132,8 @@
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
   [& tables]
-  (domonad state-m
-    [_ (set-val :inherits (map parse-table tables))]
-    nil))
+  (with-monad state-m
+    (set-val :inherits (map parse-table tables))))
 
 (defn insert
   "Returns a fn that builds a INSERT statement."
@@ -180,24 +178,21 @@
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from condition & {:keys [type outer pk]}]
-  (let [join (make-join from condition :type type :outer outer :pk pk)]
-    (domonad state-m
-      [_ (concat-val :joins [join])]
-      nil)))
+  (with-monad state-m
+    (let [join (make-join from condition :type type :outer outer :pk pk)]
+      (concat-val :joins [join]))))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
   [table & {:as opts}]
-  (domonad state-m
-    [_ (set-val :like (assoc opts :op :like :table (parse-table table)))]
-    nil))
+  (with-monad state-m
+    (set-val :like (assoc opts :op :like :table (parse-table table)))))
 
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
   [count]
-  (domonad state-m
-    [_ (set-val :limit {:op :limit :count count})]
-    nil))
+  (with-monad state-m
+    (set-val :limit {:op :limit :count count})))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
@@ -206,9 +201,8 @@
 (defn offset
   "Returns a fn that adds a OFFSET clause to an SQL statement."
   [start]
-  (domonad state-m
-    [_ (set-val :offset {:op :offset :start start})]
-    nil))
+  (with-monad state-m
+    (set-val :offset {:op :offset :start start})))
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
@@ -238,9 +232,8 @@
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (domonad state-m
-    [_ (concat-val :returning (map parse-expr exprs))]
-    nil))
+  (with-monad state-m
+    (concat-val :returning (map parse-expr exprs))))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
