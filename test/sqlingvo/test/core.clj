@@ -527,7 +527,7 @@
   (is (= [(parse-from :weather-reports)] (:from stmt)))
   (is (= [(parse-expr :location) (desc :time)] (:order-by stmt))))
 
-(deftest-stmt test-select-oder-by-asc
+(deftest-stmt test-select-order-by-asc
   ["SELECT * FROM continents ORDER BY created-at ASC"]
   (select [*]
     (from :continents)
@@ -537,7 +537,7 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr (asc :created-at))] (:order-by stmt))))
 
-(deftest-stmt test-select-oder-by-desc
+(deftest-stmt test-select-order-by-desc
   ["SELECT * FROM continents ORDER BY created-at DESC"]
   (select [*]
     (from :continents)
@@ -547,7 +547,7 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr (desc :created-at))] (:order-by stmt))))
 
-(deftest-stmt test-select-oder-by-nulls-first
+(deftest-stmt test-select-order-by-nulls-first
   ["SELECT * FROM continents ORDER BY created-at NULLS FIRST"]
   (select [*]
     (from :continents)
@@ -557,7 +557,7 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr (nulls :created-at :first))] (:order-by stmt))))
 
-(deftest-stmt test-select-oder-by-nulls-last
+(deftest-stmt test-select-order-by-nulls-last
   ["SELECT * FROM continents ORDER BY created-at NULLS LAST"]
   (select [*]
     (from :continents)
@@ -567,7 +567,7 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr (nulls :created-at :last))] (:order-by stmt))))
 
-(deftest-stmt test-select-oder-by-if-true
+(deftest-stmt test-select-order-by-if-true
   ["SELECT * FROM continents ORDER BY name"]
   (let [opts {:order-by :name}]
     (select [*]
@@ -579,7 +579,7 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr :name)] (:order-by stmt))))
 
-(deftest-stmt test-select-oder-by-if-false
+(deftest-stmt test-select-order-by-if-false
   ["SELECT * FROM continents"]
   (let [opts {}]
     (select [*]
@@ -591,7 +591,7 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (nil? (:order-by stmt))))
 
-(deftest-stmt test-select-oder-by-nil
+(deftest-stmt test-select-order-by-nil
   ["SELECT * FROM continents"]
   (select [*]
     (from :continents)
