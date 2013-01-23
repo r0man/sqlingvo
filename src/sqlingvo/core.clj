@@ -55,43 +55,39 @@
 (defn copy
   "Returns a fn that builds a COPY statement."
   [table columns & body]
-  (let [[_ copy]
-        ((chain-state body)
-         {:op :copy
-          :table (parse-table table)
-          :columns (map parse-column columns)})]
-    (fn [stmt]
-      [copy copy])))
+  (fn [stmt]
+    (with-monad state-m
+      ((m-seq (remove nil? body))
+       {:op :copy
+        :table (parse-table table)
+        :columns (map parse-column columns)}))))
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
   [table & body]
-  (let [[_ create-table]
-        ((chain-state body)
-         {:op :create-table
-          :table (parse-table table)})]
-    (fn [stmt]
-      [create-table create-table])))
+  (fn [stmt]
+    (with-monad state-m
+      ((m-seq (remove nil? body))
+       {:op :create-table
+        :table (parse-table table)}))))
 
 (defn delete
   "Returns a fn that builds a DELETE statement."
   [table & body]
-  (let [[_ delete]
-        ((chain-state body)
-         {:op :delete
-          :table (parse-table table)})]
-    (fn [stmt]
-      [delete delete])))
+  (fn [stmt]
+    (with-monad state-m
+      ((m-seq (remove nil? body))
+       {:op :delete
+        :table (parse-table table)}))))
 
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
   [tables & body]
-  (let [[_ drop-table]
-        ((chain-state body)
-         {:op :drop-table
-          :tables (map parse-table tables)})]
-    (fn [stmt]
-      [drop-table drop-table])))
+  (fn [stmt]
+    (with-monad state-m
+      ((m-seq (remove nil? body))
+       {:op :drop-table
+        :tables (map parse-table tables)}))))
 
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
@@ -144,13 +140,12 @@
 (defn insert
   "Returns a fn that builds a INSERT statement."
   [table columns & body]
-  (let [[_ insert]
-        ((chain-state body)
-         {:op :insert
-          :table (parse-table table)
-          :columns (map parse-column columns)})]
-    (fn [stmt]
-      [insert insert])))
+  (fn [stmt]
+    (with-monad state-m
+      ((m-seq (remove nil? body))
+       {:op :insert
+        :table (parse-table table)
+        :columns (map parse-column columns)}))))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
