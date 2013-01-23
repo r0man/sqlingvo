@@ -1,9 +1,9 @@
 (ns sqlingvo.test.core
   (:import java.sql.Date)
   (:refer-clojure :exclude [distinct group-by])
-  (:require [clojure.java.jdbc :as jdbc])
+  (:require [clojure.algo.monads :refer :all]
+            [clojure.java.jdbc :as jdbc])
   (:use clojure.test
-        clojure.pprint
         sqlingvo.compiler
         sqlingvo.util
         sqlingvo.core))
@@ -1108,3 +1108,11 @@
   (with-database
     (is (= {:1 1 :2 2 :3 3}
            (run1 (select [1 2 3]))))))
+
+(deftest test-comp-stmts
+  (let [s (select [*]
+            (from :continents))
+        o (order-by :name)]
+    (is (= ["SELECT * FROM continents ORDER BY name"]
+           (sql (with-monad state-m
+                  (m-seq [s o])))))))
