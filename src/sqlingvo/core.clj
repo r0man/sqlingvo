@@ -133,9 +133,9 @@
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
   [& tables]
-  (let [inherits (map parse-table tables)]
-    (fn [stmt]
-      [nil (assoc stmt :inherits inherits)])))
+  (domonad state-m
+    [_ (set-val :inherits (map parse-table tables))]
+    nil))
 
 (defn insert
   "Returns a fn that builds a INSERT statement."
