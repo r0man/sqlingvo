@@ -31,6 +31,13 @@
   (is (= {:op :if-not-exists} (:if-not-exists stmt)))
   (is (= [(parse-table :quotes)] (:inherits stmt))))
 
+(deftest-stmt test-create-table-tmp-if-not-exists-false
+  ["CREATE TEMPORARY TABLE import () INHERITS (quotes)"]
+  (create-table :import
+    (temporary true)
+    (if-not-exists false)
+    (inherits :quotes)))
+
 (deftest-stmt test-create-table-like-including-defaults
   ["CREATE TABLE tmp-films (LIKE films INCLUDING DEFAULTS)"]
   (create-table :tmp-films
@@ -144,14 +151,6 @@
   (is (= :drop-table (:op stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt))))
 
-(deftest-stmt test-drop-continents-if-exists
-  ["DROP TABLE IF EXISTS continents"]
-  (drop-table [:continents]
-    (if-exists true))
-  (is (= :drop-table (:op stmt)))
-  (is (= {:op :if-exists} (:if-exists stmt)))
-  (is (= [(parse-table :continents)] (:tables stmt))))
-
 (deftest-stmt test-drop-continents-countries-if-exists-restrict
   ["DROP TABLE IF EXISTS continents, countries RESTRICT"]
   (drop-table [:continents :countries]
@@ -161,6 +160,16 @@
   (is (= {:op :if-exists} (:if-exists stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
   (is (= {:op :restrict} (:restrict stmt))))
+
+(deftest-stmt test-drop-continents-if-exists
+  ["DROP TABLE IF EXISTS continents"]
+  (drop-table [:continents]
+    (if-exists true)))
+
+(deftest-stmt test-drop-continents-if-exists-false
+  ["DROP TABLE continents"]
+  (drop-table [:continents]
+    (if-exists false)))
 
 ;; INSERT
 
@@ -977,6 +986,51 @@
   (is (= [(parse-table :continents)] (:tables stmt)))
   (is (= {:op :cascade} (:cascade stmt)))
   (is (= {:op :continue-identity} (:continue-identity stmt))))
+
+(deftest-stmt test-truncate-cascade
+  ["TRUNCATE TABLE continents CASCADE"]
+  (truncate [:continents]
+    (cascade true)))
+
+(deftest-stmt test-truncate-continue-identity
+  ["TRUNCATE TABLE continents CONTINUE IDENTITY"]
+  (truncate [:continents]
+    (continue-identity true)))
+
+(deftest-stmt test-truncate-continue-identity-false
+  ["TRUNCATE TABLE continents"]
+  (truncate [:continents]
+    (continue-identity false)))
+
+(deftest-stmt test-truncate-cascade
+  ["TRUNCATE TABLE continents"]
+  (truncate [:continents]
+    (cascade false)))
+
+(deftest-stmt test-truncate-cascade-false
+  ["TRUNCATE TABLE continents"]
+  (truncate [:continents]
+    (cascade false)))
+
+(deftest-stmt test-truncate-restart-identity
+  ["TRUNCATE TABLE continents RESTART IDENTITY"]
+  (truncate [:continents]
+    (restart-identity true)))
+
+(deftest-stmt test-truncate-restart-identity-false
+  ["TRUNCATE TABLE continents"]
+  (truncate [:continents]
+    (restart-identity false)))
+
+(deftest-stmt test-truncate-restrict
+  ["TRUNCATE TABLE continents"]
+  (truncate [:continents]
+    (restrict false)))
+
+(deftest-stmt test-truncate-restrict-false
+  ["TRUNCATE TABLE continents"]
+  (truncate [:continents]
+    (restrict false)))
 
 ;; UPDATE
 

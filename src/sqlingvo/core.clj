@@ -28,18 +28,18 @@
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
   [cascade?]
-  (domonad state-m
-    [:when cascade?
-     _ (set-val :cascade {:op :cascade})]
-    nil))
+  (fn [stmt]
+    (if cascade?
+      [nil (assoc stmt :cascade {:op :cascade})]
+      [nil stmt])))
 
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
   [continue-identity?]
-  (domonad state-m
-    [:when continue-identity?
-     _ (set-val :continue-identity {:op :continue-identity})]
-    nil))
+  (fn [stmt]
+    (if continue-identity?
+      [nil (assoc stmt :continue-identity {:op :continue-identity})]
+      [nil stmt])))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -117,25 +117,25 @@
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [if-exists?]
-  (domonad state-m
-    [:when if-exists?
-     _ (set-val :if-exists {:op :if-exists})]
-    nil))
+  (fn [stmt]
+    (if if-exists?
+      [nil (assoc stmt :if-exists {:op :if-exists})]
+      [nil stmt])))
 
 (defn if-not-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [if-not-exists?]
-  (domonad state-m
-    [:when if-not-exists?
-     _ (set-val :if-not-exists {:op :if-not-exists})]
-    nil))
+  (fn [stmt]
+    (if if-not-exists?
+      [nil (assoc stmt :if-not-exists {:op :if-not-exists})]
+      [nil stmt])))
 
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
   [& tables]
-  (domonad state-m
-    [_ (set-val :inherits (map parse-table tables))]
-    nil))
+  (let [inherits (map parse-table tables)]
+    (fn [stmt]
+      [nil (assoc stmt :inherits inherits)])))
 
 (defn insert
   "Returns a fn that builds a INSERT statement."
@@ -222,18 +222,18 @@
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
   [restart-identity?]
-  (domonad state-m
-    [:when restart-identity?
-     _ (set-val :restart-identity {:op :restart-identity})]
-    nil))
+  (fn [stmt]
+    (if restart-identity?
+      [nil (assoc stmt :restart-identity {:op :restart-identity})]
+      [nil stmt])))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
   [restrict?]
-  (domonad state-m
-    [:when restrict?
-     _ (set-val :restrict {:op :restrict})]
-    nil))
+  (fn [stmt]
+    (if restrict?
+      [nil (assoc stmt :restrict {:op :restrict})]
+      [nil stmt])))
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
@@ -260,10 +260,10 @@
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
   [temporary?]
-  (domonad state-m
-    [:when temporary?
-     _ (set-val :temporary {:op :temporary})]
-    nil))
+  (fn [stmt]
+    (if temporary?
+      [nil (assoc stmt :temporary {:op :temporary})]
+      [nil stmt])))
 
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement."
