@@ -46,7 +46,7 @@
   [expr] (assoc (parse-expr expr) :direction :desc))
 
 (defn distinct
-  "Parse `exprs` and retuern a DISTINCT clause."
+  "Parse `exprs` and return a DISTINCT clause."
   [exprs & {:keys [on]}]
   {:op :distinct
    :exprs (map parse-expr exprs)
