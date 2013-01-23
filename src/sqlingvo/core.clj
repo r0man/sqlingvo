@@ -28,18 +28,18 @@
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
   [cascade?]
-  (fn [stmt]
+  (with-monad state-m
     (if cascade?
-      [nil (assoc stmt :cascade {:op :cascade})]
-      [nil stmt])))
+      (set-val :cascade {:op :cascade})
+      (fetch-state))))
 
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
   [continue-identity?]
-  (fn [stmt]
+  (with-monad state-m
     (if continue-identity?
-      [nil (assoc stmt :continue-identity {:op :continue-identity})]
-      [nil stmt])))
+      (set-val :continue-identity {:op :continue-identity})
+      (fetch-state))))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -116,18 +116,18 @@
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [if-exists?]
-  (fn [stmt]
+  (with-monad state-m
     (if if-exists?
-      [nil (assoc stmt :if-exists {:op :if-exists})]
-      [nil stmt])))
+      (set-val :if-exists {:op :if-exists})
+      (fetch-state))))
 
 (defn if-not-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [if-not-exists?]
-  (fn [stmt]
+  (with-monad state-m
     (if if-not-exists?
-      [nil (assoc stmt :if-not-exists {:op :if-not-exists})]
-      [nil stmt])))
+      (set-val :if-not-exists {:op :if-not-exists})
+      (fetch-state))))
 
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
@@ -216,18 +216,18 @@
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
   [restart-identity?]
-  (fn [stmt]
+  (with-monad state-m
     (if restart-identity?
-      [nil (assoc stmt :restart-identity {:op :restart-identity})]
-      [nil stmt])))
+      (set-val :restart-identity {:op :restart-identity})
+      (fetch-state))))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
   [restrict?]
-  (fn [stmt]
+  (with-monad state-m
     (if restrict?
-      [nil (assoc stmt :restrict {:op :restrict})]
-      [nil stmt])))
+      (set-val :restrict {:op :restrict})
+      (fetch-state))))
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
@@ -253,10 +253,10 @@
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
   [temporary?]
-  (fn [stmt]
+  (with-monad state-m
     (if temporary?
-      [nil (assoc stmt :temporary {:op :temporary})]
-      [nil stmt])))
+      (set-val :temporary {:op :temporary})
+      (fetch-state))))
 
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement."
