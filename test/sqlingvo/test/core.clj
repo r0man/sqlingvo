@@ -1097,6 +1097,16 @@
               :u))
     (where '(= :airports.iata-code :u.iata-code))))
 
+(deftest-stmt test-update-countries
+  [(str "UPDATE countries SET geom = u.geom FROM (SELECT iso-a2, iso-a3, iso-n3, geom FROM natural-earth.countries) AS u "
+        "WHERE ((lower(countries.iso-3166-1-alpha-2) = lower(u.iso-a2)) or (lower(countries.iso-3166-1-alpha-3) = lower(u.iso-a3)))")]
+  (update :countries
+      '((= :geom :u.geom))
+    (from (as (select [:iso-a2 :iso-a3 :iso-n3 :geom]
+                (from :natural-earth.countries)) :u))
+    (where '(or (= (lower :countries.iso-3166-1-alpha-2) (lower :u.iso-a2))
+                (= (lower :countries.iso-3166-1-alpha-3) (lower :u.iso-a3))))))
+
 ;; RUN
 
 (deftest test-run
