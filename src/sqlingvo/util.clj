@@ -1,6 +1,7 @@
 (ns sqlingvo.util
   (:refer-clojure :exclude [replace])
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clojure.algo.monads :refer :all]
+            [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [blank? join replace]]
             [inflections.core :refer [hyphenize]]))
 
@@ -53,10 +54,10 @@
   (apply update-in m ks concat args))
 
 (defn concat-val [k v]
-  (fn [s]
-    (let [old-val (get s k)
-          new-s (assoc s k (concat old-val v))]
-      [old-val new-s])))
+  (domonad state-m
+    [old-v (fetch-val k)
+     old-s (set-val k (concat old-v v))]
+    old-s))
 
 (defn qualified-name
   "Returns the qualified name of `k`."
