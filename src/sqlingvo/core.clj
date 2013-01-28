@@ -28,18 +28,16 @@
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
   [cascade?]
-  (with-monad state-m
-    (if cascade?
-      (set-val :cascade {:op :cascade})
-      (fetch-state))))
+  (if cascade?
+    (set-val :cascade {:op :cascade})
+    (fetch-state)))
 
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
   [continue-identity?]
-  (with-monad state-m
-    (if continue-identity?
-      (set-val :continue-identity {:op :continue-identity})
-      (fetch-state))))
+  (if continue-identity?
+    (set-val :continue-identity {:op :continue-identity})
+    (fetch-state)))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -110,30 +108,26 @@
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (with-monad state-m
-    (concat-val :group-by (map parse-expr exprs))))
+  (concat-val :group-by (map parse-expr exprs)))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [if-exists?]
-  (with-monad state-m
-    (if if-exists?
-      (set-val :if-exists {:op :if-exists})
-      (fetch-state))))
+  (if if-exists?
+    (set-val :if-exists {:op :if-exists})
+    (fetch-state)))
 
 (defn if-not-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [if-not-exists?]
-  (with-monad state-m
-    (if if-not-exists?
-      (set-val :if-not-exists {:op :if-not-exists})
-      (fetch-state))))
+  (if if-not-exists?
+    (set-val :if-not-exists {:op :if-not-exists})
+    (fetch-state)))
 
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
   [& tables]
-  (with-monad state-m
-    (set-val :inherits (map parse-table tables))))
+  (set-val :inherits (map parse-table tables)))
 
 (defn insert
   "Returns a fn that builds a INSERT statement."
@@ -178,21 +172,18 @@
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from condition & {:keys [type outer pk]}]
-  (with-monad state-m
-    (let [join (make-join from condition :type type :outer outer :pk pk)]
-      (concat-val :joins [join]))))
+  (let [join (make-join from condition :type type :outer outer :pk pk)]
+    (concat-val :joins [join])))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
   [table & {:as opts}]
-  (with-monad state-m
-    (set-val :like (assoc opts :op :like :table (parse-table table)))))
+  (set-val :like (assoc opts :op :like :table (parse-table table))))
 
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
   [count]
-  (with-monad state-m
-    (set-val :limit {:op :limit :count count})))
+  (set-val :limit {:op :limit :count count}))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
@@ -207,33 +198,29 @@
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
-  (with-monad state-m
-    (let [exprs (map parse-expr (remove nil? exprs))]
-      (if-not (empty? exprs)
-        (concat-val :order-by exprs)
-        (fetch-state)))))
+  (let [exprs (map parse-expr (remove nil? exprs))]
+    (if-not (empty? exprs)
+      (concat-val :order-by exprs)
+      (fetch-state))))
 
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
   [restart-identity?]
-  (with-monad state-m
-    (if restart-identity?
-      (set-val :restart-identity {:op :restart-identity})
-      (fetch-state))))
+  (if restart-identity?
+    (set-val :restart-identity {:op :restart-identity})
+    (fetch-state)))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
   [restrict?]
-  (with-monad state-m
-    (if restrict?
-      (set-val :restrict {:op :restrict})
-      (fetch-state))))
+  (if restrict?
+    (set-val :restrict {:op :restrict})
+    (fetch-state)))
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (with-monad state-m
-    (concat-val :returning (map parse-expr exprs))))
+  (concat-val :returning (map parse-expr exprs)))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
@@ -253,10 +240,9 @@
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
   [temporary?]
-  (with-monad state-m
-    (if temporary?
-      (set-val :temporary {:op :temporary})
-      (fetch-state))))
+  (if temporary?
+    (set-val :temporary {:op :temporary})
+    (fetch-state)))
 
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement."
