@@ -289,12 +289,9 @@
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
   [values]
-  (fn [stmt]
-    [nil (case values
-           :default (assoc stmt :default-values true)
-           (concat-in
-            stmt [:values]
-            (if (sequential? values) values [values])))]))
+  (case values
+    :default (set-val :default-values true)
+    (concat-val :values (if (sequential? values) values [values]))))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
