@@ -207,11 +207,11 @@
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
-  (let [exprs (map parse-expr (remove nil? exprs))]
-    (fn [stmt]
+  (with-monad state-m
+    (let [exprs (map parse-expr (remove nil? exprs))]
       (if-not (empty? exprs)
-        [nil (concat-in stmt [:order-by] exprs)]
-        [nil stmt]))))
+        (concat-val :order-by exprs)
+        (fetch-state)))))
 
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
