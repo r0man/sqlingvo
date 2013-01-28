@@ -53,7 +53,11 @@
 (defn concat-in [m ks & args]
   (apply update-in m ks concat args))
 
-(defn concat-val [k v]
+(defn concat-val
+  "Return a state-monad function that assumes the state to be a map
+   and concats `v` onto the value stored under `k` in the state. The
+   old value is returned."
+  [k v]
   (domonad state-m
     [old-v (fetch-val k)
      old-s (set-val k (concat old-v v))]
