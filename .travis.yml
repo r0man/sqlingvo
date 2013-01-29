@@ -4,8 +4,6 @@ lein: lein2
 before_install:
   - sudo apt-get install wget -qq
   - sudo apt-get install unzip -qq
-
-before_script:
   - echo "Fetching V8..."
   - git clone --branch=master --depth=1 --quiet git://github.com/v8/v8.git v8 && cd v8
   - echo "Building V8"
