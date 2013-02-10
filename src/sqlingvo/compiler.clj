@@ -239,20 +239,22 @@
 
 (defmethod compile-sql :insert [{:keys [table columns rows default-values values returning select]}]
   (let [[sql & args] (if select (compile-sql select))
-        returning (if returning (map compile-sql returning))]
+        returning (if returning (map compile-sql returning))
+        columns (if (and (empty? columns) (not (empty? values)))
+                  (map (fn [k] {:op :column :name k})
+                       (keys (first values)))
+                  columns)]
     (cons (str "INSERT INTO " (first (compile-sql table))
                (if-not (empty? columns)
                  (str " (" (first (apply join-stmt ", " columns)) ")"))
                (if-not (empty? values)
-                 (let [columns (map as-identifier (keys (first values)))
-                       template (str "(" (join ", " (repeat (count columns) "?")) ")")]
-                   (str " (" (join ", " columns) ") VALUES "
-                        (join ", " (repeat (count values) template)))))
+                 (let [template (str "(" (join ", " (repeat (count columns) "?")) ")")]
+                   (str " VALUES " (join ", " (repeat (count values) template)))))
                (if sql (str " " sql))
                (if default-values " DEFAULT VALUES")
                (if-not (empty? returning)
                  (apply str " RETURNING " (join ", " (map first returning)))))
-          (if values (apply concat (map vals values)) args))))
+          (if values (apply concat (map (fn [r] (map r (map :name columns))) values)) args))))
 
 (defmethod compile-sql :intersect [node]
   (compile-set-op :intersect node))

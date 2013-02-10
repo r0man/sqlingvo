@@ -256,6 +256,10 @@
                    (is-not-null :a.iata-code)
                    (is-null :airports.iata-code))))))
 
+(deftest-stmt test-insert-only-columns
+  ["INSERT INTO x (a, b) VALUES (?, ?)" 1 2]
+  (insert :x [:a :b] (values [{:a 1 :b 2 :c 3}])))
+
 ;; SELECT
 
 (deftest-stmt test-select-1
