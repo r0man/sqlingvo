@@ -1111,6 +1111,16 @@
     (where '(or (= (lower :countries.iso-3166-1-alpha-2) (lower :u.iso-a2))
                 (= (lower :countries.iso-3166-1-alpha-3) (lower :u.iso-a3))))))
 
+;; POSTGRESQL ARRAYS
+
+(deftest-stmt test-array
+  ["SELECT ARRAY[1, 2]"]
+  (select [[1 2]]))
+
+(deftest-stmt test-array-concat
+  ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
+  (select ['(|| [1 2] [3 4] [5 6])]))
+
 ;; RUN
 
 (deftest test-run

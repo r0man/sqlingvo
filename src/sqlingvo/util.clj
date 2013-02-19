@@ -116,6 +116,9 @@
 (defmethod parse-expr clojure.lang.IPersistentMap [expr]
   expr)
 
+(defmethod parse-expr clojure.lang.IPersistentVector [expr]
+  {:op :array :children (map parse-expr expr)})
+
 (defmethod parse-expr clojure.lang.Keyword [expr]
   (parse-column expr))
 

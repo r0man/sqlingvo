@@ -68,6 +68,11 @@
   "Compile a SQL expression."
   :op)
 
+(defmethod compile-expr :array [{:keys [children]}]
+  (let [children (map compile-expr children)]
+    (cons (str "ARRAY[" (join ", " (map first children)) "]")
+          (mapcat rest children))))
+
 (defmethod compile-expr :select [{:keys [as] :as expr}]
   (wrap-stmt (compile-sql expr)))
 
@@ -399,7 +404,7 @@
   "=" "!=" "<>" "<" ">" "<=" ">=" "&&" "/" "^" "~" "~*" "like" "ilike" "in")
 
 (defarity compile-infix
-  "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union")
+  "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union" "||")
 
 (defarity compile-complex-args
   "partition")
