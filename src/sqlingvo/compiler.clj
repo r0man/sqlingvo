@@ -125,6 +125,11 @@
   "Compile a SQL function node into a SQL statement."
   (fn [node] (keyword (:name node))))
 
+(defmethod compile-fn :cast [{[expr type] :args}]
+  (let [[sql & args] (compile-expr expr)
+        type (name (:name type))]
+    (cons (str "CAST(" sql " AS " type ")") args)))
+
 (defmethod compile-fn :count [{:keys [args]}]
   (let [distinct? (= 'distinct (:form (first args)))
         args (map compile-sql (remove #(= 'distinct (:form %1)) args))]
