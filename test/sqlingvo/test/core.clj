@@ -8,8 +8,12 @@
         sqlingvo.util
         sqlingvo.core))
 
-(defmacro with-database [& body]
+(defmacro with-sqlite [& body]
   `(jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
+     ~@body))
+
+(defmacro with-postgresql [& body]
+  `(jdbc/with-connection "postgresql://tiger:scotch@localhost/sqlingvo"
      ~@body))
 
 (defmacro deftest-stmt [name sql stmt & body]
@@ -1148,12 +1152,12 @@
 ;; RUN
 
 (deftest test-run
-  (with-database
+  (with-sqlite
     (is (= [{:1 1 :2 2 :3 3}]
            (run (select [1 2 3]))))))
 
 (deftest test-run1
-  (with-database
+  (with-sqlite
     (is (= {:1 1 :2 2 :3 3}
            (run1 (select [1 2 3]))))))
 
@@ -1164,3 +1168,9 @@
     (is (= ["SELECT * FROM continents ORDER BY name"]
            (sql (with-monad state-m
                   (m-seq [s o])))))))
+
+;; RAW SQL
+
+(deftest test-sql-str
+  (is (thrown? UnsupportedOperationException (with-sqlite (sql-str (select [1 "a"])))))
+  (is (= "SELECT 1, 'a'" (with-postgresql (sql-str (select [1 "a"]))))))

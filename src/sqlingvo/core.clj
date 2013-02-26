@@ -300,6 +300,24 @@
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
   [stmt] (compile-stmt (ast stmt)))
 
+(defn- prepare
+  "Compile `stmt` and return a java.sql.PreparedStatement from
+  `connection`."
+  [connection stmt]
+  (let [[sql & args] (sql stmt)
+        stmt (jdbc/prepare-statement (jdbc/connection) sql)]
+    (doall (map-indexed (fn [i v] (.setObject stmt (inc i) v)) args))
+    stmt))
+
+(defn sql-str
+  "Prepare `stmt` against the current clojure.java.jdbc database
+  connection and return the plain SQL as a string."
+  [stmt]
+  (let [sql (first (sql stmt))
+        stmt (prepare (jdbc/connection) stmt)]
+    (if (.startsWith (str stmt) (str/replace sql #"\?.*" ""))
+      (str stmt) (throw (UnsupportedOperationException. "Sorry, sql-str not supported by SQL driver.")))))
+
 (defn run
   "Compile and run `stmt` against the current clojure.java.jdbc
   database connection."

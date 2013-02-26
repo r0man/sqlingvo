@@ -1,2 +1,6 @@
+before_script:
+  - "psql -c \"CREATE DATABASE sqlingvo;\" -U postgres"
+  - "psql -c \"CREATE USER tiger SUPERUSER UNENCRYPTED PASSWORD 'scotch';\" -U postgres"
+
 language: clojure
 lein: lein2
