@@ -145,6 +145,11 @@
   (let [[sql & args] (compile-expr (first args))]
     (cons (str "(" sql " IS NOT NULL)") args)))
 
+(defmethod compile-fn :range [{:keys [args]}]
+  (let [args (map compile-expr args)]
+    (cons (str "(" (join ", " (map first args)) ")")
+          (mapcat rest args))))
+
 (defmethod compile-fn :default [{:keys [as args name]}]
   (let [args (map compile-expr args)]
     (cons (str (as-identifier name) "(" (join ", " (map first args)) ")"
@@ -415,7 +420,7 @@
   "=" "!=" "<>" "<" ">" "<=" ">=" "&&" "/" "^" "~" "~*" "like" "ilike" "in")
 
 (defarity compile-infix
-  "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union" "||")
+  "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union" "||" "overlaps")
 
 (defarity compile-complex-args
   "partition")
