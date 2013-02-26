@@ -137,6 +137,8 @@
   (cond
    (keyword? forms)
    (parse-table forms)
+   (and (map? forms) (= :fn (:op forms)))
+   forms
    (and (map? forms) (= :select (:op forms)))
    forms
    (and (map? forms) (= :table (:op forms)))

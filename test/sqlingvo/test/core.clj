@@ -969,6 +969,10 @@
   ["SELECT * FROM generate_series(0, 10)"]
   (select [*] (from '(generate_series 0 10))))
 
+(deftest-stmt test-select-from-fn-alias
+  ["SELECT n FROM generate_series(0, 200) AS n"]
+  (select [:n] (from (as '(generate_series 0 200) :n))))
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
