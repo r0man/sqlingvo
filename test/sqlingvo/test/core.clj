@@ -560,6 +560,12 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (= [(parse-expr (asc :created-at))] (:order-by stmt))))
 
+(deftest-stmt test-select-order-by-asc-expr
+  ["SELECT * FROM weather.datasets ORDER BY abs((ST_ScaleX(rast) * ST_ScaleY(rast))) DESC"]
+  (select [*]
+    (from :weather.datasets)
+    (order-by (desc '(abs (* (ST_ScaleX :rast) (ST_ScaleY :rast)))))))
+
 (deftest-stmt test-select-order-by-desc
   ["SELECT * FROM continents ORDER BY created-at DESC"]
   (select [*]

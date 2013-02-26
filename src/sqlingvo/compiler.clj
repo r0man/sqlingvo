@@ -236,7 +236,10 @@
           args)))
 
 (defmethod compile-sql :fn [node]
-  (compile-fn node))
+  (let [[sql & args] (compile-fn node)]
+    (cons (if-let [dir (:direction node)]
+            (str sql " " (upper-case (name dir)))
+            sql) args)))
 
 (defmethod compile-sql :from [{:keys [clause joins]}]
   (let [from (map compile-from clause)
