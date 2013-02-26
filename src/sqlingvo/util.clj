@@ -146,4 +146,6 @@
     :as (:as forms)
     :schema (:table forms)
     :name (:name forms)}
+   (list? forms)
+   (parse-expr forms)
    :else (throw (IllegalArgumentException. (str "Can't parse FROM form: " forms)))))

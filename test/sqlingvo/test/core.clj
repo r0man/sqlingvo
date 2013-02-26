@@ -965,6 +965,10 @@
   ["SELECT trim(both ? from ?)" "x" "xTomxx"]
   (select ['(trim both "x" from "xTomxx")]))
 
+(deftest-stmt test-select-from-fn
+  ["SELECT * FROM generate_series(0, 10)"]
+  (select [*] (from '(generate_series 0 10))))
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents

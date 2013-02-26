@@ -109,7 +109,11 @@
             {:op :column :schema nil :table nil :name :date :as nil}
             {:op :constant :form desc}]}]}))
 
-
+(deftest test-parse-from
+  (are [from expected]
+       (is (= expected (parse-from from)))
+       '(generate_series 0 10)
+       {:op :fn, :name :generate_series, :args [{:op :constant, :form 0} {:op :constant, :form 10}]}))
 
 (deftest test-qualified-name
   (are [arg expected]

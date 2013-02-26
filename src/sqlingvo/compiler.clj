@@ -155,6 +155,9 @@
 
 (defmulti compile-from :op)
 
+(defmethod compile-from :fn [fn]
+  (compile-sql fn))
+
 (defmethod compile-from :select [node]
   (let [[sql & args] (compile-sql node)]
     (cons (str "(" sql ") AS " (as-identifier (:as node))) args)))
