@@ -22,6 +22,12 @@
        (is (= ~sql (sql ~stmt)))
        ~@body)))
 
+(deftest-stmt test-compose
+  ["SELECT id, name FROM continents WHERE (id = 1) ORDER BY name"]
+  (compose (select [:id :name] (from :continents))
+           (where '(= :id 1))
+           (order-by :name)))
+
 ;; CAST
 
 (deftest-stmt test-cast-int-as-text
