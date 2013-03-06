@@ -758,10 +758,10 @@
   (is (= [(parse-expr :sum)] (:order-by stmt))))
 
 (deftest-stmt test-select-setval
-  ["SELECT setval(continentd-id-seq, (SELECT max(id) FROM continents))"]
-  (select [`(setval :continentd-id-seq ~(select [`(max :id)] (from :continents)))])
+  ["SELECT setval(continent-id-seq, (SELECT max(id) FROM continents))"]
+  (select [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
   (is (= :select (:op stmt)))
-  (is (= (map parse-expr [`(setval :continentd-id-seq ~(select [`(max :id)] (from :continents)))])
+  (is (= (map parse-expr [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
          (:exprs stmt))))
 
 (deftest-stmt test-select-regex-match
