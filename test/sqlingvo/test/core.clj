@@ -78,6 +78,22 @@
     (is (= (parse-table :films) (:table like)))
     (is (= [:indexes] (:excluding like)))))
 
+(deftest-stmt test-create-table-films
+  [(str "CREATE TABLE films ("
+        "code CHAR(5) PRIMARY KEY, "
+        "title VARCHAR(40) NOT NULL, "
+        "did INTEGER NOT NULL, "
+        "date-prod DATE, "
+        "kind VARCHAR(10), "
+        "len INTERVAL)")]
+  (create-table :films
+    (column :code :char :length 5 :primary-key? true)
+    (column :title :varchar :length 40 :not-null? true)
+    (column :did :integer :not-null? true)
+    (column :date-prod :date)
+    (column :kind :varchar :length 10)
+    (column :len :interval)))
+
 ;; COPY
 
 (deftest-stmt test-copy-stdin

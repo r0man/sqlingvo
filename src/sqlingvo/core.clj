@@ -36,6 +36,17 @@
     (set-val :cascade {:op :cascade})
     (fetch-state)))
 
+(defn column
+  "Add a column to `stmt`."
+  [name type & {:as options}]
+  (let [column (assoc options :op :column :name name :type type)]
+    (fn [stmt]
+      [nil (-> (update-in stmt [:columns] #(concat %1 [(:name column)]))
+               (assoc-in [:column (:name column)]
+                         (assoc column
+                           :schema (:schema stmt)
+                           :table (:name stmt))))])))
+
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
   [continue-identity?]

@@ -185,22 +185,35 @@
            (string? from) [from]
            (= :stdin from) []))))
 
-(defmethod compile-sql :create-table [{:keys [columns table if-not-exists inherits like temporary]}]
-  (cons (str "CREATE"
-             (if temporary " TEMPORARY")
-             " TABLE"
-             (if if-not-exists " IF NOT EXISTS")
-             (str " " (first (compile-sql table)))
-             " ("
-             (cond
-              (not (empty? columns))
-              (join ", " (map (comp first compile-sql) columns))
-              like
-              (first (compile-sql like)))
-             ")"
-             (if inherits
-               (str " INHERITS (" (join ", " (map (comp first compile-sql) inherits)) ")")))
-        []))
+(defn compile-column [column]
+  [(str (as-identifier (:name column))
+        " " (upper-case (name (:type column)))
+        (if-let [length (:length column)]
+          (str "(" length ")"))
+        (if (:not-null? column)
+          " NOT NULL")
+        (if (:unique? column)
+          " UNIQUE")
+        (if (:primary-key? column)
+          " PRIMARY KEY"))])
+
+(defmethod compile-sql :create-table [{:keys [table if-not-exists inherits like temporary] :as node}]
+  (let [columns (map compile-column (map (:column node) (:columns node)))]
+    (cons (str "CREATE"
+               (if temporary " TEMPORARY")
+               " TABLE"
+               (if if-not-exists " IF NOT EXISTS")
+               (str " " (first (compile-sql table)))
+               " ("
+               (cond
+                (not (empty? columns))
+                (join ", " (map first columns))
+                like
+                (first (compile-sql like)))
+               ")"
+               (if inherits
+                 (str " INHERITS (" (join ", " (map (comp first compile-sql) inherits)) ")")))
+          [])))
 
 (defmethod compile-sql :delete [{:keys [where table returning]}]
   (let [returning (if returning (map compile-sql returning))
