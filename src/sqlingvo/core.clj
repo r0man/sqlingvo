@@ -23,7 +23,17 @@
 (defn as
   "Parse `expr` and return an expr with and AS clause using `alias`."
   [expr alias]
-  (assoc (parse-expr expr) :as (as-keyword alias)))
+  (if (sequential? alias)
+    (for [alias alias]
+      (let [table (parse-table expr)]
+        (assoc table
+          :op :column
+          :as (->> (concat (map table [:schema :name]) [alias])
+                   (remove nil?)
+                   (map name)
+                   (str/join "-")
+                   (keyword)))))
+    (assoc (parse-expr expr) :as (as-keyword alias))))
 
 (defn asc
   "Parse `expr` and return an ORDER BY expr using ascending order."
