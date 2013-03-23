@@ -34,15 +34,15 @@
   (are [args expected]
        (is (= expected (apply as args)))
        [:id :other]
-       {:op :column, :schema nil, :table nil, :name :id, :as :other}
+       {:op :column :schema nil :table nil :name :id :as :other}
        [:continents [:id :name]]
-       [{:op :column, :schema nil, :name :continents, :as :continents-id}
-        {:op :column, :schema nil, :name :continents, :as :continents-name}]
+       [{:op :column :schema nil :table :continents :name :id :as :continents-id}
+        {:op :column :schema nil :table :continents :name :name :as :continents-name}]
        [:public.continents [:id :name]]
-       [{:op :column, :schema :public, :name :continents, :as :public-continents-id}
-        {:op :column, :schema :public, :name :continents, :as :public-continents-name}]
+       [{:op :column :schema :public :table :continents :name :id :as :public-continents-id}
+        {:op :column :schema :public :table :continents :name :name :as :public-continents-name}]
        ['(count *) :count]
-       {:as :count, :op :fn, :name :count, :args [{:op :constant, :form '*}]}))
+       {:as :count :op :fn :name :count :args [{:op :constant :form '*}]}))
 
 ;; CAST
 

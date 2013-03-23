@@ -25,10 +25,9 @@
   [expr alias]
   (if (sequential? alias)
     (for [alias alias]
-      (let [table (parse-table expr)]
-        (assoc table
-          :op :column
-          :as (->> (concat (map table [:schema :name]) [alias])
+      (let [column (parse-column (str expr "." (name alias)))]
+        (assoc column
+          :as (->> (map column [:schema :table :name])
                    (remove nil?)
                    (map name)
                    (str/join "-")
