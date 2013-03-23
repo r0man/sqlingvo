@@ -999,8 +999,6 @@
   ["SELECT lower(substring(? from 2 for 3))" "Thomas"]
   (select ['(lower (substring "Thomas" from 2 for 3))]))
 
-;; (sql (select ['(lower (substring "Thomas" from 2 for 3))]))
-
 (deftest-stmt test-substring-from-pattern
   ["SELECT substring(? from ?)" "Thomas" "...$"]
   (select ['(substring "Thomas" from "...$")]))
@@ -1020,6 +1018,15 @@
 (deftest-stmt test-select-from-fn-alias
   ["SELECT n FROM generate_series(0, 200) AS n"]
   (select [:n] (from (as '(generate_series 0 200) :n))))
+
+(deftest-stmt test-select-qualified-column
+  ["SELECT continents.id FROM continents"]
+  (select [{:op :column :table :continents :name :id}]
+    (from :continents)))
+
+(deftest-stmt test-select-qualified-keyword-column
+  ["SELECT continents.id FROM continents"]
+  (select [:continents.id] (from :continents)))
 
 ;; TRUNCATE
 
