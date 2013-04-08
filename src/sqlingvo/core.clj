@@ -325,36 +325,31 @@
   [stmt] (compile-stmt (ast stmt)))
 
 (defn- prepare
-  "Compile `stmt` and return a java.sql.PreparedStatement from
-  `connection`."
-  [connection stmt]
+  "Compile `stmt` and return a java.sql.PreparedStatement from `db`."
+  [db stmt]
   (let [[sql & args] (sql stmt)
-        stmt (jdbc/prepare-statement connection sql)]
+        stmt (jdbc/prepare-statement (jdbc/get-connection db) sql)]
     (doall (map-indexed (fn [i v] (.setObject stmt (inc i) v)) args))
     stmt))
 
 (defn sql-str
-  "Prepare `stmt` against the current clojure.java.jdbc database
-  connection and return the plain SQL as a string."
-  [stmt]
+  "Prepare `stmt` using the database and return the raw SQL as a string."
+  [db stmt]
   (let [sql (first (sql stmt))
-        stmt (prepare (jdbc/connection) stmt)]
+        stmt (prepare db stmt)]
     (if (.startsWith (str stmt) (str/replace sql #"\?.*" ""))
       (str stmt) (throw (UnsupportedOperationException. "Sorry, sql-str not supported by SQL driver.")))))
 
 (defn run
-  "Compile and run `stmt` against the current clojure.java.jdbc
-  database connection."
-  [stmt]
+  "Compile and run `stmt` against the database and return the rows."
+  [db stmt & {:keys [transaction?]}]
   (let [ast (ast stmt), compiled (apply vector (compile-sql ast))]
     (if (or (= :select (:op ast))
             (:returning ast))
-      (jdbc/with-query-results results
-        compiled (doall results))
+      (jdbc/query db compiled)
       (map #(hash-map :count %1)
-           (jdbc/do-prepared (first compiled) (rest compiled))))))
+           (jdbc/db-do-prepared db transaction? (first compiled) (rest compiled))))))
 
 (defn run1
-  "Run `stmt` against the current clojure.java.jdbc database
-  connection and return the first row."
-  [stmt] (first (run stmt)))
+  "Run `stmt` against the database and return the first row."
+  [db stmt] (first (run db stmt)))
