@@ -4,7 +4,7 @@
             [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [inflections.core :refer [foreign-key]]
-            [sqlingvo.compiler :refer [compile-sql compile-stmt]]
+            [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]))
 
 (defn chain-state [body]
@@ -343,7 +343,7 @@
 (defn run
   "Compile and run `stmt` against the database and return the rows."
   [db stmt & {:keys [transaction?]}]
-  (let [ast (ast stmt), compiled (apply vector (compile-sql ast))]
+  (let [ast (ast stmt), compiled (compile-stmt ast)]
     (if (or (= :select (:op ast))
             (:returning ast))
       (jdbc/query db compiled)
