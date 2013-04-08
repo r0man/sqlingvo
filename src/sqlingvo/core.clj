@@ -329,7 +329,7 @@
   `connection`."
   [connection stmt]
   (let [[sql & args] (sql stmt)
-        stmt (jdbc/prepare-statement (jdbc/connection) sql)]
+        stmt (jdbc/prepare-statement connection sql)]
     (doall (map-indexed (fn [i v] (.setObject stmt (inc i) v)) args))
     stmt))
 
