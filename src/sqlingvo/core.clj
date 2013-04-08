@@ -71,7 +71,7 @@
   "Parse `exprs` and return a DISTINCT clause."
   [exprs & {:keys [on]}]
   {:op :distinct
-   :exprs (map parse-expr exprs)
+   :exprs (parse-expressions exprs)
    :on (map parse-expr on)})
 
 (defn copy
@@ -132,7 +132,7 @@
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (concat-val :group-by (map parse-expr exprs)))
+  (concat-val :group-by (parse-expressions exprs)))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
@@ -222,7 +222,7 @@
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
-  (let [exprs (map parse-expr (remove nil? exprs))]
+  (let [exprs (parse-expressions exprs)]
     (if-not (empty? exprs)
       (concat-val :order-by exprs)
       (fetch-state))))
@@ -244,7 +244,7 @@
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (concat-val :returning (map parse-expr exprs)))
+  (concat-val :returning (parse-expressions exprs)))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
@@ -255,7 +255,7 @@
           :distinct (if (= :distinct (:op exprs))
                       exprs)
           :exprs (if (sequential? exprs)
-                   (map parse-expr exprs))})]
+                   (parse-expressions exprs))})]
     (fn [stmt]
       (case (:op stmt)
         nil [select select]
