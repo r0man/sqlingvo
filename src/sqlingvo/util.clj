@@ -130,7 +130,7 @@
     (first (expr {}))
     {:op :constant :form expr}))
 
-(defn parse-expressions [exprs]
+(defn parse-exprs [exprs]
   (map parse-expr (remove nil? exprs)))
 
 (defn parse-condition [condition]
