@@ -3,7 +3,7 @@
   (:require [clojure.algo.monads :refer :all]
             [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
-            [inflections.core :refer [foreign-key]]
+            [inflections.core :refer [foreign-key hyphenize underscore]]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]))
 
@@ -322,7 +322,8 @@
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
-  [stmt] (compile-stmt (ast stmt)))
+  [stmt & {:keys [entities]}]
+  (compile-stmt (ast stmt) :entities entities))
 
 (defn- prepare
   "Compile `stmt` and return a java.sql.PreparedStatement from `db`."
@@ -334,22 +335,22 @@
 
 (defn sql-str
   "Prepare `stmt` using the database and return the raw SQL as a string."
-  [db stmt]
-  (let [sql (first (sql stmt))
+  [db stmt & opts]
+  (let [sql (first (apply sql stmt opts))
         stmt (prepare db stmt)]
     (if (.startsWith (str stmt) (str/replace sql #"\?.*" ""))
       (str stmt) (throw (UnsupportedOperationException. "Sorry, sql-str not supported by SQL driver.")))))
 
 (defn run
   "Compile and run `stmt` against the database and return the rows."
-  [db stmt & {:keys [transaction?]}]
-  (let [ast (ast stmt), compiled (compile-stmt ast)]
+  [db stmt & {:keys [entities identifiers transaction?]}]
+  (let [ast (ast stmt), compiled (compile-stmt ast :entities entities)]
     (if (or (= :select (:op ast))
             (:returning ast))
-      (jdbc/query db compiled)
+      (jdbc/query db compiled :identifiers (or identifiers hyphenize))
       (map #(hash-map :count %1)
            (jdbc/db-do-prepared db transaction? (first compiled) (rest compiled))))))
 
 (defn run1
   "Run `stmt` against the database and return the first row."
-  [db stmt] (first (run db stmt)))
+  [db stmt & opts] (first (apply run db stmt opts)))

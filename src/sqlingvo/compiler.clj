@@ -1,7 +1,9 @@
 (ns sqlingvo.compiler
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
+            [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [blank? join replace upper-case]]
+            [inflections.core :refer [underscore]]
             [sqlingvo.util :refer [as-identifier]]))
 
 (defprotocol SQLType
@@ -445,4 +447,6 @@
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
-  [stmt] (apply vector (compile-sql stmt)))
+  [stmt & {:keys [entities]}]
+  (jdbc/with-naming-strategy {:entity underscore}
+    (apply vector (compile-sql stmt))))
