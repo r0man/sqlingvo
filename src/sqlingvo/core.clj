@@ -353,4 +353,5 @@
 
 (defn run1
   "Run `stmt` against the database and return the first row."
-  [db stmt & opts] (first (apply run db stmt opts)))
+  [db stmt & opts]
+  (first (apply run db stmt opts)))
