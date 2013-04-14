@@ -345,8 +345,7 @@
   "Compile and run `stmt` against the database and return the rows."
   [db stmt & {:keys [entities identifiers transaction?]}]
   (let [ast (ast stmt), compiled (compile-stmt ast :entities entities)]
-    (if (or (= :select (:op ast))
-            (:returning ast))
+    (if (or (= :select (:op ast)) (:returning ast))
       (jdbc/query db compiled :identifiers (or identifiers hyphenize))
       (map #(hash-map :count %1)
            (jdbc/db-do-prepared db transaction? (first compiled) (rest compiled))))))
