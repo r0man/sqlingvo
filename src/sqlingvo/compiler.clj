@@ -290,7 +290,9 @@
                (if default-values " DEFAULT VALUES")
                (if-not (empty? returning)
                  (apply str " RETURNING " (join ", " (map first returning)))))
-          (if values (apply concat (map (fn [r] (map r (map :name columns))) values)) args))))
+          (if-not (empty? values)
+            (apply concat (map (fn [r] (map r (map :name columns))) values))
+            args))))
 
 (defmethod compile-sql :intersect [node]
   (compile-set-op :intersect node))
