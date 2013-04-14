@@ -328,10 +328,11 @@
 (defn- prepare
   "Compile `stmt` and return a java.sql.PreparedStatement from `db`."
   [db stmt]
-  (let [[sql & args] (sql stmt)
-        stmt (jdbc/prepare-statement (jdbc/get-connection db) sql)]
-    (doall (map-indexed (fn [i v] (.setObject stmt (inc i) v)) args))
-    stmt))
+  (with-open [connection (jdbc/get-connection db)]
+    (let [[sql & args] (sql stmt)
+          stmt (jdbc/prepare-statement connection sql)]
+      (doall (map-indexed (fn [i v] (.setObject stmt (inc i) v)) args))
+      stmt)))
 
 (defn sql-str
   "Prepare `stmt` using the database and return the raw SQL as a string."
