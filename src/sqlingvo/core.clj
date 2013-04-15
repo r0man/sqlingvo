@@ -379,7 +379,13 @@
   "Evaluate `body` within a transaction on `db` and rollback
   afterwards."
   [[symbol db] & body]
-  `(jdbc/db-transaction
-    [~symbol ~db]
-    (jdbc/db-set-rollback-only! ~symbol)
-    ~@body))
+  `(let [run# (fn [db#]
+                (jdbc/db-transaction
+                 [~symbol db#]
+                 (jdbc/db-set-rollback-only! ~symbol)
+                 ~@body))]
+     (let [db# ~db]
+       (if (and (map? db#) (:connection db#))
+         (run# db#)
+         (with-open [connection# (jdbc/get-connection db#)]
+           (run# (jdbc/add-connection db# connection#)))))))
