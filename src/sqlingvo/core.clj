@@ -342,16 +342,44 @@
     (if (.startsWith (str stmt) (str/replace sql #"\?.*" ""))
       (str stmt) (throw (UnsupportedOperationException. "Sorry, sql-str not supported by SQL driver.")))))
 
+(defn- run-query
+  [db compiled  & {:keys [identifiers transaction?]}]
+  (let [query #(jdbc/query %1 compiled :identifiers (or identifiers hyphenize))]
+    (if transaction?
+      (jdbc/db-transaction [t-db db] (query t-db))
+      (query db))))
+
+(defn- run-prepared
+  [db compiled & {:keys [identifiers transaction?]}]
+  (->> (jdbc/db-do-prepared db transaction? (first compiled) (rest compiled))
+       (map #(hash-map :count %1))))
+
 (defn run
   "Compile and run `stmt` against the database and return the rows."
   [db stmt & {:keys [entities identifiers transaction?]}]
-  (let [ast (ast stmt), compiled (compile-stmt ast :entities entities)]
-    (if (or (= :select (:op ast)) (:returning ast))
-      (jdbc/query db compiled :identifiers (or identifiers hyphenize))
-      (map #(hash-map :count %1)
-           (jdbc/db-do-prepared db transaction? (first compiled) (rest compiled))))))
+  (let [run #(let [{:keys [op returning] :as ast} (ast stmt)
+                   compiled (compile-stmt ast :entities entities)]
+               (cond
+                (= :select op)
+                (run-query %1 compiled :identifiers identifiers :transaction? transaction?)
+                returning
+                (run-query %1 compiled :identifiers identifiers :transaction? transaction?)
+                :else (run-prepared %1 compiled :identifiers identifiers :transaction? transaction?)))]
+    (if (and (map? db) (:connection db))
+      (run db)
+      (with-open [connection (jdbc/get-connection db)]
+        (run (jdbc/add-connection db connection))))))
 
 (defn run1
   "Run `stmt` against the database and return the first row."
   [db stmt & opts]
   (first (apply run db stmt opts)))
+
+(defmacro with-rollback
+  "Evaluate `body` within a transaction on `db` and rollback
+  afterwards."
+  [[symbol db] & body]
+  `(jdbc/db-transaction
+    [~symbol ~db]
+    (jdbc/db-set-rollback-only! ~symbol)
+    ~@body))

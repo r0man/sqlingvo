@@ -8,7 +8,7 @@
         sqlingvo.util
         sqlingvo.core))
 
-(def sqlite "jdbc:sqlite:/tmp/sqlingvo.sqlite")
+(def sqlite "sqlite:/tmp/sqlingvo.sqlite")
 (def postgresql "postgresql://tiger:scotch@localhost/sqlingvo")
 
 (defmacro deftest-stmt [name sql stmt & body]
@@ -1042,7 +1042,7 @@
 (deftest-stmt test-truncate-continents-restart-restrict
   ["TRUNCATE TABLE continents RESTART IDENTITY RESTRICT"]
   (truncate [:continents]
-    (restart-identity true)
+      (restart-identity true)
     (restrict true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
@@ -1052,7 +1052,7 @@
 (deftest-stmt test-truncate-continents-continue-cascade
   ["TRUNCATE TABLE continents CONTINUE IDENTITY CASCADE"]
   (truncate [:continents]
-    (continue-identity true)
+      (continue-identity true)
     (cascade true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
@@ -1062,47 +1062,47 @@
 (deftest-stmt test-truncate-cascade
   ["TRUNCATE TABLE continents CASCADE"]
   (truncate [:continents]
-    (cascade true)))
+      (cascade true)))
 
 (deftest-stmt test-truncate-continue-identity
   ["TRUNCATE TABLE continents CONTINUE IDENTITY"]
   (truncate [:continents]
-    (continue-identity true)))
+      (continue-identity true)))
 
 (deftest-stmt test-truncate-continue-identity-false
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-    (continue-identity false)))
+      (continue-identity false)))
 
 (deftest-stmt test-truncate-cascade
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-    (cascade false)))
+      (cascade false)))
 
 (deftest-stmt test-truncate-cascade-false
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-    (cascade false)))
+      (cascade false)))
 
 (deftest-stmt test-truncate-restart-identity
   ["TRUNCATE TABLE continents RESTART IDENTITY"]
   (truncate [:continents]
-    (restart-identity true)))
+      (restart-identity true)))
 
 (deftest-stmt test-truncate-restart-identity-false
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-    (restart-identity false)))
+      (restart-identity false)))
 
 (deftest-stmt test-truncate-restrict
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-    (restrict false)))
+      (restrict false)))
 
 (deftest-stmt test-truncate-restrict-false
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-    (restrict false)))
+      (restrict false)))
 
 ;; UPDATE
 
@@ -1210,3 +1210,11 @@
 (deftest test-sql-str
   (is (thrown? UnsupportedOperationException (sql-str sqlite (select [1 "a"]))))
   (is (= "SELECT 1, 'a'" (sql-str postgresql (select [1 "a"])))))
+
+(deftest test-with-rollback
+  (with-rollback [db postgresql]
+    (is (= [{:?column? 1 :?column?-2 2}]
+           (run db (select [1 2])))))
+  (with-rollback [db sqlite]
+    (is (= [{:1 1 :2 2}]
+           (run db (select [1 2]))))))
