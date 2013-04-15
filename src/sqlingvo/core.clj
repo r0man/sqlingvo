@@ -3,8 +3,8 @@
   (:require [clojure.algo.monads :refer :all]
             [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
-            [inflections.core :refer [foreign-key]]
-            [sqlingvo.compiler :refer [compile-sql compile-stmt]]
+            [inflections.core :refer [foreign-key hyphenize underscore]]
+            [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]))
 
 (defn chain-state [body]
@@ -71,8 +71,8 @@
   "Parse `exprs` and return a DISTINCT clause."
   [exprs & {:keys [on]}]
   {:op :distinct
-   :exprs (map parse-expr exprs)
-   :on (map parse-expr on)})
+   :exprs (parse-exprs exprs)
+   :on (parse-exprs on)})
 
 (defn copy
   "Returns a fn that builds a COPY statement."
@@ -132,7 +132,7 @@
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (concat-val :group-by (map parse-expr exprs)))
+  (concat-val :group-by (parse-exprs exprs)))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
@@ -183,7 +183,7 @@
      (and (sequential? condition)
           (= 'using (first condition)))
      (assoc join
-       :using (map parse-expr (rest condition)))
+       :using (parse-exprs (rest condition)))
      (and (keyword? from)
           (keyword? condition))
      (assoc join
@@ -222,7 +222,7 @@
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
-  (let [exprs (map parse-expr (remove nil? exprs))]
+  (let [exprs (parse-exprs exprs)]
     (if-not (empty? exprs)
       (concat-val :order-by exprs)
       (fetch-state))))
@@ -244,7 +244,7 @@
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (concat-val :returning (map parse-expr exprs)))
+  (concat-val :returning (parse-exprs exprs)))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
@@ -255,7 +255,7 @@
           :distinct (if (= :distinct (:op exprs))
                       exprs)
           :exprs (if (sequential? exprs)
-                   (map parse-expr exprs))})]
+                   (parse-exprs exprs))})]
     (fn [stmt]
       (case (:op stmt)
         nil [select select]
@@ -293,7 +293,7 @@
       ((chain-state body)
        {:op :update
         :table (parse-table table)
-        :exprs (if (sequential? row) (map parse-expr row))
+        :exprs (if (sequential? row) (parse-exprs row))
         :row (if (map? row) row)}))))
 
 (defn values
@@ -322,39 +322,70 @@
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
-  [stmt] (compile-stmt (ast stmt)))
+  [stmt & {:keys [entities]}]
+  (compile-stmt (ast stmt) :entities entities))
 
 (defn- prepare
-  "Compile `stmt` and return a java.sql.PreparedStatement from
-  `connection`."
-  [connection stmt]
-  (let [[sql & args] (sql stmt)
-        stmt (jdbc/prepare-statement connection sql)]
-    (doall (map-indexed (fn [i v] (.setObject stmt (inc i) v)) args))
-    stmt))
+  "Compile `stmt` and return a java.sql.PreparedStatement from `db`."
+  [db stmt]
+  (with-open [connection (jdbc/get-connection db)]
+    (let [[sql & args] (sql stmt)
+          stmt (jdbc/prepare-statement connection sql)]
+      (doall (map-indexed (fn [i v] (.setObject stmt (inc i) v)) args))
+      stmt)))
 
 (defn sql-str
-  "Prepare `stmt` against the current clojure.java.jdbc database
-  connection and return the plain SQL as a string."
-  [stmt]
-  (let [sql (first (sql stmt))
-        stmt (prepare (jdbc/connection) stmt)]
+  "Prepare `stmt` using the database and return the raw SQL as a string."
+  [db stmt & opts]
+  (let [sql (first (apply sql stmt opts))
+        stmt (prepare db stmt)]
     (if (.startsWith (str stmt) (str/replace sql #"\?.*" ""))
       (str stmt) (throw (UnsupportedOperationException. "Sorry, sql-str not supported by SQL driver.")))))
 
+(defn- run-query
+  [db compiled  & {:keys [identifiers transaction?]}]
+  (let [query #(jdbc/query %1 compiled :identifiers (or identifiers hyphenize))]
+    (if transaction?
+      (jdbc/db-transaction [t-db db] (query t-db))
+      (query db))))
+
+(defn- run-prepared
+  [db compiled & {:keys [identifiers transaction?]}]
+  (->> (jdbc/db-do-prepared db transaction? (first compiled) (rest compiled))
+       (map #(hash-map :count %1))))
+
 (defn run
-  "Compile and run `stmt` against the current clojure.java.jdbc
-  database connection."
-  [stmt]
-  (let [ast (ast stmt), compiled (apply vector (compile-sql ast))]
-    (if (or (= :select (:op ast))
-            (:returning ast))
-      (jdbc/with-query-results results
-        compiled (doall results))
-      (map #(hash-map :count %1)
-           (jdbc/do-prepared (first compiled) (rest compiled))))))
+  "Compile and run `stmt` against the database and return the rows."
+  [db stmt & {:keys [entities identifiers transaction?]}]
+  (let [run #(let [{:keys [op returning] :as ast} (ast stmt)
+                   compiled (compile-stmt ast :entities entities)]
+               (cond
+                (= :select op)
+                (run-query %1 compiled :identifiers identifiers :transaction? transaction?)
+                returning
+                (run-query %1 compiled :identifiers identifiers :transaction? transaction?)
+                :else (run-prepared %1 compiled :identifiers identifiers :transaction? transaction?)))]
+    (if (and (map? db) (:connection db))
+      (run db)
+      (with-open [connection (jdbc/get-connection db)]
+        (run (jdbc/add-connection db connection))))))
 
 (defn run1
-  "Run `stmt` against the current clojure.java.jdbc database
-  connection and return the first row."
-  [stmt] (first (run stmt)))
+  "Run `stmt` against the database and return the first row."
+  [db stmt & opts]
+  (first (apply run db stmt opts)))
+
+(defmacro with-rollback
+  "Evaluate `body` within a transaction on `db` and rollback
+  afterwards."
+  [[symbol db] & body]
+  `(let [run# (fn [db#]
+                (jdbc/db-transaction
+                 [~symbol db#]
+                 (jdbc/db-set-rollback-only! ~symbol)
+                 ~@body))]
+     (let [db# ~db]
+       (if (and (map? db#) (:connection db#))
+         (run# db#)
+         (with-open [connection# (jdbc/get-connection db#)]
+           (run# (jdbc/add-connection db# connection#)))))))

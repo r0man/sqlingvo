@@ -1,7 +1,9 @@
 (ns sqlingvo.compiler
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
+            [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [blank? join replace upper-case]]
+            [inflections.core :refer [underscore]]
             [sqlingvo.util :refer [as-identifier]]))
 
 (defprotocol SQLType
@@ -288,7 +290,9 @@
                (if default-values " DEFAULT VALUES")
                (if-not (empty? returning)
                  (apply str " RETURNING " (join ", " (map first returning)))))
-          (if values (apply concat (map (fn [r] (map r (map :name columns))) values)) args))))
+          (if-not (empty? values)
+            (apply concat (map (fn [r] (map r (map :name columns))) values))
+            args))))
 
 (defmethod compile-sql :intersect [node]
   (compile-set-op :intersect node))
@@ -445,4 +449,6 @@
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
-  [stmt] (apply vector (compile-sql stmt)))
+  [stmt & {:keys [entities]}]
+  (jdbc/with-naming-strategy {:entity underscore}
+    (apply vector (compile-sql stmt))))
