@@ -1,8 +1,7 @@
 (ns sqlingvo.test.core
   (:import java.sql.Date)
   (:refer-clojure :exclude [distinct group-by])
-  (:require [clojure.algo.monads :refer :all]
-            [clojure.java.jdbc :as jdbc])
+  (:require [clojure.algo.monads :refer :all])
   (:use clojure.test
         sqlingvo.compiler
         sqlingvo.util
@@ -27,17 +26,17 @@
 
 (deftest test-as
   (are [args expected]
-       (is (= expected (apply as args)))
-       [:id :other]
-       {:op :column :schema nil :table nil :name :id :as :other}
-       [:continents [:id :name]]
-       [{:op :column :schema nil :table :continents :name :id :as :continents-id}
-        {:op :column :schema nil :table :continents :name :name :as :continents-name}]
-       [:public.continents [:id :name]]
-       [{:op :column :schema :public :table :continents :name :id :as :public-continents-id}
-        {:op :column :schema :public :table :continents :name :name :as :public-continents-name}]
-       ['(count *) :count]
-       {:as :count :op :fn :name :count :args [{:op :constant :form '*}]}))
+    (is (= expected (apply as args)))
+    [:id :other]
+    {:op :column :schema nil :table nil :name :id :as :other}
+    [:continents [:id :name]]
+    [{:op :column :schema nil :table :continents :name :id :as :continents-id}
+     {:op :column :schema nil :table :continents :name :name :as :continents-name}]
+    [:public.continents [:id :name]]
+    [{:op :column :schema :public :table :continents :name :id :as :public-continents-id}
+     {:op :column :schema :public :table :continents :name :name :as :public-continents-name}]
+    ['(count *) :count]
+    {:as :count :op :fn :name :count :args [{:op :constant :form '*}]}))
 
 ;; CAST
 
@@ -667,6 +666,10 @@
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (nil? (:order-by stmt))))
 
+(sql (select [*]
+       (from :continents)
+       (order-by nil)))
+
 (deftest-stmt test-select-1-where-1-is-1
   ["SELECT 1 WHERE (1 = 1)"]
   (select [1]
@@ -1042,7 +1045,7 @@
 (deftest-stmt test-truncate-continents-restart-restrict
   ["TRUNCATE TABLE continents RESTART IDENTITY RESTRICT"]
   (truncate [:continents]
-      (restart-identity true)
+    (restart-identity true)
     (restrict true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
@@ -1052,7 +1055,7 @@
 (deftest-stmt test-truncate-continents-continue-cascade
   ["TRUNCATE TABLE continents CONTINUE IDENTITY CASCADE"]
   (truncate [:continents]
-      (continue-identity true)
+    (continue-identity true)
     (cascade true))
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
@@ -1062,47 +1065,47 @@
 (deftest-stmt test-truncate-cascade
   ["TRUNCATE TABLE continents CASCADE"]
   (truncate [:continents]
-      (cascade true)))
+    (cascade true)))
 
 (deftest-stmt test-truncate-continue-identity
   ["TRUNCATE TABLE continents CONTINUE IDENTITY"]
   (truncate [:continents]
-      (continue-identity true)))
+    (continue-identity true)))
 
 (deftest-stmt test-truncate-continue-identity-false
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-      (continue-identity false)))
+    (continue-identity false)))
 
 (deftest-stmt test-truncate-cascade
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-      (cascade false)))
+    (cascade false)))
 
 (deftest-stmt test-truncate-cascade-false
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-      (cascade false)))
+    (cascade false)))
 
 (deftest-stmt test-truncate-restart-identity
   ["TRUNCATE TABLE continents RESTART IDENTITY"]
   (truncate [:continents]
-      (restart-identity true)))
+    (restart-identity true)))
 
 (deftest-stmt test-truncate-restart-identity-false
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-      (restart-identity false)))
+    (restart-identity false)))
 
 (deftest-stmt test-truncate-restrict
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-      (restrict false)))
+    (restrict false)))
 
 (deftest-stmt test-truncate-restrict-false
   ["TRUNCATE TABLE continents"]
   (truncate [:continents]
-      (restrict false)))
+    (restrict false)))
 
 ;; UPDATE
 
@@ -1189,32 +1192,32 @@
   ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
   (select ['(|| [1 2] [3 4] [5 6])]))
 
-;; RUN
+;; ;; RUN
 
-(deftest test-run
-  (is (= [{:1 1 :2 2 :3 3}] (run sqlite (select [1 2 3])))))
+;; (deftest test-run
+;;   (is (= [{:1 1 :2 2 :3 3}] (run sqlite (select [1 2 3])))))
 
-(deftest test-run1
-  (is (= {:1 1 :2 2 :3 3} (run1 sqlite (select [1 2 3])))))
+;; (deftest test-run1
+;;   (is (= {:1 1 :2 2 :3 3} (run1 sqlite (select [1 2 3])))))
 
-(deftest test-comp-stmts
-  (let [s (select [*]
-            (from :continents))
-        o (order-by :name)]
-    (is (= ["SELECT * FROM continents ORDER BY name"]
-           (sql (with-monad state-m
-                  (m-seq [s o])))))))
+;; (deftest test-comp-stmts
+;;   (let [s (select [*]
+;;             (from :continents))
+;;         o (order-by :name)]
+;;     (is (= ["SELECT * FROM continents ORDER BY name"]
+;;            (sql (with-monad state-m
+;;                   (m-seq [s o])))))))
 
-;; RAW SQL
+;; ;; RAW SQL
 
-(deftest test-sql-str
-  (is (thrown? UnsupportedOperationException (sql-str sqlite (select [1 "a"]))))
-  (is (= "SELECT 1, 'a'" (sql-str postgresql (select [1 "a"])))))
+;; (deftest test-sql-str
+;;   (is (thrown? UnsupportedOperationException (sql-str sqlite (select [1 "a"]))))
+;;   (is (= "SELECT 1, 'a'" (sql-str postgresql (select [1 "a"])))))
 
-(deftest test-with-rollback
-  (with-rollback [db postgresql]
-    (is (= [{:?column? 1 :?column?-2 2}]
-           (run db (select [1 2])))))
-  (with-rollback [db sqlite]
-    (is (= [{:1 1 :2 2}]
-           (run db (select [1 2]))))))
+;; (deftest test-with-rollback
+;;   (with-rollback [db postgresql]
+;;     (is (= [{:?column? 1 :?column?-2 2}]
+;;            (run db (select [1 2])))))
+;;   (with-rollback [db sqlite]
+;;     (is (= [{:1 1 :2 2}]
+;;            (run db (select [1 2]))))))

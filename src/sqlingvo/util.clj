@@ -1,9 +1,10 @@
 (ns sqlingvo.util
   (:refer-clojure :exclude [replace])
   (:require [clojure.algo.monads :refer :all]
-            [clojure.java.jdbc :as jdbc]
             [clojure.string :refer [blank? join replace]]
-            [inflections.core :refer [hyphenize]]))
+            [inflections.core :refer [hyphenize underscore]]))
+
+(def ^:dynamic *as-identifier* (comp underscore name))
 
 (def ^:dynamic *column-regex*
   #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?")
@@ -19,15 +20,15 @@
    (nil? obj)
    nil
    (keyword? obj)
-   (jdbc/as-identifier obj)
+   (*as-identifier* obj)
    (string? obj)
-   obj
+   (*as-identifier* obj)
    (symbol? obj)
-   (str obj)
+   (*as-identifier* obj)
    (map? obj)
    (->> [(:schema obj) (:table obj) (:name obj)]
-        (map jdbc/as-identifier)
-        (remove blank?)
+        (remove nil?)
+        (map *as-identifier*)
         (join "."))))
 
 (defn as-keyword
@@ -45,8 +46,8 @@
    (keyword (hyphenize obj))
    (map? obj)
    (->> [(:schema obj) (:table obj) (:name obj)]
-        (map jdbc/as-identifier)
-        (remove blank?)
+        (remove nil?)
+        (map name)
         (join ".")
         (keyword))))
 
