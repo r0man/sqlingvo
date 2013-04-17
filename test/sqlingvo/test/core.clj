@@ -1192,32 +1192,10 @@
   ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
   (select ['(|| [1 2] [3 4] [5 6])]))
 
-;; ;; RUN
-
-;; (deftest test-run
-;;   (is (= [{:1 1 :2 2 :3 3}] (run sqlite (select [1 2 3])))))
-
-;; (deftest test-run1
-;;   (is (= {:1 1 :2 2 :3 3} (run1 sqlite (select [1 2 3])))))
-
-;; (deftest test-comp-stmts
-;;   (let [s (select [*]
-;;             (from :continents))
-;;         o (order-by :name)]
-;;     (is (= ["SELECT * FROM continents ORDER BY name"]
-;;            (sql (with-monad state-m
-;;                   (m-seq [s o])))))))
-
-;; ;; RAW SQL
-
-;; (deftest test-sql-str
-;;   (is (thrown? UnsupportedOperationException (sql-str sqlite (select [1 "a"]))))
-;;   (is (= "SELECT 1, 'a'" (sql-str postgresql (select [1 "a"])))))
-
-;; (deftest test-with-rollback
-;;   (with-rollback [db postgresql]
-;;     (is (= [{:?column? 1 :?column?-2 2}]
-;;            (run db (select [1 2])))))
-;;   (with-rollback [db sqlite]
-;;     (is (= [{:1 1 :2 2}]
-;;            (run db (select [1 2]))))))
+(deftest test-comp-stmts
+  (let [s (select [*]
+            (from :continents))
+        o (order-by :name)]
+    (is (= ["SELECT * FROM continents ORDER BY name"]
+           (sql (with-monad state-m
+                  (m-seq [s o])))))))
