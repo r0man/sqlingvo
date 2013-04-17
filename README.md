@@ -59,7 +59,7 @@ Insert a single row into table films.
 
     (sql (insert :films []
            (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})))
-    ;=> ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
+    ;=> ["INSERT INTO films (did, date_prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
     ;=>  106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
 
 Insert multiple rows into the table films using the multirow VALUES syntax.
@@ -67,7 +67,7 @@ Insert multiple rows into the table films using the multirow VALUES syntax.
     (sql (insert :films []
            (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
                     {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])))
-    ;=> ["INSERT INTO films (did, date-prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
+    ;=> ["INSERT INTO films (did, date_prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
     ;=>  110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
 
 Insert a row consisting entirely of default values.
@@ -76,13 +76,13 @@ Insert a row consisting entirely of default values.
            (values :default)))
     ;=> ["INSERT INTO films DEFAULT VALUES"]
 
-Insert some rows into table films from a table tmp-films with the same column layout as films.
+Insert some rows into table films from a table tmp_films with the same column layout as films.
 
     (sql (insert :films []
            (select [*]
              (from :tmp-films)
-             (where '(< :date-prod "2004-05-07")))))
-    ;=> ["INSERT INTO films (SELECT * FROM tmp-films WHERE (date-prod < ?))" "2004-05-07"]
+             (where '(< :date_prod "2004-05-07")))))
+    ;=> ["INSERT INTO films (SELECT * FROM tmp_films WHERE (date_prod < ?))" "2004-05-07"]
 
 ### [Select](http://www.postgresql.org/docs/9.2/static/sql-select.html)
 
@@ -103,7 +103,7 @@ Retrieve the most recent weather report for each location.
     (sql (select (distinct [:location :time :report] :on [:location])
            (from :weather-reports)
            (order-by :location (desc :time))))
-    ;=> ["SELECT DISTINCT ON (location) location, time, report FROM weather-reports ORDER BY location, time DESC"]
+    ;=> ["SELECT DISTINCT ON (location) location, time, report FROM weather_reports ORDER BY location, time DESC"]
 
 ### [Update](http://www.postgresql.org/docs/9.2/static/sql-update.html)
 
@@ -120,14 +120,14 @@ The sort expression(s) can be any expression that would be valid in the query's 
     (sql (select [:a :b]
            (from :table-1)
            (order-by '(+ :a :b) :c)))
-    ;=> ["SELECT a, b FROM table-1 ORDER BY (a + b), c"]
+    ;=> ["SELECT a, b FROM table_1 ORDER BY (a + b), c"]
 
 A sort expression can also be the column label
 
     (sql (select [(as '(+ :a :b) :sum) :c]
            (from :table-1)
            (order-by :sum)))
-    ;=> ["SELECT a + b AS sum, c FROM table-1 ORDER BY sum"]
+    ;=> ["SELECT a + b AS sum, c FROM table_1 ORDER BY sum"]
 
 or the number of an output column.
 
@@ -135,20 +135,9 @@ or the number of an output column.
            (from :table-1)
            (group-by :a)
            (order-by 1)))
-    ;=> ["SELECT a, max(b) FROM table-1 GROUP BY a ORDER BY 1"]
+    ;=> ["SELECT a, max(b) FROM table_1 GROUP BY a ORDER BY 1"]
 
 For more complex examples, look at the [tests](https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/test/core.clj).
-
-## Running SQL statements against a database
-
-SQLingvo uses the [clojure.java.jdbc](https://github.com/clojure/java.jdbc) library to
-run SQL statements against a database.
-
-    (require '[clojure.java.jdbc :as jdbc])
-
-    (jdbc/with-connection "jdbc:sqlite:/tmp/sqlingvo.sqlite"
-      (run (select [1 2 3])))
-    ;=> ({:3 3, :2 2, :1 1})
 
 ## Tips & Tricks
 
@@ -171,6 +160,6 @@ For better indentation in clojure-mode add this to your Emacs config.
 
 ## License
 
-Copyright © 2012 Roman Scherer
+Copyright © 2012-13 Roman Scherer
 
 Distributed under the Eclipse Public License, the same as Clojure.
