@@ -1233,27 +1233,27 @@
              (to_tsquery "fat & rat"))]))
 
 (deftest-stmt test-searching-a-table-1
-  ["SELECT title FROM pgweb WHERE (to_tsvector(?, body) @@ to_ts_query(?, ?))" "english" "english" "friend"]
+  ["SELECT title FROM pgweb WHERE (to_tsvector(?, body) @@ to_tsquery(?, ?))" "english" "english" "friend"]
   (select [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
              (to_tsvector "english" :body)
-             (to_ts_query "english" "friend")))))
+             (to_tsquery "english" "friend")))))
 
 (deftest-stmt test-searching-a-table-2
-  ["SELECT title FROM pgweb WHERE (to_tsvector(body) @@ to_ts_query(?))" "friend"]
+  ["SELECT title FROM pgweb WHERE (to_tsvector(body) @@ to_tsquery(?))" "friend"]
   (select [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
              (to_tsvector :body)
-             (to_ts_query "friend")))))
+             (to_tsquery "friend")))))
 
 (deftest-stmt test-searching-a-table-3
-  ["SELECT title FROM pgweb WHERE (to_tsvector((title || ? || body)) @@ to_ts_query(?)) ORDER BY last_mod_date DESC LIMIT 10" " " "create & table"]
+  ["SELECT title FROM pgweb WHERE (to_tsvector((title || ? || body)) @@ to_tsquery(?)) ORDER BY last_mod_date DESC LIMIT 10" " " "create & table"]
   (select [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
              (to_tsvector (:|| :title " " :body))
-             (to_ts_query "create & table")))
+             (to_tsquery "create & table")))
     (order-by (desc :last-mod-date))
     (limit 10)))
