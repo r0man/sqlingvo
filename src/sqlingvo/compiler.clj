@@ -436,7 +436,7 @@
   "=" "!=" "<>" "<" ">" "<=" ">=" "&&" "/" "^" "~" "~*" "like" "ilike" "in")
 
 (defarity compile-infix
-  "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union" "||" "overlaps")
+  "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union" "||" "overlaps" "@@")
 
 (defarity compile-complex-args
   "partition")
