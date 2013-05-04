@@ -7,9 +7,6 @@
         sqlingvo.util
         sqlingvo.core))
 
-(def sqlite "sqlite:/tmp/sqlingvo.sqlite")
-(def postgresql "postgresql://tiger:scotch@localhost/sqlingvo")
-
 (defmacro deftest-stmt [name sql stmt & body]
   `(deftest ~name
      (let [~'stmt (ast ~stmt)]
@@ -665,10 +662,6 @@
   (is (= [(parse-expr *)] (:exprs stmt)))
   (is (= [(parse-from :continents)] (:from stmt)))
   (is (nil? (:order-by stmt))))
-
-(sql (select [*]
-       (from :continents)
-       (order-by nil)))
 
 (deftest-stmt test-select-1-where-1-is-1
   ["SELECT 1 WHERE (1 = 1)"]
