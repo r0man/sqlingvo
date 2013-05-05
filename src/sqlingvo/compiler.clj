@@ -217,7 +217,7 @@
           [])))
 
 (defmethod compile-sql :delete [{:keys [where table returning]}]
-  (let [returning (if returning (map compile-sql returning))
+  (let [returning (map compile-sql returning)
         where (if where (compile-sql where))]
     (cons (str "DELETE FROM " (first (compile-sql table))
                (if-not (empty? where)
@@ -274,7 +274,7 @@
 
 (defmethod compile-sql :insert [{:keys [table columns rows default-values values returning select]}]
   (let [[sql & args] (if select (compile-sql select))
-        returning (if returning (map compile-sql returning))
+        returning (map compile-sql returning)
         columns (if (and (empty? columns) (not (empty? values)))
                   (map (fn [k] {:op :column :name k})
                        (keys (first values)))
@@ -299,7 +299,7 @@
 (defmethod compile-sql :join [{:keys [on using from how type outer]}]
   (let [[on-sql & on-args] (if on (compile-sql on))
         [from-sql & from-args] (compile-from from)
-        using (if using (map compile-sql using))]
+        using (map compile-sql using)]
     (cons (str (case type
                  :cross "CROSS "
                  :inner "INNER "
@@ -310,7 +310,7 @@
                "JOIN " from-sql
                (if on
                  (str " ON " on-sql))
-               (if using
+               (if-not (empty? using)
                  (str " USING (" (join ", " (map first using)) ")")))
           (concat from-args on-args (mapcat rest using)))))
 
@@ -342,8 +342,8 @@
         (if as (str " AS " (as-identifier as))))])
 
 (defmethod compile-sql :distinct [{:keys [exprs on]}]
-  (let [exprs (if exprs (map compile-sql exprs))
-        on (if on (map compile-sql on))]
+  (let [exprs (map compile-sql exprs)
+        on (map compile-sql on)]
     (cons (str "DISTINCT "
                (if-not (empty? on)
                  (str "ON (" (join ", " (map first on)) ") "))
@@ -354,7 +354,7 @@
 
 (defmethod compile-sql :select [{:keys [exprs distinct joins from where group-by limit offset order-by set]}]
   (let [[distinct-sql & distinct-args] (if distinct (compile-sql distinct))
-        joins (if joins (map compile-sql joins))
+        joins (map compile-sql joins)
         exprs (map compile-expr exprs)
         from (map compile-from from)
         where (if where (compile-sql where))
@@ -403,16 +403,16 @@
   (compile-set-op :union node))
 
 (defmethod compile-sql :update [{:keys [where from exprs table row returning]}]
-  (let [returning (if returning (map compile-sql returning))
+  (let [returning (map compile-sql returning)
         where (if where (compile-sql where))
-        columns (if row (map as-identifier (keys row)))
-        exprs (if exprs (map (comp unwrap-stmt compile-expr) exprs))
-        from (if from (map compile-from from))]
+        columns (map as-identifier (keys row))
+        exprs (map (comp unwrap-stmt compile-expr) exprs)
+        from (map compile-from from)]
     (cons (str "UPDATE " (first (compile-sql table))
                " SET " (if row
                          (apply str (concat (interpose " = ?, " columns) " = ?"))
                          (join ", " (map first exprs)))
-               (if from
+               (if-not (empty? from)
                  (str " FROM " (join " " (map first from))))
                (if-not (empty? where)
                  (str " WHERE " (first where)))
