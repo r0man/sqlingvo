@@ -13,11 +13,19 @@
        (is (= ~sql (sql ~stmt)))
        ~@body)))
 
+;; COMPOSE
+
 (deftest-stmt test-compose
   ["SELECT id, name FROM continents WHERE (id = 1) ORDER BY name"]
   (compose (select [:id :name] (from :continents))
            (where '(= :id 1))
            (order-by :name)))
+
+(deftest-stmt test-compose-where-clause-using-and
+  ["SELECT color, num_sides FROM shapes WHERE ((num_sides = 3) and (color = ?))" "green"]
+  (let [triangles (compose (select [:color :num_sides] (from :shapes))
+                           (where '(= :num_sides 3)))]
+    (compose triangles (where '(= :color "green") :and))))
 
 ;; AS
 
