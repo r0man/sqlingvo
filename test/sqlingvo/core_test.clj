@@ -1,4 +1,4 @@
-(ns sqlingvo.test.core
+(ns sqlingvo.core-test
   (:import java.sql.Date)
   (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.algo.monads :refer :all])

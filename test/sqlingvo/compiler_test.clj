@@ -1,4 +1,4 @@
-(ns sqlingvo.test.compiler
+(ns sqlingvo.compiler-test
   (:use clojure.test
         sqlingvo.compiler))
 

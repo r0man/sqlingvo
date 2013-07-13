@@ -137,7 +137,7 @@ or the number of an output column.
            (order-by 1)))
     ;=> ["SELECT a, max(b) FROM table_1 GROUP BY a ORDER BY 1"]
 
-For more complex examples, look at the [tests](https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/test/core.clj).
+For more complex examples, look at the [tests](https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj).
 
 ## Tips & Tricks
 
