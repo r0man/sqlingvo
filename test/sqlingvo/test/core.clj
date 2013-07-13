@@ -100,14 +100,18 @@
         "did INTEGER NOT NULL, "
         "date_prod DATE, "
         "kind VARCHAR(10), "
-        "len INTERVAL)")]
+        "len INTERVAL, "
+        "created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
+        "updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())")]
   (create-table :films
     (column :code :char :length 5 :primary-key? true)
     (column :title :varchar :length 40 :not-null? true)
     (column :did :integer :not-null? true)
     (column :date-prod :date)
     (column :kind :varchar :length 10)
-    (column :len :interval)))
+    (column :len :interval)
+    (column :created-at :timestamp-with-time-zone :not-null? true :default "now()")
+    (column :updated-at :timestamp-with-time-zone :not-null? true :default "now()")))
 
 ;; COPY
 

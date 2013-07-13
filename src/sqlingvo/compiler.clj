@@ -188,7 +188,7 @@
 
 (defn compile-column [column]
   [(str (as-identifier (:name column))
-        " " (upper-case (name (:type column)))
+        " " (replace (upper-case (name (:type column))) "-" " ")
         (if-let [length (:length column)]
           (str "(" length ")"))
         (if (:not-null? column)
@@ -196,7 +196,9 @@
         (if (:unique? column)
           " UNIQUE")
         (if (:primary-key? column)
-          " PRIMARY KEY"))])
+          " PRIMARY KEY")
+        (if-let [default (:default column)]
+          (str " DEFAULT " default)))])
 
 (defmethod compile-sql :create-table [{:keys [table if-not-exists inherits like temporary] :as node}]
   (let [columns (map compile-column (map (:column node) (:columns node)))]
