@@ -173,7 +173,7 @@
 
 ;; COMPILE SQL
 
-(defmethod compile-sql :copy [{:keys [columns from to table]}]
+(defmethod compile-sql :copy [{:keys [columns encoding from to table]}]
   (let [from (first from)]
     (cons (str "COPY " (first (compile-sql table))
                (if-not (empty? columns)
@@ -181,9 +181,13 @@
                " FROM "
                (cond
                 (string? from) "?"
-                (= :stdin from) "STDIN"))
+                (= :stdin from) "STDIN")
+               (if encoding " ENCODING ?"))
           (cond
-           (string? from) [from]
+           (and (string? from) encoding)
+           [from encoding]
+           (string? from)
+           [from]
            (= :stdin from) []))))
 
 (defn compile-column [column]

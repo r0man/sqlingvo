@@ -73,6 +73,11 @@
    :exprs (parse-exprs exprs)
    :on (parse-exprs on)})
 
+(defn encoding
+  "Returns a fn that adds a ENCODING clause to an SQL statement."
+  [encoding]
+  (set-val :encoding encoding))
+
 (defn copy
   "Returns a fn that builds a COPY statement."
   [table columns & body]

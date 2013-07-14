@@ -129,6 +129,14 @@
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
+(deftest-stmt test-copy-country-with-encoding
+  ["COPY country FROM ? ENCODING ?" "/usr1/proj/bray/sql/country_data" "UTF-8"]
+  (copy :country []
+    (from "/usr1/proj/bray/sql/country_data")
+    (encoding "UTF-8"))
+  (is (= :copy (:op stmt)))
+  (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
+
 (deftest-stmt test-copy-country-columns
   ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]
   (copy :country [:id :name]
