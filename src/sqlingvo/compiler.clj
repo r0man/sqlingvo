@@ -1,6 +1,7 @@
 (ns sqlingvo.compiler
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
+            [clojure.java.io :refer [file]]
             [clojure.string :refer [blank? join replace upper-case]]
             [inflections.core :refer [underscore]]
             [sqlingvo.util :refer [*as-identifier* as-identifier]]))
@@ -187,7 +188,7 @@
            (and (string? from) encoding)
            [from encoding]
            (string? from)
-           [from]
+           [(.getAbsolutePath (file from))]
            (= :stdin from) []))))
 
 (defn compile-column [column]

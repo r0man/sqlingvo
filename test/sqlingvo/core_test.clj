@@ -1,7 +1,8 @@
 (ns sqlingvo.core-test
   (:import java.sql.Date)
   (:refer-clojure :exclude [distinct group-by])
-  (:require [clojure.algo.monads :refer :all])
+  (:require [clojure.algo.monads :refer :all]
+            [clojure.java.io :refer [file]])
   (:use clojure.test
         sqlingvo.compiler
         sqlingvo.util
@@ -144,6 +145,10 @@
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt)))
   (is (= (map parse-column [:id :name]) (:columns stmt))))
+
+(deftest test-copy-from-expands-to-absolute-path
+  (is (= ["COPY country FROM ?" (.getAbsolutePath (file "country_data"))]
+         (sql (copy :country [] (from "country_data"))))))
 
 ;; DELETE
 
