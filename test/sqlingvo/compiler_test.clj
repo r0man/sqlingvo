@@ -2,9 +2,11 @@
   (:use clojure.test
         sqlingvo.compiler))
 
+(def db :postgresql)
+
 (deftest test-compile-column
   (are [ast expected]
-    (is (= expected (compile-sql ast)))
+    (is (= expected (compile-sql db ast)))
     {:op :column :name :created-at}
     ["created_at"]
     {:op :column :table :continents :name :created-at}
@@ -16,7 +18,7 @@
 
 (deftest test-compile-constant
   (are [ast expected]
-    (is (= expected (compile-sql ast)))
+    (is (= expected (compile-sql db ast)))
     {:op :constant :form 1}
     ["1"]
     {:op :constant :form 3.14}
@@ -26,7 +28,7 @@
 
 (deftest test-compile-sql
   (are [ast expected]
-    (is (= expected (compile-sql ast)))
+    (is (= expected (compile-sql db ast)))
     {:op :nil}
     ["NULL"]
     {:op :constant :form 1}
@@ -42,7 +44,7 @@
 
 (deftest test-compile-drop-table
   (are [ast expected]
-    (is (= expected (compile-sql ast)))
+    (is (= expected (compile-sql db ast)))
     {:op :drop-table :tables [{:op :table :name :continents}]}
     ["DROP TABLE continents"]
     {:op :drop-table :tables [{:op :table :name :continents}] :cascade {:op :cascade :cascade true}}
@@ -59,7 +61,7 @@
 
 (deftest test-compile-limit
   (are [ast expected]
-    (is (= expected (compile-sql ast)))
+    (is (= expected (compile-sql db ast)))
     {:op :limit :count 1}
     ["LIMIT 1"]
     {:op :limit :count nil}
@@ -67,7 +69,7 @@
 
 (deftest test-compile-offset
   (are [ast expected]
-    (is (= expected (compile-sql ast)))
+    (is (= expected (compile-sql db ast)))
     {:op :offset :start 1}
     ["OFFSET 1"]
     {:op :offset :start nil}
@@ -75,7 +77,7 @@
 
 (deftest test-compile-table
   (are [ast expected]
-    (is (= expected (compile-sql ast)))
+    (is (= expected (compile-sql db ast)))
     {:op :table :name :continents}
     ["continents"]
     {:op :table :schema :public :name :continents}
