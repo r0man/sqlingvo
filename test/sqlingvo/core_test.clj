@@ -520,7 +520,7 @@
   (is (= [(parse-expr '(+ 1 (greatest 2 3)))] (:exprs stmt))))
 
 (deftest-stmt test-select-fn-alias
-  ["SELECT max(created_at) AS m FROM continents"]
+  ["SELECT max(\"created_at\") AS \"m\" FROM \"continents\""]
   (select [(as '(max :created-at) :m)]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -560,7 +560,7 @@
   (is (= {:op :offset :start 20} (:offset stmt))))
 
 (deftest-stmt test-select-column-max
-  ["SELECT max(created_at) FROM continents"]
+  ["SELECT max(\"created_at\") FROM \"continents\""]
   (select ['(max :created-at)]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -568,7 +568,7 @@
   (is (= [(parse-table :continents)] (:from stmt))))
 
 (deftest-stmt test-select-distinct-subquery-alias
-  ["SELECT DISTINCT x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]
+  ["SELECT DISTINCT \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
   (select (distinct [:x.a :x.b])
     (from (as (select [(as 1 :a) (as 2 :b)]) :x)))
   (is (= :select (:op stmt)))
@@ -582,7 +582,7 @@
     (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from)))))
 
 (deftest-stmt test-select-distinct-on-subquery-alias
-  ["SELECT DISTINCT ON (x.a, x.b) x.a, x.b FROM (SELECT 1 AS a, 2 AS b) AS x"]
+  ["SELECT DISTINCT ON (\"x\".\"a\", \"x\".\"b\") \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
   (select (distinct [:x.a :x.b] :on [:x.a :x.b])
     (from (as (select [(as 1 :a) (as 2 :b)]) :x)))
   (is (= :select (:op stmt)))
@@ -596,7 +596,7 @@
     (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from)))))
 
 (deftest-stmt test-select-most-recent-weather-report
-  ["SELECT DISTINCT ON (location) location, time, report FROM weather_reports ORDER BY location, time DESC"]
+  ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
   (select (distinct [:location :time :report] :on [:location])
     (from :weather-reports)
     (order-by :location (desc :time)))
@@ -609,7 +609,7 @@
   (is (= [(parse-expr :location) (desc :time)] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-asc
-  ["SELECT * FROM continents ORDER BY created_at ASC"]
+  ["SELECT * FROM \"continents\" ORDER BY \"created_at\" ASC"]
   (select [*]
     (from :continents)
     (order-by (asc :created-at)))
@@ -619,13 +619,13 @@
   (is (= [(parse-expr (asc :created-at))] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-asc-expr
-  ["SELECT * FROM weather.datasets ORDER BY abs((ST_ScaleX(rast) * ST_ScaleY(rast))) DESC"]
+  ["SELECT * FROM \"weather\".\"datasets\" ORDER BY abs((ST_ScaleX(\"rast\") * ST_ScaleY(\"rast\"))) DESC"]
   (select [*]
     (from :weather.datasets)
     (order-by (desc '(abs (* (ST_ScaleX :rast) (ST_ScaleY :rast)))))))
 
 (deftest-stmt test-select-order-by-desc
-  ["SELECT * FROM continents ORDER BY created_at DESC"]
+  ["SELECT * FROM \"continents\" ORDER BY \"created_at\" DESC"]
   (select [*]
     (from :continents)
     (order-by (desc :created-at)))
@@ -635,7 +635,7 @@
   (is (= [(parse-expr (desc :created-at))] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-nulls-first
-  ["SELECT * FROM continents ORDER BY created_at NULLS FIRST"]
+  ["SELECT * FROM \"continents\" ORDER BY \"created_at\" NULLS FIRST"]
   (select [*]
     (from :continents)
     (order-by (nulls :created-at :first)))
@@ -645,7 +645,7 @@
   (is (= [(parse-expr (nulls :created-at :first))] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-nulls-last
-  ["SELECT * FROM continents ORDER BY created_at NULLS LAST"]
+  ["SELECT * FROM \"continents\" ORDER BY \"created_at\" NULLS LAST"]
   (select [*]
     (from :continents)
     (order-by (nulls :created-at :last)))
@@ -655,7 +655,7 @@
   (is (= [(parse-expr (nulls :created-at :last))] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-if-true
-  ["SELECT * FROM continents ORDER BY name"]
+  ["SELECT * FROM \"continents\" ORDER BY \"name\""]
   (let [opts {:order-by :name}]
     (select [*]
       (from :continents)
@@ -667,7 +667,7 @@
   (is (= [(parse-expr :name)] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-if-false
-  ["SELECT * FROM continents"]
+  ["SELECT * FROM \"continents\""]
   (let [opts {}]
     (select [*]
       (from :continents)
@@ -679,7 +679,7 @@
   (is (nil? (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-nil
-  ["SELECT * FROM continents"]
+  ["SELECT * FROM \"continents\""]
   (select [*]
     (from :continents)
     (order-by nil))
@@ -705,7 +705,7 @@
   (is (= (parse-condition '(= 1 2 3)) (:where stmt))))
 
 (deftest-stmt test-select-subquery-alias
-  ["SELECT * FROM (SELECT 1, 2, 3) AS x"]
+  ["SELECT * FROM (SELECT 1, 2, 3) AS \"x\""]
   (select [*]
     (from (as (select [1 2 3]) :x)))
   (is (= :select (:op stmt)))
@@ -716,7 +716,7 @@
     (is (= (map parse-expr [1 2 3]) (:exprs from)))))
 
 (deftest-stmt test-select-subqueries-alias
-  ["SELECT * FROM (SELECT 1) AS x, (SELECT 2) AS y"]
+  ["SELECT * FROM (SELECT 1) AS \"x\", (SELECT 2) AS \"y\""]
   (select [*]
     (from (as (select [1]) :x)
           (as (select [2]) :y)))
@@ -759,7 +759,7 @@
   (is (= [(parse-from :quotes)] (:from stmt))))
 
 (deftest-stmt test-select-group-by-a-order-by-1
-  ["SELECT a, max(b) FROM table_1 GROUP BY a ORDER BY 1"]
+  ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
   (select [:a '(max :b)]
     (from :table-1)
     (group-by :a)
@@ -770,7 +770,7 @@
   (is (= [(parse-expr 1)] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-query-select
-  ["SELECT a, b FROM table_1 ORDER BY (a + b), c"]
+  ["SELECT \"a\", \"b\" FROM \"table_1\" ORDER BY (\"a\" + \"b\"), \"c\""]
   (select [:a :b]
     (from :table-1)
     (order-by '(+ :a :b) :c))
@@ -780,7 +780,7 @@
   (is (= [(parse-expr '(+ :a :b)) (parse-expr :c)] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-sum
-  ["SELECT (a + b) AS sum, c FROM table_1 ORDER BY sum"]
+  ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table_1\" ORDER BY \"sum\""]
   (select [(as '(+ :a :b) :sum) :c]
     (from :table-1)
     (order-by :sum))
@@ -790,14 +790,14 @@
   (is (= [(parse-expr :sum)] (:order-by stmt))))
 
 (deftest-stmt test-select-setval
-  ["SELECT setval(continent_id_seq, (SELECT max(id) FROM continents))"]
+  ["SELECT setval(\"continent_id_seq\", (SELECT max(\"id\") FROM \"continents\"))"]
   (select [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
   (is (= :select (:op stmt)))
   (is (= (map parse-expr [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
          (:exprs stmt))))
 
 (deftest-stmt test-select-regex-match
-  ["SELECT id, symbol, quote FROM quotes WHERE (? ~ concat(?, symbol, ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
+  ["SELECT \"id\", \"symbol\", \"quote\" FROM \"quotes\" WHERE (? ~ concat(?, \"symbol\", ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
   (select [:id :symbol :quote]
     (from :quotes)
     (where `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
@@ -807,7 +807,7 @@
   (is (= (parse-condition `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))) (:where stmt)))  )
 
 (deftest-stmt test-select-join-on-columns
-  ["SELECT * FROM countries JOIN continents ON (continents.id = countries.continent_id)"]
+  ["SELECT * FROM \"countries\" JOIN \"continents\" ON (\"continents\".\"id\" = \"countries\".\"continent_id\")"]
   (select [*]
     (from :countries)
     (join :continents '(on (= :continents.id :countries.continent-id))))
@@ -820,7 +820,7 @@
     (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:on join)))))
 
 (deftest-stmt test-select-join-with-keywords
-  ["SELECT * FROM continents JOIN countries ON (countries.continent_id = continents.id)"]
+  ["SELECT * FROM \"continents\" JOIN \"countries\" ON (\"countries\".\"continent_id\" = \"continents\".\"id\")"]
   (select [*]
     (from :continents)
     (join :countries.continent-id :continents.id))
@@ -833,7 +833,7 @@
     (is (= (parse-expr '(= :countries.continent-id :continents.id)) (:on join)))))
 
 (deftest-stmt test-select-join-on-columns-alias
-  ["SELECT * FROM countries AS c JOIN continents ON (continents.id = c.continent_id)"]
+  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
   (select [*]
     (from (as :countries :c))
     (join :continents '(on (= :continents.id :c.continent-id))))
@@ -846,7 +846,7 @@
     (is (= (parse-expr '(= :continents.id :c.continent-id)) (:on join)))))
 
 (deftest-stmt test-select-join-using-column
-  ["SELECT * FROM countries JOIN continents USING (id)"]
+  ["SELECT * FROM \"countries\" JOIN \"continents\" USING (\"id\")"]
   (select [*]
     (from :countries)
     (join :continents '(using :id)))
@@ -859,7 +859,7 @@
     (is (= (map parse-expr [:id]) (:using join)))))
 
 (deftest-stmt test-select-join-using-columns
-  ["SELECT * FROM countries JOIN continents USING (id, created_at)"]
+  ["SELECT * FROM \"countries\" JOIN \"continents\" USING (\"id\", \"created_at\")"]
   (select [*]
     (from :countries)
     (join :continents '(using :id :created-at)))
@@ -872,7 +872,7 @@
     (is (= (map parse-expr [:id :created-at]) (:using join)))))
 
 (deftest-stmt test-select-join-alias
-  ["SELECT * FROM countries AS c JOIN continents ON (continents.id = c.continent_id)"]
+  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
   (select [*]
     (from (as :countries :c))
     (join :continents '(on (= :continents.id :c.continent-id)))))
@@ -1032,23 +1032,23 @@
   (select [*] (from '(generate_series 0 10))))
 
 (deftest-stmt test-select-from-fn-alias
-  ["SELECT n FROM generate_series(0, 200) AS n"]
+  ["SELECT \"n\" FROM generate_series(0, 200) AS \"n\""]
   (select [:n] (from (as '(generate_series 0 200) :n))))
 
 (deftest-stmt test-select-qualified-column
-  ["SELECT continents.id FROM continents"]
+  ["SELECT \"continents\".\"id\" FROM \"continents\""]
   (select [{:op :column :table :continents :name :id}]
     (from :continents)))
 
 (deftest-stmt test-select-qualified-keyword-column
-  ["SELECT continents.id FROM continents"]
+  ["SELECT \"continents\".\"id\" FROM \"continents\""]
   (select [:continents.id] (from :continents)))
 
 (deftest test-vendor-specifiy-quoting
   (are [db expected]
     (is (= expected (sql db (select [:continents.id] (from :continents)))))
-    :mysql ["SELECT \"continents.id\" FROM \"continents\""]
-    :postgresql ["SELECT \"continents.id\" FROM \"continents\""]
+    :mysql ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    :postgresql ["SELECT \"continents\".\"id\" FROM \"continents\""]
     :vertica ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
 ;; (sql :postgresql (select [:continents.id] (from :continents)))
@@ -1056,21 +1056,21 @@
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
-  ["TRUNCATE TABLE continents"]
+  ["TRUNCATE TABLE \"continents\""]
   (truncate [:continents])
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
   (is (nil? (:children stmt))))
 
 (deftest-stmt test-truncate-continents-and-countries
-  ["TRUNCATE TABLE continents, countries"]
+  ["TRUNCATE TABLE \"continents\", \"countries\""]
   (truncate [:continents :countries])
   (is (= :truncate (:op stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
   (is (nil? (:children stmt))))
 
 (deftest-stmt test-truncate-continents-restart-restrict
-  ["TRUNCATE TABLE continents RESTART IDENTITY RESTRICT"]
+  ["TRUNCATE TABLE \"continents\" RESTART IDENTITY RESTRICT"]
   (truncate [:continents]
     (restart-identity true)
     (restrict true))
@@ -1080,7 +1080,7 @@
   (is (= {:op :restart-identity} (:restart-identity stmt))))
 
 (deftest-stmt test-truncate-continents-continue-cascade
-  ["TRUNCATE TABLE continents CONTINUE IDENTITY CASCADE"]
+  ["TRUNCATE TABLE \"continents\" CONTINUE IDENTITY CASCADE"]
   (truncate [:continents]
     (continue-identity true)
     (cascade true))
@@ -1089,55 +1089,50 @@
   (is (= {:op :cascade} (:cascade stmt)))
   (is (= {:op :continue-identity} (:continue-identity stmt))))
 
-(deftest-stmt test-truncate-cascade
-  ["TRUNCATE TABLE continents CASCADE"]
-  (truncate [:continents]
-    (cascade true)))
-
 (deftest-stmt test-truncate-continue-identity
-  ["TRUNCATE TABLE continents CONTINUE IDENTITY"]
+  ["TRUNCATE TABLE \"continents\" CONTINUE IDENTITY"]
   (truncate [:continents]
     (continue-identity true)))
 
 (deftest-stmt test-truncate-continue-identity-false
-  ["TRUNCATE TABLE continents"]
+  ["TRUNCATE TABLE \"continents\""]
   (truncate [:continents]
     (continue-identity false)))
 
-(deftest-stmt test-truncate-cascade
-  ["TRUNCATE TABLE continents"]
+(deftest-stmt test-truncate-cascade-true
+  ["TRUNCATE TABLE \"continents\" CASCADE"]
   (truncate [:continents]
-    (cascade false)))
+    (cascade true)))
 
 (deftest-stmt test-truncate-cascade-false
-  ["TRUNCATE TABLE continents"]
+  ["TRUNCATE TABLE \"continents\""]
   (truncate [:continents]
     (cascade false)))
 
 (deftest-stmt test-truncate-restart-identity
-  ["TRUNCATE TABLE continents RESTART IDENTITY"]
+  ["TRUNCATE TABLE \"continents\" RESTART IDENTITY"]
   (truncate [:continents]
     (restart-identity true)))
 
 (deftest-stmt test-truncate-restart-identity-false
-  ["TRUNCATE TABLE continents"]
+  ["TRUNCATE TABLE \"continents\""]
   (truncate [:continents]
     (restart-identity false)))
 
 (deftest-stmt test-truncate-restrict
-  ["TRUNCATE TABLE continents"]
+  ["TRUNCATE TABLE \"continents\""]
   (truncate [:continents]
     (restrict false)))
 
 (deftest-stmt test-truncate-restrict-false
-  ["TRUNCATE TABLE continents"]
+  ["TRUNCATE TABLE \"continents\""]
   (truncate [:continents]
     (restrict false)))
 
 ;; UPDATE
 
 (deftest-stmt test-update-drama-to-dramatic
-  ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
+  ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
   (update :films {:kind "Dramatic"}
     (where '(= :kind "Drama")))
   (is (= :update (:op stmt)))
@@ -1146,7 +1141,7 @@
   (is (= {:kind "Dramatic"} (:row stmt))))
 
 (deftest-stmt test-update-drama-to-dramatic-returning
-  ["UPDATE films SET kind = ? WHERE (kind = ?) RETURNING *" "Dramatic" "Drama"]
+  ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?) RETURNING *" "Dramatic" "Drama"]
   (update :films {:kind "Dramatic"}
     (where '(= :kind "Drama"))
     (returning *))
