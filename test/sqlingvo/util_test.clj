@@ -2,6 +2,18 @@
   (:use clojure.test
         sqlingvo.util))
 
+(deftest test-quoted
+  (are [s start end expected]
+    (is (= expected (quoted s start end)))
+    nil nil nil nil
+    "" nil nil ""
+    "" "`" nil "``"
+    "" "E'" "'" "E''"
+    "test" nil nil "test"
+    "test" "`" nil "`test`"
+    "test" "`" "`" "`test`"
+    "test" "E'" "'" "E'test'"))
+
 (deftest test-as-identifier
   (are [obj expected]
     (is (= expected (as-identifier obj)))

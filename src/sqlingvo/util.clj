@@ -12,6 +12,13 @@
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
 
+(defn quoted
+  "Returns `s` quoted with `start` at the beginning and `end` or
+  `start` at the end."
+  [s & [start end]]
+  (if s (let [start (or start "")]
+          (str start s (or end start)))))
+
 (defn as-identifier
   "Given a obj, convert it to a string using the current naming
   strategy."
