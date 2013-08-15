@@ -7,7 +7,12 @@
             [sqlingvo.util :refer [as-identifier as-quoted default-entities default-identifiers default-quotes]]))
 
 (def ^:dynamic *vendors*
-  {:postgresql
+  {:mysql
+   {:name :mysql
+    :entities default-entities
+    :identifiers default-identifiers
+    :quotes default-quotes}
+   :postgresql
    {:name :postgresql
     :entities default-entities
     :identifiers default-identifiers

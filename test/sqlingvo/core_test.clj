@@ -310,11 +310,11 @@
          (:select stmt))))
 
 (deftest-stmt test-insert-airports
-  [(str "INSERT INTO airports (country_id, name, gps_code, iata_code, wikipedia_url, location) "
-        "SELECT DISTINCT ON (a.iata_code) c.id, a.name, a.gps_code, a.iata_code, a.wikipedia, a.geom "
-        "FROM natural_earth.airports AS a JOIN countries AS c ON (c.geography && a.geom) "
-        "LEFT JOIN airports ON (airports.iata_code = a.iata_code) "
-        "WHERE ((a.gps_code IS NOT NULL) and (a.iata_code IS NOT NULL) and (airports.iata_code IS NULL))")]
+  [(str "INSERT INTO \"airports\" (\"country_id\", \"name\", \"gps_code\", \"iata_code\", \"wikipedia_url\", \"location\") "
+        "SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
+        "FROM \"natural_earth\".\"airports\" AS \"a\" JOIN \"countries\" AS \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
+        "LEFT JOIN \"airports\" ON (\"airports\".\"iata_code\" = \"a\".\"iata_code\") "
+        "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NULL))")]
   (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
     (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
       (from (as :natural-earth.airports :a))
@@ -1044,15 +1044,6 @@
   ["SELECT \"continents\".\"id\" FROM \"continents\""]
   (select [:continents.id] (from :continents)))
 
-(deftest test-vendor-specifiy-quoting
-  (are [db expected]
-    (is (= expected (sql db (select [:continents.id] (from :continents)))))
-    :mysql ["SELECT \"continents\".\"id\" FROM \"continents\""]
-    :postgresql ["SELECT \"continents\".\"id\" FROM \"continents\""]
-    :vertica ["SELECT \"continents\".\"id\" FROM \"continents\""]))
-
-;; (sql :postgresql (select [:continents.id] (from :continents)))
-
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
@@ -1203,6 +1194,15 @@
                 (from :natural-earth.countries)) :u))
     (where '(or (= (lower :countries.iso-3166-1-alpha-2) (lower :u.iso-a2))
                 (= (lower :countries.iso-3166-1-alpha-3) (lower :u.iso-a3))))))
+
+;; QUOTING
+
+(deftest test-vendor-specifiy-quoting
+  (are [db expected]
+    (is (= expected (sql db (select [:continents.id] (from :continents)))))
+    :mysql ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    :postgresql ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    :vertica ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
 ;; POSTGRESQL ARRAYS
 
