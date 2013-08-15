@@ -18,7 +18,6 @@
   (are [obj expected]
     (is (= expected (as-identifier nil obj)))
     nil nil
-    1 "1"
     'a-1 "a_1"
     'a_1 "a_1"
     :a-1 "a_1"

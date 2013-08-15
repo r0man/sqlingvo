@@ -6,19 +6,23 @@
 
 (deftest test-compile-column
   (are [ast expected]
-    (is (= expected (compile-sql db ast)))
+    (is (= expected (compile-stmt db ast)))
+    {:op :column :name :*}
+    ["*"]
+    {:op :column :table :continents :name :*}
+    ["\"continents\".*"]
     {:op :column :name :created-at}
-    ["created_at"]
+    ["\"created_at\""]
     {:op :column :table :continents :name :created-at}
-    ["continents.created_at"]
+    ["\"continents\".\"created_at\""]
     {:op :column :schema :public :table :continents :name :created-at}
-    ["public.continents.created_at"]
+    ["\"public\".\"continents\".\"created_at\""]
     {:op :column :schema :public :table :continents :name :created-at :as :c}
-    ["public.continents.created_at AS c"]))
+    ["\"public\".\"continents\".\"created_at\" AS \"c\""]))
 
 (deftest test-compile-constant
   (are [ast expected]
-    (is (= expected (compile-sql db ast)))
+    (is (= expected (compile-stmt db ast)))
     {:op :constant :form 1}
     ["1"]
     {:op :constant :form 3.14}

@@ -27,6 +27,8 @@
     (cond
      (nil? obj)
      nil
+     (= :* obj)
+     "*"
      (keyword? obj)
      (entities obj)
      (string? obj)

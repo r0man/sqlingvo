@@ -428,7 +428,7 @@
   (is (= [(parse-from :continents)] (:from stmt))))
 
 (deftest-stmt test-select-continents-qualified
-  ["SELECT \"continents\".\"*\" FROM \"continents\""]
+  ["SELECT \"continents\".* FROM \"continents\""]
   (select [:continents.*]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -732,7 +732,7 @@
     (is (= [(parse-expr 2)] (:exprs from)))))
 
 (deftest-stmt test-select-parition-by
-  ["SELECT id, lag(close) over (partition by company_id order by date desc) FROM quotes"]
+  ["SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) FROM \"quotes\""]
   (select [:id '((lag :close) over (partition by :company-id order by :date desc))]
     (from :quotes))
   (is (= :select (:op stmt)))
@@ -741,20 +741,20 @@
   (is (= [(parse-from :quotes)] (:from stmt))))
 
 (deftest-stmt test-select-total-return
-  ["SELECT id, (close / (lag(close) over (partition by company_id order by date desc) - 1)) FROM quotes"]
-  (select [:id '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))]
+  ["SELECT \"id\", (\"close\" / (lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) FROM \"quotes\""]
+  (select [:id '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))]
     (from :quotes))
   (is (= :select (:op stmt)))
-  (is (= (map parse-expr [:id '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))])
+  (is (= (map parse-expr [:id '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))])
          (:exprs stmt)))
   (is (= [(parse-from :quotes)] (:from stmt))))
 
 (deftest-stmt test-select-total-return-alias
-  ["SELECT id, (close / (lag(close) over (partition by company_id order by date desc) - 1)) AS daily_return FROM quotes"]
-  (select [:id (as '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)]
+  ["SELECT \"id\", (\"close\" / (lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) AS \"daily_return\" FROM \"quotes\""]
+  (select [:id (as '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)]
     (from :quotes))
   (is (= :select (:op stmt)))
-  (is (= (map parse-expr [:id (as '(/ close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)])
+  (is (= (map parse-expr [:id (as '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)])
          (:exprs stmt)))
   (is (= [(parse-from :quotes)] (:from stmt))))
 
@@ -878,8 +878,8 @@
     (join :continents '(on (= :continents.id :c.continent-id)))))
 
 (deftest-stmt test-select-join-subselect-alias
-  [(str "SELECT quotes.*, start_date FROM quotes JOIN (SELECT company_id, min(date) AS start_date "
-        "FROM quotes GROUP BY company_id) AS start_dates ON ((quotes.company_id = start_dates.company_id) and (quotes.date = start_dates.start_date))")]
+  [(str "SELECT \"quotes\".*, \"start_date\" FROM \"quotes\" JOIN (SELECT \"company_id\", min(\"date\") AS \"start_date\" "
+        "FROM \"quotes\" GROUP BY \"company_id\") AS \"start_dates\" ON ((\"quotes\".\"company_id\" = \"start_dates\".\"company_id\") and (\"quotes\".\"date\" = \"start_dates\".\"start_date\"))")]
   (select [:quotes.* :start-date]
     (from :quotes)
     (join (as (select [:company-id (as '(min :date) :start-date)]

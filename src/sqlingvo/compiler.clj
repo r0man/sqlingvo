@@ -252,6 +252,16 @@
         (if direction (str " " (upper-case (core/name direction))))
         (if nulls (str " NULLS " (keyword-sql nulls))))])
 
+(defmethod compile-sql :column [db {:keys [as schema name table direction nulls]}]
+  [(str (->> [(if schema (as-quoted db schema))
+              (if table (as-quoted db table))
+              (if name (if (= :* name) "*" (as-quoted db name)))]
+             (remove nil?)
+             (join "."))
+        (if as (str " AS " (as-quoted db as)))
+        (if direction (str " " (upper-case (core/name direction))))
+        (if nulls (str " NULLS " (keyword-sql nulls))))])
+
 (defmethod compile-sql :constant [db node]
   (compile-const db node))
 
