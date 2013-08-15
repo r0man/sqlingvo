@@ -17,13 +17,13 @@
 ;; COMPOSE
 
 (deftest-stmt test-compose
-  ["SELECT id, name FROM continents WHERE (id = 1) ORDER BY name"]
+  ["SELECT \"id\", \"name\" FROM \"continents\" WHERE (\"id\" = 1) ORDER BY \"name\""]
   (compose (select [:id :name] (from :continents))
            (where '(= :id 1))
            (order-by :name)))
 
 (deftest-stmt test-compose-where-clause-using-and
-  ["SELECT color, num_sides FROM shapes WHERE ((num_sides = 3) and (color = ?))" "green"]
+  ["SELECT \"color\", \"num_sides\" FROM \"shapes\" WHERE ((\"num_sides\" = 3) and (\"color\" = ?))" "green"]
   (let [triangles (compose (select [:color :num_sides] (from :shapes))
                            (where '(= :num_sides 3)))]
     (compose triangles (where '(= :color "green") :and))))
@@ -57,7 +57,7 @@
 ;; CREATE TABLE
 
 (deftest-stmt test-create-table-tmp-if-not-exists-inherits
-  ["CREATE TEMPORARY TABLE IF NOT EXISTS import () INHERITS (quotes)"]
+  ["CREATE TEMPORARY TABLE IF NOT EXISTS \"import\" () INHERITS (\"quotes\")"]
   (create-table :import
     (temporary true)
     (if-not-exists true)
@@ -68,14 +68,14 @@
   (is (= [(parse-table :quotes)] (:inherits stmt))))
 
 (deftest-stmt test-create-table-tmp-if-not-exists-false
-  ["CREATE TEMPORARY TABLE import () INHERITS (quotes)"]
+  ["CREATE TEMPORARY TABLE \"import\" () INHERITS (\"quotes\")"]
   (create-table :import
     (temporary true)
     (if-not-exists false)
     (inherits :quotes)))
 
 (deftest-stmt test-create-table-like-including-defaults
-  ["CREATE TABLE tmp_films (LIKE films INCLUDING DEFAULTS)"]
+  ["CREATE TABLE \"tmp_films\" (LIKE \"films\" INCLUDING DEFAULTS)"]
   (create-table :tmp-films
     (like :films :including [:defaults]))
   (is (= :create-table (:op stmt)))
@@ -85,7 +85,7 @@
     (is (= [:defaults] (:including like)))))
 
 (deftest-stmt test-create-table-like-excluding-indexes
-  ["CREATE TABLE tmp_films (LIKE films EXCLUDING INDEXES)"]
+  ["CREATE TABLE \"tmp_films\" (LIKE \"films\" EXCLUDING INDEXES)"]
   (create-table :tmp-films
     (like :films :excluding [:indexes]))
   (is (= :create-table (:op stmt)))
@@ -95,15 +95,15 @@
     (is (= [:indexes] (:excluding like)))))
 
 (deftest-stmt test-create-table-films
-  [(str "CREATE TABLE films ("
-        "code CHAR(5) PRIMARY KEY, "
-        "title VARCHAR(40) NOT NULL, "
-        "did INTEGER NOT NULL, "
-        "date_prod DATE, "
-        "kind VARCHAR(10), "
-        "len INTERVAL, "
-        "created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
-        "updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())")]
+  [(str "CREATE TABLE \"films\" ("
+        "\"code\" CHAR(5) PRIMARY KEY, "
+        "\"title\" VARCHAR(40) NOT NULL, "
+        "\"did\" INTEGER NOT NULL, "
+        "\"date_prod\" DATE, "
+        "\"kind\" VARCHAR(10), "
+        "\"len\" INTERVAL, "
+        "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
+        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())")]
   (create-table :films
     (column :code :char :length 5 :primary-key? true)
     (column :title :varchar :length 40 :not-null? true)
@@ -117,21 +117,21 @@
 ;; COPY
 
 (deftest-stmt test-copy-stdin
-  ["COPY country FROM STDIN"]
+  ["COPY \"country\" FROM STDIN"]
   (copy :country []
     (from :stdin))
   (is (= :copy (:op stmt)))
   (is (= [:stdin] (:from stmt))))
 
 (deftest-stmt test-copy-country
-  ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
+  ["COPY \"country\" FROM ?" "/usr1/proj/bray/sql/country_data"]
   (copy :country []
     (from "/usr1/proj/bray/sql/country_data"))
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
 (deftest-stmt test-copy-country-with-encoding
-  ["COPY country FROM ? ENCODING ?" "/usr1/proj/bray/sql/country_data" "UTF-8"]
+  ["COPY \"country\" FROM ? ENCODING ?" "/usr1/proj/bray/sql/country_data" "UTF-8"]
   (copy :country []
     (from "/usr1/proj/bray/sql/country_data")
     (encoding "UTF-8"))
@@ -139,7 +139,7 @@
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
 (deftest-stmt test-copy-country-columns
-  ["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]
+  ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
   (copy :country [:id :name]
     (from "/usr1/proj/bray/sql/country_data"))
   (is (= :copy (:op stmt)))
@@ -147,19 +147,19 @@
   (is (= (map parse-column [:id :name]) (:columns stmt))))
 
 (deftest test-copy-from-expands-to-absolute-path
-  (is (= ["COPY country FROM ?" (.getAbsolutePath (file "country_data"))]
+  (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
          (sql (copy :country [] (from "country_data"))))))
 
 ;; DELETE
 
 (deftest-stmt test-delete-films
-  ["DELETE FROM films"]
+  ["DELETE FROM \"films\""]
   (delete :films)
   (is (= :delete (:op stmt)))
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-delete-all-films-but-musicals
-  ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
+  ["DELETE FROM \"films\" WHERE (\"kind\" <> ?)" "Musical"]
   (delete :films
     (where '(<> :kind "Musical")))
   (is (= :delete (:op stmt)))
@@ -167,7 +167,7 @@
   (is (= (parse-condition '(<> :kind "Musical")) (:where stmt))))
 
 (deftest-stmt test-delete-completed-tasks-returning-all
-  ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
+  ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
   (delete :tasks
     (where '(= status "DONE"))
     (returning *))
@@ -177,7 +177,7 @@
   (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-delete-films-by-producer-name
-  ["DELETE FROM films WHERE (producer_id in (SELECT id FROM producers WHERE (name = ?)))" "foo"]
+  ["DELETE FROM \"films\" WHERE (\"producer_id\" in (SELECT \"id\" FROM \"producers\" WHERE (\"name\" = ?)))" "foo"]
   (delete :films
     (where `(in :producer-id
                 ~(select [:id]
@@ -192,8 +192,8 @@
          (:where stmt))))
 
 (deftest-stmt test-delete-quotes
-  [(str "DELETE FROM quotes WHERE ((company_id = 1) and (date > (SELECT min(date) FROM import)) and "
-        "(date > (SELECT max(date) FROM import)))")]
+  [(str "DELETE FROM \"quotes\" WHERE ((\"company_id\" = 1) and (\"date\" > (SELECT min(\"date\") FROM \"import\")) and "
+        "(\"date\" > (SELECT max(\"date\") FROM \"import\")))")]
   (delete :quotes
     (where `(and (= :company-id 1)
                  (> :date ~(select ['(min :date)] (from :import)))
@@ -208,19 +208,19 @@
 ;; DROP TABLE
 
 (deftest-stmt test-drop-continents
-  ["DROP TABLE continents"]
+  ["DROP TABLE \"continents\""]
   (drop-table [:continents])
   (is (= :drop-table (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt))))
 
 (deftest-stmt test-drop-continents-and-countries
-  ["DROP TABLE continents, countries"]
+  ["DROP TABLE \"continents\", \"countries\""]
   (drop-table [:continents :countries])
   (is (= :drop-table (:op stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt))))
 
 (deftest-stmt test-drop-continents-countries-if-exists-restrict
-  ["DROP TABLE IF EXISTS continents, countries RESTRICT"]
+  ["DROP TABLE IF EXISTS \"continents\", \"countries\" RESTRICT"]
   (drop-table [:continents :countries]
     (if-exists true)
     (restrict true))
@@ -230,19 +230,19 @@
   (is (= {:op :restrict} (:restrict stmt))))
 
 (deftest-stmt test-drop-continents-if-exists
-  ["DROP TABLE IF EXISTS continents"]
+  ["DROP TABLE IF EXISTS \"continents\""]
   (drop-table [:continents]
     (if-exists true)))
 
 (deftest-stmt test-drop-continents-if-exists-false
-  ["DROP TABLE continents"]
+  ["DROP TABLE \"continents\""]
   (drop-table [:continents]
     (if-exists false)))
 
 ;; INSERT
 
 (deftest-stmt test-insert-default-values
-  ["INSERT INTO films DEFAULT VALUES"]
+  ["INSERT INTO \"films\" DEFAULT VALUES"]
   (insert :films []
     (values :default))
   (is (= :insert (:op stmt)))
@@ -251,7 +251,7 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-single-row-as-map
-  ["INSERT INTO films (did, date_prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
+  ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?)"
    106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
   (insert :films []
     (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
@@ -262,7 +262,7 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-single-row-as-seq
-  ["INSERT INTO films (did, date_prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
+  ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?)"
    106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
   (insert :films []
     (values [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
@@ -273,7 +273,7 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-multi-row
-  ["INSERT INTO films (did, date_prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
+  ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
    110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
   (insert :films []
     (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
@@ -286,7 +286,7 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-returning
-  ["INSERT INTO distributors (did, dname) VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
+  ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
   (insert :distributors []
     (values [{:did 106 :dname "XYZ Widgets"}])
     (returning *))
@@ -296,7 +296,7 @@
   (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-insert-subselect
-  ["INSERT INTO films SELECT * FROM tmp_films WHERE (date_prod < ?)" "2004-05-07"]
+  ["INSERT INTO \"films\" SELECT * FROM \"tmp_films\" WHERE (\"date_prod\" < ?)" "2004-05-07"]
   (insert :films []
     (select [*]
       (from :tmp-films)
@@ -325,7 +325,7 @@
                    (is-null :airports.iata-code))))))
 
 (deftest-stmt test-insert-only-columns
-  ["INSERT INTO x (a, b) VALUES (?, ?)" 1 2]
+  ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (?, ?)" 1 2]
   (insert :x [:a :b] (values [{:a 1 :b 2 :c 3}])))
 
 ;; SELECT
@@ -337,13 +337,13 @@
   (is (= [(parse-expr 1)] (:exprs stmt))))
 
 (deftest-stmt test-select-1-as
-  ["SELECT 1 AS n"]
+  ["SELECT 1 AS \"n\""]
   (select [(as 1 :n)])
   (is (= :select (:op stmt)))
   (is (= [(parse-expr (as 1 :n))] (:exprs stmt))))
 
-(deftest-stmt test-select-x-as
-  ["SELECT ? AS x" "x"]
+(deftest-stmt test-select-x-as-x
+  ["SELECT ? AS \"x\"" "x"]
   (select [(as "x" :x)])
   (is (= :select (:op stmt)))
   (is (= [(parse-expr (as "x" :x))] (:exprs stmt))))
@@ -355,14 +355,14 @@
   (is (= (map parse-expr [1 2 3]) (:exprs stmt))))
 
 (deftest-stmt test-select-1-2-3-as
-  ["SELECT 1 AS a, 2 AS b, 3 AS c"]
+  ["SELECT 1 AS \"a\", 2 AS \"b\", 3 AS \"c\""]
   (select [(as 1 :a) (as 2 :b) (as 3 :c)])
   (is (= :select (:op stmt)))
   (is (= (map parse-expr [(as 1 :a) (as 2 :b) (as 3 :c)])
          (:exprs stmt))))
 
 (deftest-stmt test-select-count-distinct
-  ["SELECT count(DISTINCT user_id) FROM tweets"]
+  ["SELECT count(DISTINCT \"user_id\") FROM \"tweets\""]
   (select ['(count distinct :user-id)]
     (from :tweets)))
 
@@ -387,7 +387,7 @@
   (is (= [(ast (select [1])) (ast (select ["x"]))] (:exprs stmt))))
 
 (deftest-stmt test-select-string
-  ["SELECT * FROM continents WHERE (name = ?)" "Europe"]
+  ["SELECT * FROM \"continents\" WHERE (\"name\" = ?)" "Europe"]
   (select [*]
     (from :continents)
     (where '(= :name "Europe")))
@@ -420,7 +420,7 @@
   (is (= (parse-condition '(< 1 2 3)) (:where stmt))))
 
 (deftest-stmt test-select-continents
-  ["SELECT * FROM continents"]
+  ["SELECT * FROM \"continents\""]
   (select [*]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -428,7 +428,7 @@
   (is (= [(parse-from :continents)] (:from stmt))))
 
 (deftest-stmt test-select-continents-qualified
-  ["SELECT continents.* FROM continents"]
+  ["SELECT \"continents\".\"*\" FROM \"continents\""]
   (select [:continents.*]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -436,14 +436,14 @@
   (is (= [(parse-from :continents)] (:from stmt))))
 
 (deftest-stmt test-select-films
-  ["SELECT * FROM films"]
+  ["SELECT * FROM \"films\""]
   (select [*] (from :films))
   (is (= :select (:op stmt)))
   (is (= [(parse-expr *)] (:exprs stmt)))
   (is (= [(parse-from :films)] (:from stmt))))
 
 (deftest-stmt test-select-comedy-films
-  ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
+  ["SELECT * FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
   (select [*]
     (from :films)
     (where '(= :kind "Comedy")))
@@ -469,7 +469,7 @@
   (is (= (parse-condition '(is-not-null nil)) (:where stmt))))
 
 (deftest-stmt test-select-backquote-date
-  ["SELECT * FROM countries WHERE (created_at > ?)" (Date. 0)]
+  ["SELECT * FROM \"countries\" WHERE (\"created_at\" > ?)" (Date. 0)]
   (select [*]
     (from :countries)
     (where `(> :created-at ~(Date. 0))))
@@ -484,7 +484,7 @@
   (is (= (map parse-expr [* 1 "x"]) (:exprs stmt))))
 
 (deftest-stmt test-select-column
-  ["SELECT created_at FROM continents"]
+  ["SELECT \"created_at\" FROM \"continents\""]
   (select [:created-at]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -492,7 +492,7 @@
   (is (= [(parse-expr :created-at)] (:exprs stmt))))
 
 (deftest-stmt test-select-columns
-  ["SELECT name, created_at FROM continents"]
+  ["SELECT \"name\", \"created_at\" FROM \"continents\""]
   (select [:name :created-at]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -500,7 +500,7 @@
   (is (= (map parse-expr [:name :created-at]) (:exprs stmt))))
 
 (deftest-stmt test-select-column-alias
-  ["SELECT created_at AS c FROM continents"]
+  ["SELECT \"created_at\" AS \"c\" FROM \"continents\""]
   (select [(as :created-at :c)]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -528,7 +528,7 @@
   (is (= [(parse-table :continents)] (:from stmt))))
 
 (deftest-stmt test-select-limit
-  ["SELECT * FROM continents LIMIT 10"]
+  ["SELECT * FROM \"continents\" LIMIT 10"]
   (select [*]
     (from :continents)
     (limit 10))
@@ -538,7 +538,7 @@
   (is (= {:op :limit :count 10} (:limit stmt))))
 
 (deftest-stmt test-select-offset
-  ["SELECT * FROM continents OFFSET 15"]
+  ["SELECT * FROM \"continents\" OFFSET 15"]
   (select [*]
     (from :continents)
     (offset 15))
@@ -548,7 +548,7 @@
   (is (= {:op :offset :start 15} (:offset stmt))))
 
 (deftest-stmt test-select-limit-offset
-  ["SELECT * FROM continents LIMIT 10 OFFSET 20"]
+  ["SELECT * FROM \"continents\" LIMIT 10 OFFSET 20"]
   (select [*]
     (from :continents)
     (limit 10)
@@ -1044,6 +1044,15 @@
   ["SELECT continents.id FROM continents"]
   (select [:continents.id] (from :continents)))
 
+(deftest test-vendor-specifiy-quoting
+  (are [db expected]
+    (is (= expected (sql db (select [:continents.id] (from :continents)))))
+    :mysql ["SELECT \"continents.id\" FROM \"continents\""]
+    :postgresql ["SELECT \"continents.id\" FROM \"continents\""]
+    :vertica ["SELECT \"continents\".\"id\" FROM \"continents\""]))
+
+;; (sql :postgresql (select [:continents.id] (from :continents)))
+
 ;; TRUNCATE
 
 (deftest-stmt test-truncate-continents
@@ -1191,8 +1200,8 @@
     (where '(= :airports.iata-code :u.iata-code))))
 
 (deftest-stmt test-update-countries
-  [(str "UPDATE countries SET geom = u.geom FROM (SELECT iso_a2, iso_a3, iso_n3, geom FROM natural_earth.countries) AS u "
-        "WHERE ((lower(countries.iso_3166_1_alpha_2) = lower(u.iso_a2)) or (lower(countries.iso_3166_1_alpha_3) = lower(u.iso_a3)))")]
+  [(str "UPDATE \"countries\" SET \"geom\" = \"u\".\"geom\" FROM (SELECT \"iso_a2\", \"iso_a3\", \"iso_n3\", \"geom\" FROM \"natural_earth\".\"countries\") AS \"u\" "
+        "WHERE ((lower(\"countries\".\"iso_3166_1_alpha_2\") = lower(\"u\".\"iso_a2\")) or (lower(\"countries\".\"iso_3166_1_alpha_3\") = lower(\"u\".\"iso_a3\")))")]
   (update :countries
       '((= :geom :u.geom))
     (from (as (select [:iso-a2 :iso-a3 :iso-n3 :geom]
@@ -1214,20 +1223,20 @@
   (let [s (select [*]
             (from :continents))
         o (order-by :name)]
-    (is (= ["SELECT * FROM continents ORDER BY name"]
+    (is (= ["SELECT * FROM \"continents\" ORDER BY \"name\""]
            (sql (with-monad state-m
                   (m-seq [s o])))))))
 
 ;; POSTGRESQL FULLTEXT
 
 (deftest-stmt test-cast-as-document-1
-  ["SELECT CAST((title || ? || author || ? || abstract || ? || body) AS document) FROM messages WHERE (mid = 12)" " " " " " "]
+  ["SELECT CAST((\"title\" || ? || \"author\" || ? || \"abstract\" || ? || \"body\") AS document) FROM \"messages\" WHERE (\"mid\" = 12)" " " " " " "]
   (select ['(cast (:|| :title " " :author " " :abstract " " :body) :document)]
     (from :messages)
     (where '(= :mid 12))))
 
 (deftest-stmt test-cast-as-document-2
-  ["SELECT CAST((m.title || ? || m.author || ? || m.abstract || ? || d.body) AS document) FROM messages AS m, docs AS d WHERE ((mid = did) and (mid = 12))" " " " " " "]
+  ["SELECT CAST((\"m\".\"title\" || ? || \"m\".\"author\" || ? || \"m\".\"abstract\" || ? || \"d\".\"body\") AS document) FROM \"messages\" AS \"m\", \"docs\" AS \"d\" WHERE ((\"mid\" = \"did\") and (\"mid\" = 12))" " " " " " "]
   (select ['(cast (:|| :m.title " " :m.author " " :m.abstract " " :d.body) :document)]
     (from (as :messages :m) (as :docs :d))
     (where '(and (= :mid :did)
@@ -1258,7 +1267,7 @@
              (to_tsquery "fat & rat"))]))
 
 (deftest-stmt test-searching-a-table-1
-  ["SELECT title FROM pgweb WHERE (to_tsvector(?, body) @@ to_tsquery(?, ?))" "english" "english" "friend"]
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector(?, \"body\") @@ to_tsquery(?, ?))" "english" "english" "friend"]
   (select [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
@@ -1266,7 +1275,7 @@
              (to_tsquery "english" "friend")))))
 
 (deftest-stmt test-searching-a-table-2
-  ["SELECT title FROM pgweb WHERE (to_tsvector(body) @@ to_tsquery(?))" "friend"]
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector(\"body\") @@ to_tsquery(?))" "friend"]
   (select [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
@@ -1274,7 +1283,7 @@
              (to_tsquery "friend")))))
 
 (deftest-stmt test-searching-a-table-3
-  ["SELECT title FROM pgweb WHERE (to_tsvector((title || ? || body)) @@ to_tsquery(?)) ORDER BY last_mod_date DESC LIMIT 10" " " "create & table"]
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector((\"title\" || ? || \"body\")) @@ to_tsquery(?)) ORDER BY \"last_mod_date\" DESC LIMIT 10" " " "create & table"]
   (select [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
@@ -1282,16 +1291,3 @@
              (to_tsquery "create & table")))
     (order-by (desc :last-mod-date))
     (limit 10)))
-
-(comment
-  (deftest test-create-table-vertica
-    (sql :vertica
-         (create-table :films
-           (column :code :char :length 5 :primary-key? true)
-           (column :title :varchar :length 40 :not-null? true)
-           (column :did :integer :not-null? true)
-           (column :date-prod :date)
-           (column :kind :varchar :length 10)
-           (column :len :interval)
-           (column :created-at :timestamp-with-time-zone :not-null? true :default "now()")
-           (column :updated-at :timestamp-with-time-zone :not-null? true :default "now()")))))

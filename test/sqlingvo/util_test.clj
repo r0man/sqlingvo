@@ -3,21 +3,22 @@
         sqlingvo.util))
 
 (deftest test-quoted
-  (are [s start end expected]
-    (is (= expected (quoted s start end)))
-    nil nil nil nil
-    "" nil nil ""
-    "" "`" nil "``"
-    "" "E'" "'" "E''"
-    "test" nil nil "test"
-    "test" "`" nil "`test`"
-    "test" "`" "`" "`test`"
-    "test" "E'" "'" "E'test'"))
+  (are [s quotes expected]
+    (is (= expected (as-quoted {:quotes quotes} s)))
+    nil [nil nil] nil
+    "" [nil nil] ""
+    "" ["\"" nil] "\"\""
+    "" ["E'" "'"] "E''"
+    "test" [nil nil] "test"
+    "test" ["\"" nil] "\"test\""
+    "test" ["\"" "\""] "\"test\""
+    "test" ["E'" "'"] "E'test'"))
 
 (deftest test-as-identifier
   (are [obj expected]
-    (is (= expected (as-identifier obj)))
+    (is (= expected (as-identifier nil obj)))
     nil nil
+    1 "1"
     'a-1 "a_1"
     'a_1 "a_1"
     :a-1 "a_1"

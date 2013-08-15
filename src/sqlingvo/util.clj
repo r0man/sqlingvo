@@ -4,39 +4,48 @@
             [clojure.string :refer [blank? join replace]]
             [inflections.core :refer [hyphenize underscore]]))
 
-(def ^:dynamic *as-identifier* (comp underscore name))
-
 (def ^:dynamic *column-regex*
   #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?")
 
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
 
-(defn quoted
-  "Returns `s` quoted with `start` at the beginning and `end` or
-  `start` at the end."
-  [s & [start end]]
-  (if s (let [start (or start "")]
-          (str start s (or end start)))))
+(def default-entities
+  (comp underscore name))
+
+(def default-identifiers
+  (comp keyword hyphenize))
+
+(def default-quotes
+  [\" \"])
 
 (defn as-identifier
   "Given a obj, convert it to a string using the current naming
   strategy."
-  [obj]
-  (cond
-   (nil? obj)
-   nil
-   (keyword? obj)
-   (*as-identifier* obj)
-   (string? obj)
-   (*as-identifier* obj)
-   (symbol? obj)
-   (*as-identifier* obj)
-   (map? obj)
-   (->> [(:schema obj) (:table obj) (:name obj)]
-        (remove nil?)
-        (map *as-identifier*)
-        (join "."))))
+  [db obj]
+  (let [entities (or (:entities db) default-entities)]
+    (cond
+     (nil? obj)
+     nil
+     (keyword? obj)
+     (entities obj)
+     (string? obj)
+     (entities obj)
+     (symbol? obj)
+     (entities obj)
+     (map? obj)
+     (->> [(:schema obj) (:table obj) (:name obj)]
+          (remove nil?)
+          (map entities)
+          (join ".")))))
+
+(defn as-quoted [db obj]
+  (if obj
+    (let [[start end] (:quotes db)]
+      (str
+       (or start)
+       (as-identifier db obj)
+       (or end start)))))
 
 (defn as-keyword
   "Given a obj, convert it to a keyword using the current naming
