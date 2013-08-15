@@ -1152,7 +1152,7 @@
   (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-update-daily-return
-  ["UPDATE quotes SET daily_return = u.daily_return FROM (SELECT id, lag(close) over (partition by company_id order by date desc) AS daily_return FROM quotes) AS u WHERE (quotes.id = u.id)"]
+  ["UPDATE \"quotes\" SET \"daily_return\" = \"u\".\"daily_return\" FROM (SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) AS \"daily_return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
   (update :quotes '((= :daily-return :u.daily-return))
     (where '(= :quotes.id :u.id))
     (from (as (select [:id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return)]
@@ -1160,12 +1160,12 @@
               :u))))
 
 (deftest-stmt test-update-prices
-  [(str "UPDATE prices SET daily_return = u.daily_return "
-        "FROM (SELECT id, ((close / lag(close) over (partition by quote_id order by date desc)) - 1) AS daily_return "
-        "FROM prices WHERE (prices.quote_id = 1)) AS u WHERE ((prices.id = u.id) and (prices.quote_id = 1))")]
+  [(str "UPDATE \"prices\" SET \"daily_return\" = \"u\".\"daily_return\" "
+        "FROM (SELECT \"id\", ((\"close\" / lag(\"close\") over (partition by \"quote_id\" order by \"date\" desc)) - 1) AS \"daily_return\" "
+        "FROM \"prices\" WHERE (\"prices\".\"quote_id\" = 1)) AS \"u\" WHERE ((\"prices\".\"id\" = \"u\".\"id\") and (\"prices\".\"quote_id\" = 1))")]
   (let [quote {:id 1}]
     (update :prices '((= :daily-return :u.daily-return))
-      (from (as (select [:id (as '(- (/ close ((lag :close) over (partition by :quote-id order by :date desc))) 1) :daily-return)]
+      (from (as (select [:id (as '(- (/ :close ((lag :close) over (partition by :quote-id order by :date desc))) 1) :daily-return)]
                   (from :prices)
                   (where `(= :prices.quote-id ~(:id quote))))
                 :u))
@@ -1173,12 +1173,12 @@
                    (= :prices.quote-id ~(:id quote)))))))
 
 (deftest-stmt test-update-airports
-  [(str "UPDATE airports SET country_id = u.id, gps_code = u.gps_code, wikipedia_url = u.wikipedia, location = u.geom "
-        "FROM (SELECT DISTINCT ON (a.iata_code) c.id, a.name, a.gps_code, a.iata_code, a.wikipedia, a.geom "
-        "FROM natural_earth.airports AS a JOIN countries AS c ON (c.geography && a.geom) "
-        "LEFT JOIN airports ON (lower(airports.iata_code) = lower(a.iata_code)) "
-        "WHERE ((a.gps_code IS NOT NULL) and (a.iata_code IS NOT NULL) and (airports.iata_code IS NOT NULL))) AS u "
-        "WHERE (airports.iata_code = u.iata_code)")]
+  [(str "UPDATE \"airports\" SET \"country_id\" = \"u\".\"id\", \"gps_code\" = \"u\".\"gps_code\", \"wikipedia_url\" = \"u\".\"wikipedia\", \"location\" = \"u\".\"geom\" "
+        "FROM (SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
+        "FROM \"natural_earth\".\"airports\" AS \"a\" JOIN \"countries\" AS \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
+        "LEFT JOIN \"airports\" ON (lower(\"airports\".\"iata_code\") = lower(\"a\".\"iata_code\")) "
+        "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NOT NULL))) AS \"u\" "
+        "WHERE (\"airports\".\"iata_code\" = \"u\".\"iata_code\")")]
   (update :airports
       '((= :country-id :u.id)
         (= :gps-code :u.gps-code)
