@@ -169,11 +169,11 @@
 (deftest-stmt test-delete-completed-tasks-returning-all
   ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
   (delete :tasks
-    (where '(= status "DONE"))
+    (where '(= :status "DONE"))
     (returning *))
   (is (= :delete (:op stmt)))
   (is (= (parse-table :tasks) (:table stmt)))
-  (is (= (parse-condition '(= status "DONE")) (:where stmt)))
+  (is (= (parse-condition '(= :status "DONE")) (:where stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-delete-films-by-producer-name
@@ -182,13 +182,13 @@
     (where `(in :producer-id
                 ~(select [:id]
                    (from :producers)
-                   (where '(= name "foo"))))))
+                   (where '(= :name "foo"))))))
   (is (= :delete (:op stmt)))
   (is (= (parse-table :films) (:table stmt)))
   (is (= (parse-condition `(in :producer-id
                                ~(select [:id]
                                   (from :producers)
-                                  (where '(= name "foo")))))
+                                  (where '(= :name "foo")))))
          (:where stmt))))
 
 (deftest-stmt test-delete-quotes
