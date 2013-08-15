@@ -3,8 +3,18 @@
   (:require [clojure.core :as core]
             [clojure.java.io :refer [file]]
             [clojure.string :refer [blank? join replace upper-case]]
-            [inflections.core :refer [underscore]]
+            [inflections.core :refer [underscore hyphenize]]
             [sqlingvo.util :refer [*as-identifier* as-identifier]]))
+
+(def ^:dynamic *vendors*
+  {:postgresql
+   {:name :postgresql
+    :entities #(underscore (name %1))
+    :identifiers #(keyword (hyphenize %1))}
+   :vertica
+   {:name :vertica
+    :entities #(str "\"" (underscore (name %1)) "\"")
+    :identifiers #(keyword (hyphenize %1))}})
 
 (defprotocol SQLType
   (sql-type [arg] "Convert `arg` into an SQL type."))
@@ -455,6 +465,13 @@
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
-  [stmt & {:keys [entities]}]
-  (binding [*as-identifier* (or entities (comp underscore name))]
-    (apply vector (compile-sql stmt))))
+  ([stmt]
+     (compile-stmt :postgresql stmt))
+  ([db stmt]
+     (let [db (cond
+               (keyword? db)
+               (get *vendors* db)
+               (map? db)
+               db
+               :else (:postgresql *vendors*))]
+       (apply vector (compile-sql stmt)))))

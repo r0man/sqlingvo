@@ -326,5 +326,7 @@
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
-  [stmt & {:keys [entities]}]
-  (compile-stmt (ast stmt) :entities entities))
+  ([stmt]
+     (compile-stmt nil (ast stmt)))
+  ([db stmt]
+     (compile-stmt db (ast stmt))))

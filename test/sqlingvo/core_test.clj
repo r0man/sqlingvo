@@ -1282,3 +1282,16 @@
              (to_tsquery "create & table")))
     (order-by (desc :last-mod-date))
     (limit 10)))
+
+(comment
+  (deftest test-create-table-vertica
+    (sql :vertica
+         (create-table :films
+           (column :code :char :length 5 :primary-key? true)
+           (column :title :varchar :length 40 :not-null? true)
+           (column :did :integer :not-null? true)
+           (column :date-prod :date)
+           (column :kind :varchar :length 10)
+           (column :len :interval)
+           (column :created-at :timestamp-with-time-zone :not-null? true :default "now()")
+           (column :updated-at :timestamp-with-time-zone :not-null? true :default "now()")))))
