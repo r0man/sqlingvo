@@ -19,39 +19,39 @@ Copy from standard input.
 
     (sql (copy :country []
            (from :stdin)))
-    ;=> ["COPY country FROM STDIN"]
+    ;=> ["COPY \"country\" FROM STDIN"]
 
 Copy data from a file into the country table.
 
     (sql (copy :country []
            (from "/usr1/proj/bray/sql/country_data")))
-    ;=> ["COPY country FROM ?" "/usr1/proj/bray/sql/country_data"]
+    ;=> ["COPY \"country\" FROM ?" "/usr1/proj/bray/sql/country_data"]
 
 Copy data from a file into the country table with columns in the given order.
 
     (sql (copy :country [:id :name]
            (from "/usr1/proj/bray/sql/country_data")))
-    ;=>["COPY country (id, name) FROM ?" "/usr1/proj/bray/sql/country_data"]
+    ;=>["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
 
 ### [Delete](http://www.postgresql.org/docs/9.2/static/sql-delete.html)
 
 Clear the table films.
 
     (sql (delete :films))
-    ;=> ["DELETE FROM films"]
+    ;=> ["DELETE FROM \"films\""]
 
 Delete all films but musicals.
 
     (sql (delete :films
            (where '(<> :kind "Musical"))))
-    ;=> ["DELETE FROM films WHERE (kind <> ?)" "Musical"]
+    ;=> ["DELETE FROM \"films\" WHERE (\"kind\" <> ?)" "Musical"]
 
 Delete completed tasks, returning full details of the deleted rows.
 
     (sql (delete :tasks
-           (where '(= status "DONE"))
+           (where '(= :status "DONE"))
            (returning *)))
-    ;=> ["DELETE FROM tasks WHERE (status = ?) RETURNING *" "DONE"]
+    ;=> ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
 
 ### [Insert](http://www.postgresql.org/docs/9.2/static/sql-insert.html)
 
@@ -59,7 +59,7 @@ Insert a single row into table films.
 
     (sql (insert :films []
            (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})))
-    ;=> ["INSERT INTO films (did, date_prod, kind, title, code) VALUES (?, ?, ?, ?, ?)"
+    ;=> ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?)"
     ;=>  106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
 
 Insert multiple rows into the table films using the multirow VALUES syntax.
@@ -67,14 +67,14 @@ Insert multiple rows into the table films using the multirow VALUES syntax.
     (sql (insert :films []
            (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
                     {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])))
-    ;=> ["INSERT INTO films (did, date_prod, kind, title, code) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
+    ;=> ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
     ;=>  110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
 
 Insert a row consisting entirely of default values.
 
     (sql (insert :films []
            (values :default)))
-    ;=> ["INSERT INTO films DEFAULT VALUES"]
+    ;=> ["INSERT INTO \"films\" DEFAULT VALUES"]
 
 Insert some rows into table films from a table tmp_films with the same column layout as films.
 
@@ -82,28 +82,28 @@ Insert some rows into table films from a table tmp_films with the same column la
            (select [*]
              (from :tmp-films)
              (where '(< :date_prod "2004-05-07")))))
-    ;=> ["INSERT INTO films (SELECT * FROM tmp_films WHERE (date_prod < ?))" "2004-05-07"]
+    ;=> ["INSERT INTO \"films\" (SELECT * FROM \"tmp_films\" WHERE (\"date_prod\" < ?))" "2004-05-07"]
 
 ### [Select](http://www.postgresql.org/docs/9.2/static/sql-select.html)
 
 Select all films.
 
     (sql (select [*] (from :films)))
-    ;=> ["SELECT * FROM films"]
+    ;=> ["SELECT * FROM \"films\""]
 
 Select all Comedy films.
 
     (sql (select [*]
            (from :films)
            (where '(= :kind "Comedy"))))
-    ;=> ["SELECT * FROM films WHERE (kind = ?)" "Comedy"]
+    ;=> ["SELECT * FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
 
 Retrieve the most recent weather report for each location.
 
     (sql (select (distinct [:location :time :report] :on [:location])
            (from :weather-reports)
            (order-by :location (desc :time))))
-    ;=> ["SELECT DISTINCT ON (location) location, time, report FROM weather_reports ORDER BY location, time DESC"]
+    ;=> ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
 
 ### [Update](http://www.postgresql.org/docs/9.2/static/sql-update.html)
 
@@ -111,7 +111,7 @@ Change the word Drama to Dramatic in the column kind of the table films.
 
     (sql (update :films {:kind "Dramatic"}
            (where '(= :kind "Drama"))))
-    ;=> ["UPDATE films SET kind = ? WHERE (kind = ?)" "Dramatic" "Drama"]
+    ;=> ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
 
 ### [Sorting Rows](http://www.postgresql.org/docs/9.2/static/queries-order.html)
 
@@ -120,14 +120,14 @@ The sort expression(s) can be any expression that would be valid in the query's 
     (sql (select [:a :b]
            (from :table-1)
            (order-by '(+ :a :b) :c)))
-    ;=> ["SELECT a, b FROM table_1 ORDER BY (a + b), c"]
+    ;=> ["SELECT \"a\", \"b\" FROM \"table_1\" ORDER BY (\"a\" + \"b\"), \"c\""]
 
 A sort expression can also be the column label
 
     (sql (select [(as '(+ :a :b) :sum) :c]
            (from :table-1)
            (order-by :sum)))
-    ;=> ["SELECT a + b AS sum, c FROM table_1 ORDER BY sum"]
+    ;=> ["SELECT \"a\" + \"b\" AS \"sum\", \"c\" FROM \"table_1\" ORDER BY \"sum\""]
 
 or the number of an output column.
 
@@ -135,7 +135,7 @@ or the number of an output column.
            (from :table-1)
            (group-by :a)
            (order-by 1)))
-    ;=> ["SELECT a, max(b) FROM table_1 GROUP BY a ORDER BY 1"]
+    ;=> ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
 
 For more complex examples, look at the [tests](https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj).
 
