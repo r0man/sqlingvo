@@ -4,6 +4,11 @@
             [clojure.string :refer [blank? join replace]]
             [inflections.core :refer [hyphenize underscore]]))
 
+(deftype Stmt [f]
+  clojure.lang.IFn
+  (invoke [this n]
+    (f n)))
+
 (def ^:dynamic *column-regex*
   #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?")
 
@@ -145,7 +150,8 @@
   {:op :constant :form '*})
 
 (defmethod parse-expr :default [expr]
-  (if (fn? expr)
+  (if (or (fn? expr)
+          (instance? Stmt expr))
     (first (expr {}))
     {:op :constant :form expr}))
 

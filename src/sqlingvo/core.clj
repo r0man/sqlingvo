@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [inflections.core :refer [foreign-key hyphenize underscore]]
             [sqlingvo.compiler :refer [compile-stmt]]
-            [sqlingvo.util :refer :all]))
+            [sqlingvo.util :refer :all])
+  (:import sqlingvo.util.Stmt))
 
 (defn chain-state [body]
   (with-monad state-m (m-seq (remove nil? body))))
@@ -16,8 +17,12 @@
 (defn ast
   "Returns the abstract syntax tree of `stmt`."
   [stmt]
-  (if (map? stmt)
-    stmt (second (stmt nil))))
+  (cond
+   (map? stmt)
+   stmt
+   (instance? Stmt stmt)
+   (second ((.f stmt) nil))
+   :else (second (stmt nil))))
 
 (defn as
   "Parse `expr` and return an expr with and AS clause using `alias`."
@@ -81,39 +86,39 @@
 (defn copy
   "Returns a fn that builds a COPY statement."
   [table columns & body]
-  (fn [stmt]
-    (with-monad state-m
-      ((m-seq (remove nil? body))
-       {:op :copy
-        :table (parse-table table)
-        :columns (map parse-column columns)}))))
+  (Stmt. (fn [stmt]
+           (with-monad state-m
+             ((m-seq (remove nil? body))
+              {:op :copy
+               :table (parse-table table)
+               :columns (map parse-column columns)})))))
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
   [table & body]
-  (fn [stmt]
-    (with-monad state-m
-      ((m-seq (remove nil? body))
-       {:op :create-table
-        :table (parse-table table)}))))
+  (Stmt. (fn [stmt]
+           (with-monad state-m
+             ((m-seq (remove nil? body))
+              {:op :create-table
+               :table (parse-table table)})))))
 
 (defn delete
   "Returns a fn that builds a DELETE statement."
   [table & body]
-  (fn [stmt]
-    (with-monad state-m
-      ((m-seq (remove nil? body))
-       {:op :delete
-        :table (parse-table table)}))))
+  (Stmt. (fn [stmt]
+           (with-monad state-m
+             ((m-seq (remove nil? body))
+              {:op :delete
+               :table (parse-table table)})))))
 
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
   [tables & body]
-  (fn [stmt]
-    (with-monad state-m
-      ((m-seq (remove nil? body))
-       {:op :drop-table
-        :tables (map parse-table tables)}))))
+  (Stmt. (fn [stmt]
+           (with-monad state-m
+             ((m-seq (remove nil? body))
+              {:op :drop-table
+               :tables (map parse-table tables)})))))
 
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
@@ -160,12 +165,12 @@
 (defn insert
   "Returns a fn that builds a INSERT statement."
   [table columns & body]
-  (fn [stmt]
-    (with-monad state-m
-      ((m-seq (remove nil? body))
-       {:op :insert
-        :table (parse-table table)
-        :columns (map parse-column columns)}))))
+  (Stmt. (fn [stmt]
+           (with-monad state-m
+             ((m-seq (remove nil? body))
+              {:op :insert
+               :table (parse-table table)
+               :columns (map parse-column columns)})))))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
@@ -260,10 +265,10 @@
                       exprs)
           :exprs (if (sequential? exprs)
                    (parse-exprs exprs))})]
-    (fn [stmt]
-      (case (:op stmt)
-        nil [select select]
-        :insert (repeat 2 (assoc stmt :select select))))))
+    (Stmt. (fn [stmt]
+             (case (:op stmt)
+               nil [select select]
+               :insert (repeat 2 (assoc stmt :select select)))))))
 
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
@@ -279,8 +284,7 @@
         ((chain-state body)
          {:op :truncate
           :tables (map parse-table tables)})]
-    (fn [stmt]
-      [truncate truncate])))
+    (Stmt. (fn [stmt] [truncate truncate]))))
 
 (defn union
   "Returns a fn that adds a UNION clause to an SQL statement."
@@ -292,13 +296,13 @@
 (defn update
   "Returns a fn that builds a UPDATE statement."
   [table row & body]
-  (fn [stmt]
-    (with-monad state-m
-      ((chain-state body)
-       {:op :update
-        :table (parse-table table)
-        :exprs (if (sequential? row) (parse-exprs row))
-        :row (if (map? row) row)}))))
+  (Stmt. (fn [stmt]
+           (with-monad state-m
+             ((chain-state body)
+              {:op :update
+               :table (parse-table table)
+               :exprs (if (sequential? row) (parse-exprs row))
+               :row (if (map? row) row)})))))
 
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
@@ -330,3 +334,7 @@
      (compile-stmt (ast stmt)))
   ([db stmt]
      (compile-stmt db (ast stmt))))
+
+(defmethod print-method sqlingvo.util.Stmt
+  [stmt writer]
+  (print-method (sql stmt) writer))
