@@ -1200,7 +1200,7 @@
 (deftest test-vendor-specifiy-quoting
   (are [db expected]
     (is (= expected (sql db (select [:continents.id] (from :continents)))))
-    :mysql ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    :mysql ["SELECT `continents`.`id` FROM `continents`"]
     :postgresql ["SELECT \"continents\".\"id\" FROM \"continents\""]
     :vertica ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 

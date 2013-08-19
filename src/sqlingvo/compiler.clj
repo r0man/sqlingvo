@@ -11,7 +11,7 @@
    {:name :mysql
     :entities default-entities
     :identifiers default-identifiers
-    :quotes default-quotes}
+    :quotes  ["`" "`"]}
    :postgresql
    {:name :postgresql
     :entities default-entities
