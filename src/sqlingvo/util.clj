@@ -18,9 +18,6 @@
 (def sql-name-underscore
   (comp underscore name))
 
-(def default-entities
-  (comp underscore name))
-
 (def sql-keyword-hyphenize
   (comp keyword hyphenize))
 
@@ -37,7 +34,7 @@
   "Given a obj, convert it to a string using the current naming
   strategy."
   [db obj]
-  (let [entities (or (:entities db) default-entities)]
+  (let [entities (or (:entities db) sql-name-underscore)]
     (cond
      (nil? obj)
      nil

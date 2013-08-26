@@ -4,22 +4,22 @@
             [clojure.java.io :refer [file]]
             [clojure.string :refer [blank? join replace upper-case]]
             [inflections.core :refer [underscore hyphenize]]
-            [sqlingvo.util :refer [as-identifier as-quoted default-entities sql-keyword-hyphenize default-quotes]]))
+            [sqlingvo.util :refer [as-identifier as-quoted sql-name-underscore sql-keyword-hyphenize default-quotes]]))
 
 (def ^:dynamic *vendors*
   {:mysql
    {:name :mysql
-    :entities default-entities
+    :entities sql-name-underscore
     :identifiers sql-keyword-hyphenize
     :quotes  ["`" "`"]}
    :postgresql
    {:name :postgresql
-    :entities default-entities
+    :entities sql-name-underscore
     :identifiers sql-keyword-hyphenize
     :quotes default-quotes}
    :vertica
    {:name :vertica
-    :entities default-entities
+    :entities sql-name-underscore
     :identifiers sql-keyword-hyphenize
     :quotes default-quotes}})
 
