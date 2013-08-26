@@ -15,9 +15,6 @@
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
 
-(def sql-name-underscore
-  (comp underscore name))
-
 (def sql-keyword-hyphenize
   (comp keyword hyphenize))
 
@@ -27,7 +24,7 @@
 (defn sql-quote-double-quote [x]
   (str "\"" x "\""))
 
-(def default-entities
+(def sql-name-underscore
   (comp underscore name))
 
 (def default-identifiers
@@ -40,7 +37,7 @@
   "Given a obj, convert it to a string using the current naming
   strategy."
   [db obj]
-  (let [entities (or (:entities db) default-entities)]
+  (let [entities (or (:entities db) sql-name-underscore)]
     (cond
      (nil? obj)
      nil
