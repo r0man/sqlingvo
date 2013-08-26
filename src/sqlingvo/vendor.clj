@@ -22,7 +22,7 @@
 (defn sql-quote-double-quote [x]
   (str "\"" x "\""))
 
-(defmacro defvendor [name & {:as opts}]
+(defmacro defvendor [name doc & {:as opts}]
   `(defrecord ~name [~'spec]
      Keywordable
      (sql-keyword [~'vendor ~'x]
@@ -36,21 +36,25 @@
         (sql-name ~'vendor ~'x)))))
 
 (defvendor mysql
+  "The world's most popular open source database."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-backtick)
 
 (defvendor postgresql
+  "The world's most advanced open source database."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
 
 (defvendor sqlite
+  "The in-process SQL database engine."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
 
 (defvendor vertica
+  "The Real-Time Analytics Platform."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
