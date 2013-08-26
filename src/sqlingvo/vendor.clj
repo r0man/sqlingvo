@@ -1,5 +1,5 @@
 (ns sqlingvo.vendor
-  (:require [inflections.core :refer [hyphenize underscore]]))
+  (:require [sqlingvo.util :refer :all]))
 
 (defprotocol Keywordable
   (sql-keyword [vendor x]))
@@ -9,18 +9,6 @@
 
 (defprotocol Quoteable
   (sql-quote [vendor x]))
-
-(def sql-name-underscore
-  (comp underscore name))
-
-(def sql-keyword-hyphenize
-  (comp keyword hyphenize))
-
-(defn sql-quote-backtick [x]
-  (str "`" x "`"))
-
-(defn sql-quote-double-quote [x]
-  (str "\"" x "\""))
 
 (defmacro defvendor [name doc & {:as opts}]
   `(defrecord ~name [~'spec]

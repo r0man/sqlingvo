@@ -15,6 +15,18 @@
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
 
+(def sql-name-underscore
+  (comp underscore name))
+
+(def sql-keyword-hyphenize
+  (comp keyword hyphenize))
+
+(defn sql-quote-backtick [x]
+  (str "`" x "`"))
+
+(defn sql-quote-double-quote [x]
+  (str "\"" x "\""))
+
 (def default-entities
   (comp underscore name))
 
