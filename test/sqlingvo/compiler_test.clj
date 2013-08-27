@@ -1,8 +1,9 @@
 (ns sqlingvo.compiler-test
+  (:require [sqlingvo.vendor :refer [->postgresql]])
   (:use clojure.test
         sqlingvo.compiler))
 
-(def db :postgresql)
+(def db (->postgresql {}))
 
 (deftest test-compile-column
   (are [ast expected]
@@ -38,9 +39,9 @@
     {:op :constant :form 1}
     ["1"]
     {:op :keyword :form :continents.created-at}
-    ["continents.created_at"]
+    ["\"continents.created_at\""]
     {:op :fn :name 'max :args [{:op :keyword :form :created-at}]}
-    ["max(created_at)"]
+    ["max(\"created_at\")"]
     {:op :fn :name 'greatest :args [{:op :constant :form 1} {:op :constant :form 2}]}
     ["greatest(1, 2)"]
     {:op :fn :name 'ST_AsText :args [{:op :fn :name 'ST_Centroid :args [{:op :constant :form "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"}]}]}
@@ -50,18 +51,18 @@
   (are [ast expected]
     (is (= expected (compile-sql db ast)))
     {:op :drop-table :tables [{:op :table :name :continents}]}
-    ["DROP TABLE continents"]
+    ["DROP TABLE \"continents\""]
     {:op :drop-table :tables [{:op :table :name :continents}] :cascade {:op :cascade :cascade true}}
-    ["DROP TABLE continents CASCADE"]
+    ["DROP TABLE \"continents\" CASCADE"]
     {:op :drop-table :tables [{:op :table :name :continents}] :restrict {:op :restrict :restrict true}}
-    ["DROP TABLE continents RESTRICT"]
+    ["DROP TABLE \"continents\" RESTRICT"]
     {:op :drop-table :tables [{:op :table :name :continents}] :if-exists {:op :if-exists :if-exists true}}
-    ["DROP TABLE IF EXISTS continents"]
+    ["DROP TABLE IF EXISTS \"continents\""]
     {:op :drop-table :tables [{:op :table :name :continents}]
      :cascade {:op :cascade :cascade true}
      :restrict {:op :restrict :restrict true}
      :if-exists {:op :if-exists :if-exists true}}
-    ["DROP TABLE IF EXISTS continents CASCADE RESTRICT"]))
+    ["DROP TABLE IF EXISTS \"continents\" CASCADE RESTRICT"]))
 
 (deftest test-compile-limit
   (are [ast expected]
@@ -83,11 +84,11 @@
   (are [ast expected]
     (is (= expected (compile-sql db ast)))
     {:op :table :name :continents}
-    ["continents"]
+    ["\"continents\""]
     {:op :table :schema :public :name :continents}
-    ["public.continents"]
+    ["\"public\".\"continents\""]
     {:op :table :schema :public :name :continents :as :c}
-    ["public.continents AS c"]))
+    ["\"public\".\"continents\" AS \"c\""]))
 
 (deftest test-wrap-stmt
   (are [stmt expected]

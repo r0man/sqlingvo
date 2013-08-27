@@ -3,25 +3,7 @@
   (:require [clojure.core :as core]
             [clojure.java.io :refer [file]]
             [clojure.string :refer [blank? join replace upper-case]]
-            [inflections.core :refer [underscore hyphenize]]
-            [sqlingvo.util :refer [as-identifier as-quoted sql-name-underscore sql-keyword-hyphenize default-quotes]]))
-
-(def ^:dynamic *vendors*
-  {:mysql
-   {:name :mysql
-    :entities sql-name-underscore
-    :identifiers sql-keyword-hyphenize
-    :quotes  ["`" "`"]}
-   :postgresql
-   {:name :postgresql
-    :entities sql-name-underscore
-    :identifiers sql-keyword-hyphenize
-    :quotes default-quotes}
-   :vertica
-   {:name :vertica
-    :entities sql-name-underscore
-    :identifiers sql-keyword-hyphenize
-    :quotes default-quotes}})
+            [sqlingvo.vendor :as vendor :refer [sql-quote sql-name]]))
 
 (defprotocol SQLType
   (sql-type [arg] "Convert `arg` into an SQL type."))
@@ -63,7 +45,7 @@
 ;; COMPILE CONSTANTS
 
 (defn compile-inline [db {:keys [form as]}]
-  [(str form (if as (str " AS " (as-quoted db as))))])
+  [(str form (if as (str " AS " (sql-quote db as))))])
 
 (defmulti compile-const
   "Compile a SQL constant into a SQL statement."
@@ -79,7 +61,7 @@
   (compile-inline db node))
 
 (defmethod compile-const :default [db {:keys [form as]}]
-  [(str "?" (if as (str " AS " (as-quoted db as)))) (sql-type form)])
+  [(str "?" (if as (str " AS " (sql-quote db as)))) (sql-type form)])
 
 ;; COMPILE EXPRESSIONS
 
@@ -109,7 +91,7 @@
    (= 2 (count args))
    (let [[[s1 & a1] [s2 & a2]] (map #(compile-expr db %1) args)]
      (cons (str "(" s1 " " (core/name name) " " s2 ")"
-                (if as (str " AS " (as-quoted db as))))
+                (if as (str " AS " (sql-quote db as))))
            (concat a1 a2)))
    :else
    (apply join-stmt db " AND "
@@ -125,19 +107,19 @@
    :else
    (let [args (map #(compile-expr db %1) args)]
      (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
-                (if as (str " AS " (as-quoted db as))))
+                (if as (str " AS " (sql-quote db as))))
            (apply concat (map rest args))))))
 
 (defn compile-complex-args [db {:keys [as args name] :as node}]
   (let [[sql & args] (apply join-stmt db " " args)]
     (cons (str "(" (core/name name) " " sql ")"
-               (if as (str " AS " (as-quoted db as))))
+               (if as (str " AS " (sql-quote db as))))
           args)))
 
 (defn compile-whitespace-args [db {:keys [as args name] :as node}]
   (let [[sql & args] (apply join-stmt db " " args)]
     (cons (str (core/name name) "(" sql ")"
-               (if as (str " AS " (as-quoted db as))))
+               (if as (str " AS " (sql-quote db as))))
           args)))
 
 (defmulti compile-fn
@@ -171,8 +153,8 @@
 
 (defmethod compile-fn :default [db {:keys [as args name]}]
   (let [args (map #(compile-expr db %1) args)]
-    (cons (str (as-identifier db name) "(" (join ", " (map first args)) ")"
-               (if as (str " AS " (as-quoted db as))))
+    (cons (str (sql-name db name) "(" (join ", " (map first args)) ")"
+               (if as (str " AS " (sql-quote db as))))
           (apply concat (map rest args)))))
 
 ;; COMPILE FROM CLAUSE
@@ -184,7 +166,7 @@
 
 (defmethod compile-from :select [db node]
   (let [[sql & args] (compile-sql db node)]
-    (cons (str "(" sql ") AS " (as-quoted db (:as node))) args)))
+    (cons (str "(" sql ") AS " (sql-quote db (:as node))) args)))
 
 (defmethod compile-from :table [db node]
   (compile-sql db node))
@@ -209,7 +191,7 @@
            (= :stdin from) []))))
 
 (defn compile-column [db column]
-  [(str (as-quoted db (:name column))
+  [(str (sql-quote db (:name column))
         " " (replace (upper-case (name (:type column))) "-" " ")
         (if-let [length (:length column)]
           (str "(" length ")"))
@@ -252,18 +234,18 @@
                   (mapcat rest returning)))))
 
 (defmethod compile-sql :column [db {:keys [as schema name table direction nulls]}]
-  [(str (join "." (map #(as-quoted db %1) (remove nil? [schema table name])))
-        (if as (str " AS " (as-quoted db as)))
+  [(str (join "." (map #(sql-quote db %1) (remove nil? [schema table name])))
+        (if as (str " AS " (sql-quote db as)))
         (if direction (str " " (upper-case (core/name direction))))
         (if nulls (str " NULLS " (keyword-sql nulls))))])
 
 (defmethod compile-sql :column [db {:keys [as schema name table direction nulls]}]
-  [(str (->> [(if schema (as-quoted db schema))
-              (if table (as-quoted db table))
-              (if name (if (= :* name) "*" (as-quoted db name)))]
+  [(str (->> [(if schema (sql-quote db schema))
+              (if table (sql-quote db table))
+              (if name (if (= :* name) "*" (sql-quote db name)))]
              (remove nil?)
              (join "."))
-        (if as (str " AS " (as-quoted db as)))
+        (if as (str " AS " (sql-quote db as)))
         (if direction (str " " (upper-case (core/name direction))))
         (if nulls (str " NULLS " (keyword-sql nulls))))])
 
@@ -285,7 +267,7 @@
 
 (defmethod compile-sql :expr-list [db {:keys [as children]}]
   (let [[sql & args] (apply join-stmt db " " children)]
-    (cons (str sql (if as (str " AS " (as-quoted db as))))
+    (cons (str sql (if as (str " AS " (sql-quote db as))))
           args)))
 
 (defmethod compile-sql :fn [db node]
@@ -349,7 +331,7 @@
           (concat from-args on-args (mapcat rest using)))))
 
 (defmethod compile-sql :keyword [db {:keys [form]}]
-  [(as-quoted db form)])
+  [(sql-quote db form)])
 
 (defmethod compile-sql :limit [db {:keys [count]}]
   [(str "LIMIT " (if (number? count) count "ALL"))])
@@ -372,8 +354,8 @@
     (cons (str "ORDER BY " sql) args)))
 
 (defmethod compile-sql :table [db {:keys [as schema name]}]
-  [(str (join "." (map #(as-quoted db %1) (remove nil? [schema name])))
-        (if as (str " AS " (as-quoted db as))))])
+  [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name])))
+        (if as (str " AS " (sql-quote db as))))])
 
 (defmethod compile-sql :distinct [db {:keys [exprs on]}]
   (let [exprs (map #(compile-sql db %1) exprs)
@@ -439,7 +421,7 @@
 (defmethod compile-sql :update [db {:keys [where from exprs table row returning]}]
   (let [returning (map #(compile-sql db %1) returning)
         where (if where (compile-sql db where))
-        columns (map #(as-quoted db %1) (keys row))
+        columns (map #(sql-quote db %1) (keys row))
         exprs (map (comp unwrap-stmt #(compile-expr db %1)) exprs)
         from (map #(compile-from db %1) from)]
     (cons (str "UPDATE " (first (compile-sql db table))
@@ -483,12 +465,7 @@
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
   ([stmt]
-     (compile-stmt :postgresql stmt))
+     (compile-stmt (vendor/->postgresql {}) stmt))
   ([db stmt]
-     (let [db (cond
-               (keyword? db)
-               (get *vendors* db)
-               (map? db)
-               db
-               :else (:postgresql *vendors*))]
-       (apply vector (compile-sql db stmt)))))
+     (assert db "No db given!")
+     (apply vector (compile-sql db stmt))))

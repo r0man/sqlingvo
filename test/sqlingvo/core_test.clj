@@ -2,7 +2,8 @@
   (:import java.sql.Date)
   (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.algo.monads :refer :all]
-            [clojure.java.io :refer [file]])
+            [clojure.java.io :refer [file]]
+            [sqlingvo.vendor :as vendor])
   (:use clojure.test
         sqlingvo.compiler
         sqlingvo.util
@@ -1200,9 +1201,9 @@
 (deftest test-vendor-specifiy-quoting
   (are [db expected]
     (is (= expected (sql db (select [:continents.id] (from :continents)))))
-    :mysql ["SELECT `continents`.`id` FROM `continents`"]
-    :postgresql ["SELECT \"continents\".\"id\" FROM \"continents\""]
-    :vertica ["SELECT \"continents\".\"id\" FROM \"continents\""]))
+    (vendor/->mysql {}) ["SELECT `continents`.`id` FROM `continents`"]
+    (vendor/->postgresql {}) ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    (vendor/->vertica {}) ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
 ;; POSTGRESQL ARRAYS
 
