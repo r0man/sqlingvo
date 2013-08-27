@@ -4,8 +4,18 @@
             [clojure.string :as str]
             [inflections.core :refer [foreign-key hyphenize underscore]]
             [sqlingvo.compiler :refer [compile-stmt]]
-            [sqlingvo.util :refer :all])
+            [sqlingvo.util :refer :all]
+            [sqlingvo.vendor :as vendor])
   (:import sqlingvo.util.Stmt))
+
+(defn sql-name [db x]
+  (vendor/sql-name db x))
+
+(defn sql-keyword [db x]
+  (vendor/sql-keyword db x))
+
+(defn sql-quote [db x]
+  (vendor/sql-quote db x))
 
 (defn chain-state [body]
   (with-monad state-m (m-seq (remove nil? body))))
