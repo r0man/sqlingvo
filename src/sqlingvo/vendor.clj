@@ -35,8 +35,20 @@
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
 
+(defvendor oracle
+  "Oracle Database."
+  :name sql-name-underscore
+  :keyword sql-keyword-hyphenize
+  :quote sql-quote-double-quote)
+
 (defvendor sqlite
   "The in-process SQL database engine."
+  :name sql-name-underscore
+  :keyword sql-keyword-hyphenize
+  :quote sql-quote-double-quote)
+
+(defvendor sqlserver
+  "Microsoft SQL server."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
