@@ -3,7 +3,7 @@
   (:use clojure.test
         sqlingvo.compiler))
 
-(def db (->postgresql {}))
+(def db (->postgresql))
 
 (deftest test-compile-column
   (are [ast expected]

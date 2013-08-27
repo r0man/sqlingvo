@@ -11,7 +11,7 @@
   (sql-quote [vendor x]))
 
 (defmacro defvendor [name doc & {:as opts}]
-  `(defrecord ~name [~'spec]
+  `(defrecord ~name []
      Keywordable
      (sql-keyword [~'vendor ~'x]
        ((or ~(:keyword opts) sql-name-underscore) ~'x))

@@ -465,7 +465,7 @@
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
   ([stmt]
-     (compile-stmt (->postgresql {}) stmt))
+     (compile-stmt (->postgresql) stmt))
   ([db stmt]
      (assert db "No db given!")
      (apply vector (compile-sql db stmt))))

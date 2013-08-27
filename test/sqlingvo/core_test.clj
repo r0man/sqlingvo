@@ -1201,9 +1201,9 @@
 (deftest test-vendor-specifiy-quoting
   (are [db expected]
     (is (= expected (sql db (select [:continents.id] (from :continents)))))
-    (vendor/->mysql {}) ["SELECT `continents`.`id` FROM `continents`"]
-    (vendor/->postgresql {}) ["SELECT \"continents\".\"id\" FROM \"continents\""]
-    (vendor/->vertica {}) ["SELECT \"continents\".\"id\" FROM \"continents\""]))
+    (vendor/->mysql) ["SELECT `continents`.`id` FROM `continents`"]
+    (vendor/->postgresql) ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    (vendor/->vertica) ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
 ;; POSTGRESQL ARRAYS
 
