@@ -3,7 +3,7 @@
   (:require [clojure.core :as core]
             [clojure.java.io :refer [file]]
             [clojure.string :refer [blank? join replace upper-case]]
-            [sqlingvo.vendor :as vendor :refer [sql-quote sql-name]]))
+            [sqlingvo.vendor :refer [->postgresql sql-quote sql-name]]))
 
 (defprotocol SQLType
   (sql-type [arg] "Convert `arg` into an SQL type."))
@@ -465,7 +465,7 @@
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
   ([stmt]
-     (compile-stmt (vendor/->postgresql {}) stmt))
+     (compile-stmt (->postgresql {}) stmt))
   ([db stmt]
      (assert db "No db given!")
      (apply vector (compile-sql db stmt))))
