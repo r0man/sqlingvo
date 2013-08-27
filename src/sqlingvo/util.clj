@@ -27,9 +27,6 @@
 (defn sql-quote-double-quote [x]
   (str "\"" x "\""))
 
-(def default-quotes
-  [\" \"])
-
 (defn as-identifier
   "Given a obj, convert it to a string using the current naming
   strategy."
