@@ -27,26 +27,6 @@
 (defn sql-quote-double-quote [x]
   (str "\"" x "\""))
 
-(defn as-keyword
-  "Given a obj, convert it to a keyword using the current naming
-  strategy."
-  [obj]
-  (cond
-   (nil? obj)
-   nil
-   (keyword? obj)
-   obj
-   (symbol? obj)
-   (keyword (hyphenize obj))
-   (string? obj)
-   (keyword (hyphenize obj))
-   (map? obj)
-   (->> [(:schema obj) (:table obj) (:name obj)]
-        (remove nil?)
-        (map name)
-        (join ".")
-        (keyword))))
-
 (defn concat-in [m ks & args]
   (apply update-in m ks concat args))
 

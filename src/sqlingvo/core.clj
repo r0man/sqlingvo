@@ -46,7 +46,7 @@
                    (map name)
                    (str/join "-")
                    (keyword)))))
-    (assoc (parse-expr expr) :as (as-keyword alias))))
+    (assoc (parse-expr expr) :as alias)))
 
 (defn asc
   "Parse `expr` and return an ORDER BY expr using ascending order."
@@ -207,9 +207,7 @@
           (keyword? condition))
      (assoc join
        :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
-       :on (parse-expr
-            `(= ~(as-keyword (parse-column from))
-                ~(as-keyword (parse-column condition)))))
+       :on (parse-expr `(= ~from ~condition)))
      :else (throw (IllegalArgumentException. (format "Invalid JOIN condition: %s" condition))))))
 
 (defn join
