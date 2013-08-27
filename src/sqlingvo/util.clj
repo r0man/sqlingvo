@@ -27,36 +27,6 @@
 (defn sql-quote-double-quote [x]
   (str "\"" x "\""))
 
-(defn as-identifier
-  "Given a obj, convert it to a string using the current naming
-  strategy."
-  [db obj]
-  (let [entities (or (:entities db) sql-name-underscore)]
-    (cond
-     (nil? obj)
-     nil
-     (= :* obj)
-     "*"
-     (keyword? obj)
-     (entities obj)
-     (string? obj)
-     (entities obj)
-     (symbol? obj)
-     (entities obj)
-     (map? obj)
-     (->> [(:schema obj) (:table obj) (:name obj)]
-          (remove nil?)
-          (map entities)
-          (join ".")))))
-
-(defn as-quoted [db obj]
-  (if obj
-    (let [[start end] (:quotes db)]
-      (str
-       (or start)
-       (as-identifier db obj)
-       (or end start)))))
-
 (defn as-keyword
   "Given a obj, convert it to a keyword using the current naming
   strategy."

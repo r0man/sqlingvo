@@ -2,32 +2,6 @@
   (:use clojure.test
         sqlingvo.util))
 
-(deftest test-quoted
-  (are [s quotes expected]
-    (is (= expected (as-quoted {:quotes quotes} s)))
-    nil [nil nil] nil
-    "" [nil nil] ""
-    "" ["\"" nil] "\"\""
-    "" ["E'" "'"] "E''"
-    "test" [nil nil] "test"
-    "test" ["\"" nil] "\"test\""
-    "test" ["\"" "\""] "\"test\""
-    "test" ["E'" "'"] "E'test'"))
-
-(deftest test-as-identifier
-  (are [obj expected]
-    (is (= expected (as-identifier nil obj)))
-    nil nil
-    'a-1 "a_1"
-    'a_1 "a_1"
-    :a-1 "a_1"
-    "a-1" "a_1"
-    "a_1" "a_1"
-    {:schema :public :table :continents}
-    "public.continents"
-    {:schema :public :table :continents :name :id}
-    "public.continents.id"))
-
 (deftest test-as-keyword
   (are [obj expected]
     (is (= expected (as-keyword obj)))
