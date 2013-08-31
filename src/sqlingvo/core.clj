@@ -201,11 +201,11 @@
               :outer outer}]
     (cond
      (and (sequential? condition)
-          (= 'on (first condition)))
+          (= :on (keyword (name (first condition)))))
      (assoc join
        :on (parse-expr (first (rest condition))))
      (and (sequential? condition)
-          (= 'using (first condition)))
+          (= :using (keyword (name (first condition)))))
      (assoc join
        :using (parse-exprs (rest condition)))
      (and (keyword? from)

@@ -884,6 +884,12 @@
     (from (as :countries :c))
     (join :continents '(on (= :continents.id :c.continent-id)))))
 
+(deftest-stmt test-select-join-syntax-quote
+  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+  (select [*]
+    (from (as :countries :c))
+    (join :continents `(on (= :continents.id :c.continent-id)))))
+
 (deftest-stmt test-select-join-subselect-alias
   [(str "SELECT \"quotes\".*, \"start_date\" FROM \"quotes\" JOIN (SELECT \"company_id\", min(\"date\") AS \"start_date\" "
         "FROM \"quotes\" GROUP BY \"company_id\") AS \"start_dates\" ON ((\"quotes\".\"company_id\" = \"start_dates\".\"company_id\") and (\"quotes\".\"date\" = \"start_dates\".\"start_date\"))")]
