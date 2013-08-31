@@ -139,6 +139,12 @@
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
+(deftest-stmt test-copy-country-with-delimiter
+  ["COPY \"country\" FROM ? DELIMITER ?" "/usr1/proj/bray/sql/country_data" " "]
+  (copy :country []
+    (from "/usr1/proj/bray/sql/country_data")
+    (delimiter " ")))
+
 (deftest-stmt test-copy-country-columns
   ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
   (copy :country [:id :name]

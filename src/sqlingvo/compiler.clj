@@ -173,7 +173,7 @@
 
 ;; COMPILE SQL
 
-(defmethod compile-sql :copy [db {:keys [columns encoding from to table]}]
+(defmethod compile-sql :copy [db {:keys [columns delimiter encoding from to table]}]
   (let [from (first from)]
     (cons (str "COPY " (first (compile-sql db table))
                (if-not (empty? columns)
@@ -182,13 +182,13 @@
                (cond
                 (string? from) "?"
                 (= :stdin from) "STDIN")
-               (if encoding " ENCODING ?"))
+               (if encoding " ENCODING ?")
+               (if delimiter " DELIMITER ?"))
           (cond
-           (and (string? from) encoding)
-           [from encoding]
+           (= :stdin from)
+           (remove nil? [delimiter encoding])
            (string? from)
-           [(.getAbsolutePath (file from))]
-           (= :stdin from) []))))
+           (remove nil? [(.getAbsolutePath (file from)) delimiter encoding])))))
 
 (defn compile-column [db column]
   [(str (sql-quote db (:name column))

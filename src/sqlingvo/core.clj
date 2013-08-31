@@ -88,6 +88,11 @@
    :exprs (parse-exprs exprs)
    :on (parse-exprs on)})
 
+(defn delimiter
+  "Returns a fn that adds a DELIMITER clause to an SQL statement."
+  [delimiter]
+  (set-val :delimiter delimiter))
+
 (defn encoding
   "Returns a fn that adds a ENCODING clause to an SQL statement."
   [encoding]
