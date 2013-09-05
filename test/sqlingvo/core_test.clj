@@ -387,6 +387,11 @@
   (is (= [(parse-expr 1)] (:exprs stmt)))
   (is (= (parse-condition '(in 1 (1 2 3))) (:where stmt))))
 
+(deftest-stmt test-select-1-in-1-2-3-backquote
+  ["SELECT 1 WHERE (1 in (1, 2, 3))"]
+  (select [1]
+    (where `(in 1 (1 2 3)))))
+
 (deftest-stmt test-select-select-1-select-x
   ["SELECT (SELECT 1), (SELECT ?)" "x"]
   (select [(select [1]) (select ["x"])])

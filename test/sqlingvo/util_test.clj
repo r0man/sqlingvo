@@ -81,6 +81,10 @@
          {:op :column :schema nil :table nil :name :date :as nil}
          {:op :constant :form desc}]}]}))
 
+(deftest test-parse-condition-backquote
+  (is (= (parse-condition '(in 1 (1 2 3)))
+         (parse-condition `(in 1 (1 2 3))))))
+
 (deftest test-parse-from
   (are [from expected]
     (is (= expected (parse-from from)))

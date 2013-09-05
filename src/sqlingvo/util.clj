@@ -79,7 +79,7 @@
   {:op :nil})
 
 (defmethod parse-expr clojure.lang.Cons [expr]
-  (parse-fn-expr expr))
+  (parse-expr (apply list expr)))
 
 (defmethod parse-expr clojure.lang.ISeq [expr]
   (cond
