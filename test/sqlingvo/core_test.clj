@@ -157,6 +157,18 @@
   (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
          (sql (copy :country [] (from "country_data"))))))
 
+(deftest-stmt test-select-in-list
+  ["SELECT * FROM \"continents\" WHERE 1 IN (1, 2, 3)"]
+  (select [:*]
+    (from :continents)
+    (where '(in 1 (1 2 3)))))
+
+(deftest-stmt test-select-in-empty-list
+  ["SELECT * FROM \"continents\" WHERE 1 IN (NULL)"]
+  (select [:*]
+    (from :continents)
+    (where '(in 1 ()))))
+
 ;; DELETE
 
 (deftest-stmt test-delete-films
@@ -184,7 +196,7 @@
   (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-delete-films-by-producer-name
-  ["DELETE FROM \"films\" WHERE (\"producer_id\" in (SELECT \"id\" FROM \"producers\" WHERE (\"name\" = ?)))" "foo"]
+  ["DELETE FROM \"films\" WHERE \"producer_id\" IN (SELECT \"id\" FROM \"producers\" WHERE (\"name\" = ?))" "foo"]
   (delete :films
     (where `(in :producer-id
                 ~(select [:id]
@@ -380,7 +392,7 @@
   (is (= [(ast (select [1]))] (:exprs stmt))))
 
 (deftest-stmt test-select-1-in-1-2-3
-  ["SELECT 1 WHERE (1 in (1, 2, 3))"]
+  ["SELECT 1 WHERE 1 IN (1, 2, 3)"]
   (select [1]
     (where '(in 1 (1 2 3))))
   (is (= :select (:op stmt)))
@@ -388,7 +400,7 @@
   (is (= (parse-condition '(in 1 (1 2 3))) (:where stmt))))
 
 (deftest-stmt test-select-1-in-1-2-3-backquote
-  ["SELECT 1 WHERE (1 in (1, 2, 3))"]
+  ["SELECT 1 WHERE 1 IN (1, 2, 3)"]
   (select [1]
     (where `(in 1 (1 2 3)))))
 

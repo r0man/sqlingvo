@@ -138,6 +138,16 @@
                (join ", " (map first args)) ")")
           (mapcat rest args))))
 
+(defmethod compile-fn :in [db {[member expr] :args}]
+  (let [[member-sql & member-args] (compile-expr db member)
+        [expr-sql & expr-args] (compile-expr db expr)]
+    (cons (str member-sql " IN "
+               (if (and (= :list (:op expr))
+                        (empty? (:children expr)))
+                 "(NULL)"
+                 (str expr-sql)))
+          (concat member-args expr-args))))
+
 (defmethod compile-fn :is-null [db {:keys [args]}]
   (let [[sql & args] (compile-expr db (first args))]
     (cons (str "(" sql " IS NULL)") args)))
@@ -449,7 +459,7 @@
               (~arity-fn db# ~'node)))))
 
 (defarity compile-2-ary
-  "=" "!=" "<>" "<" ">" "<=" ">=" "&&" "/" "^" "~" "~*" "like" "ilike" "in")
+  "=" "!=" "<>" "<" ">" "<=" ">=" "&&" "/" "^" "~" "~*" "like" "ilike")
 
 (defarity compile-infix
   "+" "-" "*" "&" "!~" "!~*" "%" "and" "or" "union" "||" "overlaps" "@@")
