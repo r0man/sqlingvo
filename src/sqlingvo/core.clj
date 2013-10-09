@@ -348,6 +348,6 @@
   ([db stmt]
      (compile-stmt db (ast stmt))))
 
-(defmethod print-method sqlingvo.util.Stmt
+(defmethod print-method Stmt
   [stmt writer]
   (print-method (sql stmt) writer))
