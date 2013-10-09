@@ -6,4 +6,4 @@
   :lein-release {:deploy-via :clojars}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/algo.monads "0.1.4"]
-                 [inflections "0.8.2"]])
+                 [inflections "0.9.1"]])
