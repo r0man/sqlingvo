@@ -35,6 +35,8 @@ Copy data from a file into the country table with columns in the given order.
 
 ### [Create Table](http://www.postgresql.org/docs/9.2/static/sql-createtable.html)
 
+Define a new database table.
+
     (sql (create-table :films
 	   (column :code :char :length 5 :primary-key? true)
 	   (column :title :varchar :length 40 :not-null? true)
