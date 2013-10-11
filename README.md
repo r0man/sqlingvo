@@ -40,14 +40,14 @@ Copy data from a file into the country table with columns in the given order.
 Define a new database table.
 
     (sql (create-table :films
-	   (column :code :char :length 5 :primary-key? true)
-	   (column :title :varchar :length 40 :not-null? true)
-	   (column :did :integer :not-null? true)
-	   (column :date-prod :date)
-	   (column :kind :varchar :length 10)
-	   (column :len :interval)
-	   (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
-	   (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
+           (column :code :char :length 5 :primary-key? true)
+           (column :title :varchar :length 40 :not-null? true)
+           (column :did :integer :not-null? true)
+           (column :date-prod :date)
+           (column :kind :varchar :length 10)
+           (column :len :interval)
+           (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
+           (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
 
     ;=> ["CREATE TABLE \"films\" ("
     ;=>  "\"code\" CHAR(5) PRIMARY KEY, "
