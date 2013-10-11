@@ -6,6 +6,8 @@ A SQL DSL in Clojure.
 
 Via Clojars: https://clojars.org/sqlingvo
 
+[![Current Version](https://clojars.org/sqlingvo/latest-version.svg)](https://clojars.org/sqlingvo)
+
 ## Usage
 
     (refer-clojure :exclude '[distinct group-by])
