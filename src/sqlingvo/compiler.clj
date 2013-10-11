@@ -212,7 +212,7 @@
         (if (:primary-key? column)
           " PRIMARY KEY")
         (if-let [default (:default column)]
-          (str " DEFAULT " default)))])
+          (str " DEFAULT " (first (compile-sql db default)))))])
 
 (defmethod compile-sql :create-table [db {:keys [table if-not-exists inherits like temporary] :as node}]
   (let [columns (map #(compile-column db %1) (map (:column node) (:columns node)))]

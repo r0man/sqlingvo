@@ -55,6 +55,8 @@
     {:op :fn :name :max :args [{:op :constant :form 1}
                                {:op :fn :name :max
                                 :args [{:op :constant :form 2}{:op :constant :form 3} ]}]}
+    '(now)
+    {:op :fn :name :now :args []}
     '(in 1 (1 2 3))
     {:op :fn
      :name :in

@@ -112,8 +112,8 @@
     (column :date-prod :date)
     (column :kind :varchar :length 10)
     (column :len :interval)
-    (column :created-at :timestamp-with-time-zone :not-null? true :default "now()")
-    (column :updated-at :timestamp-with-time-zone :not-null? true :default "now()")))
+    (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
+    (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
 
 ;; COPY
 

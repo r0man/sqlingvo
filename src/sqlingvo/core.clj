@@ -62,7 +62,8 @@
 (defn column
   "Add a column to `stmt`."
   [name type & {:as options}]
-  (let [column (assoc options :op :column :name name :type type)]
+  (let [column (assoc options :op :column :name name :type type)
+        column (update-in column [:default] #(if %1 (parse-expr %1)))]
     (fn [stmt]
       [nil (-> (update-in stmt [:columns] #(concat %1 [(:name column)]))
                (assoc-in [:column (:name column)]
