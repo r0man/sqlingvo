@@ -805,25 +805,25 @@
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr 1)] (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-query-select
-;;   ["SELECT \"a\", \"b\" FROM \"table_1\" ORDER BY (\"a\" + \"b\"), \"c\""]
-;;   (select [:a :b]
-;;     (from :table-1)
-;;     (order-by '(+ :a :b) :c))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr :a) (parse-expr :b)] (:exprs stmt)))
-;;   (is (= [(parse-from :table-1)] (:from stmt)))
-;;   (is (= [(parse-expr '(+ :a :b)) (parse-expr :c)] (:order-by stmt))))
+(deftest-stmt test-select-order-by-query-select
+  ["SELECT \"a\", \"b\" FROM \"table_1\" ORDER BY (\"a\" + \"b\"), \"c\""]
+  (select [:a :b]
+    (from :table-1)
+    (order-by '(+ :a :b) :c))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr :a) (parse-expr :b)] (:exprs stmt)))
+  (is (= [(parse-from :table-1)] (:from stmt)))
+  (is (= [(parse-expr '(+ :a :b)) (parse-expr :c)] (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-sum
-;;   ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table_1\" ORDER BY \"sum\""]
-;;   (select [(as '(+ :a :b) :sum) :c]
-;;     (from :table-1)
-;;     (order-by :sum))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr (as '(+ :a :b) :sum)) (parse-expr :c)] (:exprs stmt)))
-;;   (is (= [(parse-from :table-1)] (:from stmt)))
-;;   (is (= [(parse-expr :sum)] (:order-by stmt))))
+(deftest-stmt test-select-order-by-sum
+  ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table_1\" ORDER BY \"sum\""]
+  (select [(as '(+ :a :b) :sum) :c]
+    (from :table-1)
+    (order-by :sum))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr (as '(+ :a :b) :sum)) (parse-expr :c)] (:exprs stmt)))
+  (is (= [(parse-from :table-1)] (:from stmt)))
+  (is (= [(parse-expr :sum)] (:order-by stmt))))
 
 ;; (deftest-stmt test-select-setval
 ;;   ["SELECT setval(\"continent_id_seq\", (SELECT max(\"id\") FROM \"continents\"))"]
@@ -832,15 +832,15 @@
 ;;   (is (= (map parse-expr [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
 ;;          (:exprs stmt))))
 
-;; (deftest-stmt test-select-regex-match
-;;   ["SELECT \"id\", \"symbol\", \"quote\" FROM \"quotes\" WHERE (? ~ concat(?, \"symbol\", ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
-;;   (select [:id :symbol :quote]
-;;     (from :quotes)
-;;     (where `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-from :quotes)] (:from stmt)))
-;;   (is (= (map parse-expr [:id :symbol :quote]) (:exprs stmt)))
-;;   (is (= (parse-condition `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))) (:where stmt)))  )
+(deftest-stmt test-select-regex-match
+  ["SELECT \"id\", \"symbol\", \"quote\" FROM \"quotes\" WHERE (? ~ concat(?, \"symbol\", ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
+  (select [:id :symbol :quote]
+    (from :quotes)
+    (where `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :quotes)] (:from stmt)))
+  (is (= (map parse-expr [:id :symbol :quote]) (:exprs stmt)))
+  (is (= (parse-condition `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))) (:where stmt)))  )
 
 ;; (deftest-stmt test-select-join-on-columns
 ;;   ["SELECT * FROM \"countries\" JOIN \"continents\" ON (\"continents\".\"id\" = \"countries\".\"continent_id\")"]
@@ -1006,85 +1006,85 @@
 ;;       (is (= :select (:op stmt)))
 ;;       (is (= (map parse-expr [2]) (:exprs stmt))))))
 
-;; (deftest-stmt test-select-where-combine-and-1
-;;   ["SELECT 1 WHERE (1 = 1)"]
-;;   (select [1]
-;;     (where '(= 1 1) :and)))
+(deftest-stmt test-select-where-combine-and-1
+  ["SELECT 1 WHERE (1 = 1)"]
+  (select [1]
+    (where '(= 1 1) :and)))
 
-;; (deftest-stmt test-select-where-combine-and-2
-;;   ["SELECT 1 WHERE ((1 = 1) and (2 = 2))"]
-;;   (select [1]
-;;     (where '(= 1 1))
-;;     (where '(= 2 2) :and)))
+(deftest-stmt test-select-where-combine-and-2
+  ["SELECT 1 WHERE ((1 = 1) and (2 = 2))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :and)))
 
-;; (deftest-stmt test-select-where-combine-and-3
-;;   ["SELECT 1 WHERE (((1 = 1) and (2 = 2)) and (3 = 3))"]
-;;   (select [1]
-;;     (where '(= 1 1))
-;;     (where '(= 2 2) :and)
-;;     (where '(= 3 3) :and)))
+(deftest-stmt test-select-where-combine-and-3
+  ["SELECT 1 WHERE (((1 = 1) and (2 = 2)) and (3 = 3))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :and)
+    (where '(= 3 3) :and)))
 
-;; (deftest-stmt test-select-where-combine-or-1
-;;   ["SELECT 1 WHERE (1 = 1)"]
-;;   (select [1]
-;;     (where '(= 1 1) :or)))
+(deftest-stmt test-select-where-combine-or-1
+  ["SELECT 1 WHERE (1 = 1)"]
+  (select [1]
+    (where '(= 1 1) :or)))
 
-;; (deftest-stmt test-select-where-combine-or-2
-;;   ["SELECT 1 WHERE ((1 = 1) or (2 = 2))"]
-;;   (select [1]
-;;     (where '(= 1 1))
-;;     (where '(= 2 2) :or)))
+(deftest-stmt test-select-where-combine-or-2
+  ["SELECT 1 WHERE ((1 = 1) or (2 = 2))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :or)))
 
-;; (deftest-stmt test-select-where-combine-or-3
-;;   ["SELECT 1 WHERE (((1 = 1) or (2 = 2)) or (3 = 3))"]
-;;   (select [1]
-;;     (where '(= 1 1))
-;;     (where '(= 2 2) :or)
-;;     (where '(= 3 3) :or)))
+(deftest-stmt test-select-where-combine-or-3
+  ["SELECT 1 WHERE (((1 = 1) or (2 = 2)) or (3 = 3))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :or)
+    (where '(= 3 3) :or)))
 
-;; (deftest-stmt test-select-where-combine-mixed
-;;   ["SELECT 1 WHERE (((1 = 1) and (2 = 2)) or (3 = 3))"]
-;;   (select [1]
-;;     (where '(= 1 1))
-;;     (where '(= 2 2) :and)
-;;     (where '(= 3 3) :or)))
+(deftest-stmt test-select-where-combine-mixed
+  ["SELECT 1 WHERE (((1 = 1) and (2 = 2)) or (3 = 3))"]
+  (select [1]
+    (where '(= 1 1))
+    (where '(= 2 2) :and)
+    (where '(= 3 3) :or)))
 
-;; (deftest-stmt test-substring-from-to
-;;   ["SELECT substring(? from 2 for 3)" "Thomas"]
-;;   (select ['(substring "Thomas" from 2 for 3)]))
+(deftest-stmt test-substring-from-to
+  ["SELECT substring(? from 2 for 3)" "Thomas"]
+  (select ['(substring "Thomas" from 2 for 3)]))
 
-;; (deftest-stmt test-substring-from-to-lower
-;;   ["SELECT lower(substring(? from 2 for 3))" "Thomas"]
-;;   (select ['(lower (substring "Thomas" from 2 for 3))]))
+(deftest-stmt test-substring-from-to-lower
+  ["SELECT lower(substring(? from 2 for 3))" "Thomas"]
+  (select ['(lower (substring "Thomas" from 2 for 3))]))
 
-;; (deftest-stmt test-substring-from-pattern
-;;   ["SELECT substring(? from ?)" "Thomas" "...$"]
-;;   (select ['(substring "Thomas" from "...$")]))
+(deftest-stmt test-substring-from-pattern
+  ["SELECT substring(? from ?)" "Thomas" "...$"]
+  (select ['(substring "Thomas" from "...$")]))
 
-;; (deftest-stmt test-substring-from-pattern-for-escape
-;;   ["SELECT substring(? from ? for ?)" "Thomas" "%##\"o_a#\"_" "#"]
-;;   (select ['(substring "Thomas" from "%##\"o_a#\"_" for "#")]))
+(deftest-stmt test-substring-from-pattern-for-escape
+  ["SELECT substring(? from ? for ?)" "Thomas" "%##\"o_a#\"_" "#"]
+  (select ['(substring "Thomas" from "%##\"o_a#\"_" for "#")]))
 
-;; (deftest-stmt test-trim
-;;   ["SELECT trim(both ? from ?)" "x" "xTomxx"]
-;;   (select ['(trim both "x" from "xTomxx")]))
+(deftest-stmt test-trim
+  ["SELECT trim(both ? from ?)" "x" "xTomxx"]
+  (select ['(trim both "x" from "xTomxx")]))
 
-;; (deftest-stmt test-select-from-fn
-;;   ["SELECT * FROM generate_series(0, 10)"]
-;;   (select [*] (from '(generate_series 0 10))))
+(deftest-stmt test-select-from-fn
+  ["SELECT * FROM generate_series(0, 10)"]
+  (select [*] (from '(generate_series 0 10))))
 
-;; (deftest-stmt test-select-from-fn-alias
-;;   ["SELECT \"n\" FROM generate_series(0, 200) AS \"n\""]
-;;   (select [:n] (from (as '(generate_series 0 200) :n))))
+(deftest-stmt test-select-from-fn-alias
+  ["SELECT \"n\" FROM generate_series(0, 200) AS \"n\""]
+  (select [:n] (from (as '(generate_series 0 200) :n))))
 
-;; (deftest-stmt test-select-qualified-column
-;;   ["SELECT \"continents\".\"id\" FROM \"continents\""]
-;;   (select [{:op :column :table :continents :name :id}]
-;;     (from :continents)))
+(deftest-stmt test-select-qualified-column
+  ["SELECT \"continents\".\"id\" FROM \"continents\""]
+  (select [{:op :column :table :continents :name :id}]
+    (from :continents)))
 
-;; (deftest-stmt test-select-qualified-keyword-column
-;;   ["SELECT \"continents\".\"id\" FROM \"continents\""]
-;;   (select [:continents.id] (from :continents)))
+(deftest-stmt test-select-qualified-keyword-column
+  ["SELECT \"continents\".\"id\" FROM \"continents\""]
+  (select [:continents.id] (from :continents)))
 
 ;; ;; TRUNCATE
 
