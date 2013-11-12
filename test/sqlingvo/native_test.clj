@@ -842,82 +842,82 @@
   (is (= (map parse-expr [:id :symbol :quote]) (:exprs stmt)))
   (is (= (parse-condition `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))) (:where stmt)))  )
 
-;; (deftest-stmt test-select-join-on-columns
-;;   ["SELECT * FROM \"countries\" JOIN \"continents\" ON (\"continents\".\"id\" = \"countries\".\"continent_id\")"]
-;;   (select [*]
-;;     (from :countries)
-;;     (join :continents '(on (= :continents.id :countries.continent-id))))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-from :countries)] (:from stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (let [join (first (:joins stmt))]
-;;     (is (= :join (:op join)))
-;;     (is (= (parse-from :continents) (:from join)))
-;;     (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:on join)))))
+(deftest-stmt test-select-join-on-columns
+  ["SELECT * FROM \"countries\" JOIN \"continents\" ON (\"continents\".\"id\" = \"countries\".\"continent_id\")"]
+  (select [*]
+    (from :countries)
+    (join :continents '(on (= :continents.id :countries.continent-id))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :countries)] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= (parse-from :continents) (:from join)))
+    (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:on join)))))
 
-;; (deftest-stmt test-select-join-with-keywords
-;;   ["SELECT * FROM \"continents\" JOIN \"countries\" ON (\"countries\".\"continent_id\" = \"continents\".\"id\")"]
-;;   (select [*]
-;;     (from :continents)
-;;     (join :countries.continent-id :continents.id))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (let [join (first (:joins stmt))]
-;;     (is (= :join (:op join)))
-;;     (is (= (parse-from :countries) (:from join)))
-;;     (is (= (parse-expr '(= :countries.continent-id :continents.id)) (:on join)))))
+(deftest-stmt test-select-join-with-keywords
+  ["SELECT * FROM \"continents\" JOIN \"countries\" ON (\"countries\".\"continent_id\" = \"continents\".\"id\")"]
+  (select [*]
+    (from :continents)
+    (join :countries.continent-id :continents.id))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= (parse-from :countries) (:from join)))
+    (is (= (parse-expr '(= :countries.continent-id :continents.id)) (:on join)))))
 
-;; (deftest-stmt test-select-join-on-columns-alias
-;;   ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
-;;   (select [*]
-;;     (from (as :countries :c))
-;;     (join :continents '(on (= :continents.id :c.continent-id))))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-from (as :countries :c))] (:from stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (let [join (first (:joins stmt))]
-;;     (is (= :join (:op join)))
-;;     (is (= (parse-from :continents) (:from join)))
-;;     (is (= (parse-expr '(= :continents.id :c.continent-id)) (:on join)))))
+(deftest-stmt test-select-join-on-columns-alias
+  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+  (select [*]
+    (from (as :countries :c))
+    (join :continents '(on (= :continents.id :c.continent-id))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from (as :countries :c))] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= (parse-from :continents) (:from join)))
+    (is (= (parse-expr '(= :continents.id :c.continent-id)) (:on join)))))
 
-;; (deftest-stmt test-select-join-using-column
-;;   ["SELECT * FROM \"countries\" JOIN \"continents\" USING (\"id\")"]
-;;   (select [*]
-;;     (from :countries)
-;;     (join :continents '(using :id)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-from :countries)] (:from stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (let [join (first (:joins stmt))]
-;;     (is (= :join (:op join)))
-;;     (is (= (parse-from :continents) (:from join)))
-;;     (is (= (map parse-expr [:id]) (:using join)))))
+(deftest-stmt test-select-join-using-column
+  ["SELECT * FROM \"countries\" JOIN \"continents\" USING (\"id\")"]
+  (select [*]
+    (from :countries)
+    (join :continents '(using :id)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :countries)] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= (parse-from :continents) (:from join)))
+    (is (= (map parse-expr [:id]) (:using join)))))
 
-;; (deftest-stmt test-select-join-using-columns
-;;   ["SELECT * FROM \"countries\" JOIN \"continents\" USING (\"id\", \"created_at\")"]
-;;   (select [*]
-;;     (from :countries)
-;;     (join :continents '(using :id :created-at)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-from :countries)] (:from stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (let [join (first (:joins stmt))]
-;;     (is (= :join (:op join)))
-;;     (is (= (parse-from :continents) (:from join)))
-;;     (is (= (map parse-expr [:id :created-at]) (:using join)))))
+(deftest-stmt test-select-join-using-columns
+  ["SELECT * FROM \"countries\" JOIN \"continents\" USING (\"id\", \"created_at\")"]
+  (select [*]
+    (from :countries)
+    (join :continents '(using :id :created-at)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-from :countries)] (:from stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [join (first (:joins stmt))]
+    (is (= :join (:op join)))
+    (is (= (parse-from :continents) (:from join)))
+    (is (= (map parse-expr [:id :created-at]) (:using join)))))
 
-;; (deftest-stmt test-select-join-alias
-;;   ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
-;;   (select [*]
-;;     (from (as :countries :c))
-;;     (join :continents '(on (= :continents.id :c.continent-id)))))
+(deftest-stmt test-select-join-alias
+  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+  (select [*]
+    (from (as :countries :c))
+    (join :continents '(on (= :continents.id :c.continent-id)))))
 
-;; (deftest-stmt test-select-join-syntax-quote
-;;   ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
-;;   (select [*]
-;;     (from (as :countries :c))
-;;     (join :continents `(on (= :continents.id :c.continent-id)))))
+(deftest-stmt test-select-join-syntax-quote
+  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+  (select [*]
+    (from (as :countries :c))
+    (join :continents `(on (= :continents.id :c.continent-id)))))
 
 ;; (deftest-stmt test-select-join-subselect-alias
 ;;   [(str "SELECT \"quotes\".*, \"start_date\" FROM \"quotes\" JOIN (SELECT \"company_id\", min(\"date\") AS \"start_date\" "

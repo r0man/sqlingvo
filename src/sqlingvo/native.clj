@@ -246,6 +246,13 @@
 ;;   (let [join (make-join from condition :type type :outer outer :pk pk)]
 ;;     (concat-val :joins [join])))
 
+(defn join
+  "Returns a fn that adds a JOIN clause to an SQL statement."
+  [from condition & {:keys [type outer pk]}]
+  (let [join (make-join from condition :type type :outer outer :pk pk)]
+    (fn [stmt]
+      [join (update-in stmt [:joins] #(concat %1 [join]))])))
+
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
   [table & {:as opts}]
