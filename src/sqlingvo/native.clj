@@ -331,13 +331,6 @@
                         :op :select
                         :exprs exprs)])))))
 
-;; (defn temporary
-;;   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
-;;   [temporary?]
-;;   (if temporary?
-;;     (set-val :temporary {:op :temporary})
-;;     (fetch-state)))
-
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
   [condition]
