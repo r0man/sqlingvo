@@ -1246,15 +1246,15 @@
 ;;     (vendor/->postgresql) ["SELECT \"continents\".\"id\" FROM \"continents\""]
 ;;     (vendor/->vertica) ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
-;; ;; POSTGRESQL ARRAYS
+;; POSTGRESQL ARRAYS
 
-;; (deftest-stmt test-array
-;;   ["SELECT ARRAY[1, 2]"]
-;;   (select [[1 2]]))
+(deftest-stmt test-array
+  ["SELECT ARRAY[1, 2]"]
+  (select [[1 2]]))
 
-;; (deftest-stmt test-array-concat
-;;   ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
-;;   (select ['(|| [1 2] [3 4] [5 6])]))
+(deftest-stmt test-array-concat
+  ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
+  (select ['(|| [1 2] [3 4] [5 6])]))
 
 ;; (deftest test-comp-stmts
 ;;   (let [s (select [*]
@@ -1264,67 +1264,67 @@
 ;;            (sql (with-monad state-m
 ;;                   (m-seq [s o])))))))
 
-;; ;; POSTGRESQL FULLTEXT
+;; POSTGRESQL FULLTEXT
 
-;; (deftest-stmt test-cast-as-document-1
-;;   ["SELECT CAST((\"title\" || ? || \"author\" || ? || \"abstract\" || ? || \"body\") AS document) FROM \"messages\" WHERE (\"mid\" = 12)" " " " " " "]
-;;   (select ['(cast (:|| :title " " :author " " :abstract " " :body) :document)]
-;;     (from :messages)
-;;     (where '(= :mid 12))))
+(deftest-stmt test-cast-as-document-1
+  ["SELECT CAST((\"title\" || ? || \"author\" || ? || \"abstract\" || ? || \"body\") AS document) FROM \"messages\" WHERE (\"mid\" = 12)" " " " " " "]
+  (select ['(cast (:|| :title " " :author " " :abstract " " :body) :document)]
+    (from :messages)
+    (where '(= :mid 12))))
 
-;; (deftest-stmt test-cast-as-document-2
-;;   ["SELECT CAST((\"m\".\"title\" || ? || \"m\".\"author\" || ? || \"m\".\"abstract\" || ? || \"d\".\"body\") AS document) FROM \"messages\" AS \"m\", \"docs\" AS \"d\" WHERE ((\"mid\" = \"did\") and (\"mid\" = 12))" " " " " " "]
-;;   (select ['(cast (:|| :m.title " " :m.author " " :m.abstract " " :d.body) :document)]
-;;     (from (as :messages :m) (as :docs :d))
-;;     (where '(and (= :mid :did)
-;;                  (= :mid 12)))))
+(deftest-stmt test-cast-as-document-2
+  ["SELECT CAST((\"m\".\"title\" || ? || \"m\".\"author\" || ? || \"m\".\"abstract\" || ? || \"d\".\"body\") AS document) FROM \"messages\" AS \"m\", \"docs\" AS \"d\" WHERE ((\"mid\" = \"did\") and (\"mid\" = 12))" " " " " " "]
+  (select ['(cast (:|| :m.title " " :m.author " " :m.abstract " " :d.body) :document)]
+    (from (as :messages :m) (as :docs :d))
+    (where '(and (= :mid :did)
+                 (= :mid 12)))))
 
-;; (deftest-stmt test-basic-text-matching-1
-;;   ["SELECT (CAST(? AS tsvector) @@ CAST(? AS tsquery))" "a fat cat sat on a mat and ate a fat rat" "rat & cat"]
-;;   (select [`(~(keyword "@@")
-;;              (cast "a fat cat sat on a mat and ate a fat rat" :tsvector)
-;;              (cast "rat & cat" :tsquery))]))
+(deftest-stmt test-basic-text-matching-1
+  ["SELECT (CAST(? AS tsvector) @@ CAST(? AS tsquery))" "a fat cat sat on a mat and ate a fat rat" "rat & cat"]
+  (select [`(~(keyword "@@")
+             (cast "a fat cat sat on a mat and ate a fat rat" :tsvector)
+             (cast "rat & cat" :tsquery))]))
 
-;; (deftest-stmt test-basic-text-matching-2
-;;   ["SELECT (CAST(? AS tsquery) @@ CAST(? AS tsvector))" "fat & cow" "a fat cat sat on a mat and ate a fat rat"]
-;;   (select [`(~(keyword "@@")
-;;              (cast "fat & cow" :tsquery)
-;;              (cast "a fat cat sat on a mat and ate a fat rat" :tsvector))]))
+(deftest-stmt test-basic-text-matching-2
+  ["SELECT (CAST(? AS tsquery) @@ CAST(? AS tsvector))" "fat & cow" "a fat cat sat on a mat and ate a fat rat"]
+  (select [`(~(keyword "@@")
+             (cast "fat & cow" :tsquery)
+             (cast "a fat cat sat on a mat and ate a fat rat" :tsvector))]))
 
-;; (deftest-stmt test-basic-text-matching-3
-;;   ["SELECT (to_tsvector(?) @@ to_tsquery(?))" "fat cats ate fat rats" "fat & rat"]
-;;   (select [`(~(keyword "@@")
-;;              (to_tsvector "fat cats ate fat rats")
-;;              (to_tsquery "fat & rat"))]))
+(deftest-stmt test-basic-text-matching-3
+  ["SELECT (to_tsvector(?) @@ to_tsquery(?))" "fat cats ate fat rats" "fat & rat"]
+  (select [`(~(keyword "@@")
+             (to_tsvector "fat cats ate fat rats")
+             (to_tsquery "fat & rat"))]))
 
-;; (deftest-stmt test-basic-text-matching-4
-;;   ["SELECT (CAST(? AS tsvector) @@ to_tsquery(?))" "fat cats ate fat rats" "fat & rat"]
-;;   (select [`(~(keyword "@@")
-;;              (cast "fat cats ate fat rats" :tsvector)
-;;              (to_tsquery "fat & rat"))]))
+(deftest-stmt test-basic-text-matching-4
+  ["SELECT (CAST(? AS tsvector) @@ to_tsquery(?))" "fat cats ate fat rats" "fat & rat"]
+  (select [`(~(keyword "@@")
+             (cast "fat cats ate fat rats" :tsvector)
+             (to_tsquery "fat & rat"))]))
 
-;; (deftest-stmt test-searching-a-table-1
-;;   ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector(?, \"body\") @@ to_tsquery(?, ?))" "english" "english" "friend"]
-;;   (select [:title]
-;;     (from :pgweb)
-;;     (where `(~(keyword "@@")
-;;              (to_tsvector "english" :body)
-;;              (to_tsquery "english" "friend")))))
+(deftest-stmt test-searching-a-table-1
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector(?, \"body\") @@ to_tsquery(?, ?))" "english" "english" "friend"]
+  (select [:title]
+    (from :pgweb)
+    (where `(~(keyword "@@")
+             (to_tsvector "english" :body)
+             (to_tsquery "english" "friend")))))
 
-;; (deftest-stmt test-searching-a-table-2
-;;   ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector(\"body\") @@ to_tsquery(?))" "friend"]
-;;   (select [:title]
-;;     (from :pgweb)
-;;     (where `(~(keyword "@@")
-;;              (to_tsvector :body)
-;;              (to_tsquery "friend")))))
+(deftest-stmt test-searching-a-table-2
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector(\"body\") @@ to_tsquery(?))" "friend"]
+  (select [:title]
+    (from :pgweb)
+    (where `(~(keyword "@@")
+             (to_tsvector :body)
+             (to_tsquery "friend")))))
 
-;; (deftest-stmt test-searching-a-table-3
-;;   ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector((\"title\" || ? || \"body\")) @@ to_tsquery(?)) ORDER BY \"last_mod_date\" DESC LIMIT 10" " " "create & table"]
-;;   (select [:title]
-;;     (from :pgweb)
-;;     (where `(~(keyword "@@")
-;;              (to_tsvector (:|| :title " " :body))
-;;              (to_tsquery "create & table")))
-;;     (order-by (desc :last-mod-date))
-;;     (limit 10)))
+(deftest-stmt test-searching-a-table-3
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector((\"title\" || ? || \"body\")) @@ to_tsquery(?)) ORDER BY \"last_mod_date\" DESC LIMIT 10" " " "create & table"]
+  (select [:title]
+    (from :pgweb)
+    (where `(~(keyword "@@")
+             (to_tsvector (:|| :title " " :body))
+             (to_tsquery "create & table")))
+    (order-by (desc :last-mod-date))
+    (limit 10)))
