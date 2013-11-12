@@ -181,11 +181,11 @@
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
-  [if-exists?]
+  [condition]
   (fn [stmt]
-    (if if-exists?
-      [if-exists? (assoc stmt :if-exists {:op :if-exists})]
-      [if-exists? stmt])))
+    (if condition
+      [condition (assoc stmt :if-exists {:op :if-exists})]
+      [condition stmt])))
 
 ;; (defn if-not-exists
 ;;   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
@@ -287,12 +287,13 @@
 ;;     (set-val :restart-identity {:op :restart-identity})
 ;;     (fetch-state)))
 
-;; (defn restrict
-;;   "Returns a fn that adds a RESTRICT clause to an SQL statement."
-;;   [restrict?]
-;;   (if restrict?
-;;     (set-val :restrict {:op :restrict})
-;;     (fetch-state)))
+(defn restrict
+  "Returns a fn that adds a RESTRICT clause to an SQL statement."
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :restrict {:op :restrict})]
+      [condition stmt])))
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
