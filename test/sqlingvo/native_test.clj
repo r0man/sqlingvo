@@ -260,15 +260,15 @@
 ;;   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
 ;;   (is (= {:op :restrict} (:restrict stmt))))
 
-;; (deftest-stmt test-drop-continents-if-exists
-;;   ["DROP TABLE IF EXISTS \"continents\""]
-;;   (drop-table [:continents]
-;;     (if-exists true)))
+(deftest-stmt test-drop-continents-if-exists
+  ["DROP TABLE IF EXISTS \"continents\""]
+  (drop-table [:continents]
+    (if-exists true)))
 
-;; (deftest-stmt test-drop-continents-if-exists-false
-;;   ["DROP TABLE \"continents\""]
-;;   (drop-table [:continents]
-;;     (if-exists false)))
+(deftest-stmt test-drop-continents-if-exists-false
+  ["DROP TABLE \"continents\""]
+  (drop-table [:continents]
+    (if-exists false)))
 
 ;; ;; INSERT
 

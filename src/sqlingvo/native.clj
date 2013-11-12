@@ -179,12 +179,13 @@
     (fn [stmt]
       [exprs (update-in stmt [:group-by] #(concat %1 exprs))])))
 
-;; (defn if-exists
-;;   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
-;;   [if-exists?]
-;;   (if if-exists?
-;;     (set-val :if-exists {:op :if-exists})
-;;     (fetch-state)))
+(defn if-exists
+  "Returns a fn that adds a IF EXISTS clause to an SQL statement."
+  [if-exists?]
+  (fn [stmt]
+    (if if-exists?
+      [if-exists? (assoc stmt :if-exists {:op :if-exists})]
+      [if-exists? stmt])))
 
 ;; (defn if-not-exists
 ;;   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
