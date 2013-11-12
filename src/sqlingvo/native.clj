@@ -309,13 +309,14 @@
     (fn [stmt]
       [offset (assoc stmt :offset offset)])))
 
-;; (defn order-by
-;;   "Returns a fn that adds a ORDER BY clause to an SQL statement."
-;;   [& exprs]
-;;   (let [exprs (parse-exprs exprs)]
-;;     (if-not (empty? exprs)
-;;       (concat-val :order-by exprs)
-;;       (fetch-state))))
+(defn order-by
+  "Returns a fn that adds a ORDER BY clause to an SQL statement."
+  [& exprs]
+  (let [exprs (parse-exprs exprs)]
+    (fn [stmt]
+      (if-not (empty? exprs)
+        [exprs (update-in stmt [:order-by] #(concat %1 exprs))]
+        [exprs stmt]))))
 
 ;; (defn restart-identity
 ;;   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."

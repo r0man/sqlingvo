@@ -595,13 +595,13 @@
   (is (= {:op :limit :count 10} (:limit stmt)))
   (is (= {:op :offset :start 20} (:offset stmt))))
 
-;; (deftest-stmt test-select-column-max
-;;   ["SELECT max(\"created_at\") FROM \"continents\""]
-;;   (select ['(max :created-at)]
-;;     (from :continents))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr '(max :created-at))] (:exprs stmt)))
-;;   (is (= [(parse-table :continents)] (:from stmt))))
+(deftest-stmt test-select-column-max
+  ["SELECT max(\"created_at\") FROM \"continents\""]
+  (select ['(max :created-at)]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr '(max :created-at))] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt))))
 
 ;; (deftest-stmt test-select-distinct-subquery-alias
 ;;   ["SELECT DISTINCT \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
@@ -644,101 +644,101 @@
 ;;   (is (= [(parse-from :weather-reports)] (:from stmt)))
 ;;   (is (= [(parse-expr :location) (desc :time)] (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-asc
-;;   ["SELECT * FROM \"continents\" ORDER BY \"created_at\" ASC"]
-;;   (select [*]
-;;     (from :continents)
-;;     (order-by (asc :created-at)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt)))
-;;   (is (= [(parse-expr (asc :created-at))] (:order-by stmt))))
+(deftest-stmt test-select-order-by-asc
+  ["SELECT * FROM \"continents\" ORDER BY \"created_at\" ASC"]
+  (select [*]
+    (from :continents)
+    (order-by (asc :created-at)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr (asc :created-at))] (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-asc-expr
-;;   ["SELECT * FROM \"weather\".\"datasets\" ORDER BY abs((ST_ScaleX(\"rast\") * ST_ScaleY(\"rast\"))) DESC"]
-;;   (select [*]
-;;     (from :weather.datasets)
-;;     (order-by (desc '(abs (* (ST_ScaleX :rast) (ST_ScaleY :rast)))))))
+(deftest-stmt test-select-order-by-asc-expr
+  ["SELECT * FROM \"weather\".\"datasets\" ORDER BY abs((ST_ScaleX(\"rast\") * ST_ScaleY(\"rast\"))) DESC"]
+  (select [*]
+    (from :weather.datasets)
+    (order-by (desc '(abs (* (ST_ScaleX :rast) (ST_ScaleY :rast)))))))
 
-;; (deftest-stmt test-select-order-by-desc
-;;   ["SELECT * FROM \"continents\" ORDER BY \"created_at\" DESC"]
-;;   (select [*]
-;;     (from :continents)
-;;     (order-by (desc :created-at)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt)))
-;;   (is (= [(parse-expr (desc :created-at))] (:order-by stmt))))
+(deftest-stmt test-select-order-by-desc
+  ["SELECT * FROM \"continents\" ORDER BY \"created_at\" DESC"]
+  (select [*]
+    (from :continents)
+    (order-by (desc :created-at)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr (desc :created-at))] (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-nulls-first
-;;   ["SELECT * FROM \"continents\" ORDER BY \"created_at\" NULLS FIRST"]
-;;   (select [*]
-;;     (from :continents)
-;;     (order-by (nulls :created-at :first)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt)))
-;;   (is (= [(parse-expr (nulls :created-at :first))] (:order-by stmt))))
+(deftest-stmt test-select-order-by-nulls-first
+  ["SELECT * FROM \"continents\" ORDER BY \"created_at\" NULLS FIRST"]
+  (select [*]
+    (from :continents)
+    (order-by (nulls :created-at :first)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr (nulls :created-at :first))] (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-nulls-last
-;;   ["SELECT * FROM \"continents\" ORDER BY \"created_at\" NULLS LAST"]
-;;   (select [*]
-;;     (from :continents)
-;;     (order-by (nulls :created-at :last)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt)))
-;;   (is (= [(parse-expr (nulls :created-at :last))] (:order-by stmt))))
+(deftest-stmt test-select-order-by-nulls-last
+  ["SELECT * FROM \"continents\" ORDER BY \"created_at\" NULLS LAST"]
+  (select [*]
+    (from :continents)
+    (order-by (nulls :created-at :last)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr (nulls :created-at :last))] (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-if-true
-;;   ["SELECT * FROM \"continents\" ORDER BY \"name\""]
-;;   (let [opts {:order-by :name}]
-;;     (select [*]
-;;       (from :continents)
-;;       (if (:order-by opts)
-;;         (order-by (:order-by opts)))))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt)))
-;;   (is (= [(parse-expr :name)] (:order-by stmt))))
+(deftest-stmt test-select-order-by-if-true
+  ["SELECT * FROM \"continents\" ORDER BY \"name\""]
+  (let [opts {:order-by :name}]
+    (select [*]
+      (from :continents)
+      (if (:order-by opts)
+        (order-by (:order-by opts)))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (= [(parse-expr :name)] (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-if-false
-;;   ["SELECT * FROM \"continents\""]
-;;   (let [opts {}]
-;;     (select [*]
-;;       (from :continents)
-;;       (if (:order-by opts)
-;;         (order-by (:order-by opts)))))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt)))
-;;   (is (nil? (:order-by stmt))))
+(deftest-stmt test-select-order-by-if-false
+  ["SELECT * FROM \"continents\""]
+  (let [opts {}]
+    (select [*]
+      (from :continents)
+      (if (:order-by opts)
+        (order-by (:order-by opts)))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (nil? (:order-by stmt))))
 
-;; (deftest-stmt test-select-order-by-nil
-;;   ["SELECT * FROM \"continents\""]
-;;   (select [*]
-;;     (from :continents)
-;;     (order-by nil))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt)))
-;;   (is (nil? (:order-by stmt))))
+(deftest-stmt test-select-order-by-nil
+  ["SELECT * FROM \"continents\""]
+  (select [*]
+    (from :continents)
+    (order-by nil))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt)))
+  (is (nil? (:order-by stmt))))
 
-;; (deftest-stmt test-select-1-where-1-is-1
-;;   ["SELECT 1 WHERE (1 = 1)"]
-;;   (select [1]
-;;     (where '(= 1 1)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt)))
-;;   (is (= (parse-condition '(= 1 1)) (:where stmt))))
+(deftest-stmt test-select-1-where-1-is-1
+  ["SELECT 1 WHERE (1 = 1)"]
+  (select [1]
+    (where '(= 1 1)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(= 1 1)) (:where stmt))))
 
-;; (deftest-stmt test-select-1-where-1-is-2-is-3
-;;   ["SELECT 1 WHERE (1 = 2) AND (2 = 3)"]
-;;   (select [1]
-;;     (where '(= 1 2 3)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt)))
-;;   (is (= (parse-condition '(= 1 2 3)) (:where stmt))))
+(deftest-stmt test-select-1-where-1-is-2-is-3
+  ["SELECT 1 WHERE (1 = 2) AND (2 = 3)"]
+  (select [1]
+    (where '(= 1 2 3)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(= 1 2 3)) (:where stmt))))
 
 ;; (deftest-stmt test-select-subquery-alias
 ;;   ["SELECT * FROM (SELECT 1, 2, 3) AS \"x\""]
