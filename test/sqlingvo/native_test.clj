@@ -270,27 +270,27 @@
   (drop-table [:continents]
     (if-exists false)))
 
-;; ;; INSERT
+;; INSERT
 
-;; (deftest-stmt test-insert-default-values
-;;   ["INSERT INTO \"films\" DEFAULT VALUES"]
-;;   (insert :films []
-;;     (values :default))
-;;   (is (= :insert (:op stmt)))
-;;   (is (= [] (:columns stmt)))
-;;   (is (= true (:default-values stmt)))
-;;   (is (= (parse-table :films) (:table stmt))))
+(deftest-stmt test-insert-default-values
+  ["INSERT INTO \"films\" DEFAULT VALUES"]
+  (insert :films []
+    (values :default))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= true (:default-values stmt)))
+  (is (= (parse-table :films) (:table stmt))))
 
-;; (deftest-stmt test-insert-single-row-as-map
-;;   ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?)"
-;;    106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
-;;   (insert :films []
-;;     (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
-;;   (is (= :insert (:op stmt)))
-;;   (is (= [] (:columns stmt)))
-;;   (is (= [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]
-;;          (:values stmt)))
-;;   (is (= (parse-table :films) (:table stmt))))
+(deftest-stmt test-insert-single-row-as-map
+  ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?)"
+   106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
+  (insert :films []
+    (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]
+         (:values stmt)))
+  (is (= (parse-table :films) (:table stmt))))
 
 ;; (deftest-stmt test-insert-single-row-as-seq
 ;;   ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?)"
@@ -316,15 +316,15 @@
 ;;          (:values stmt)))
 ;;   (is (= (parse-table :films) (:table stmt))))
 
-;; (deftest-stmt test-insert-returning
-;;   ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
-;;   (insert :distributors []
-;;     (values [{:did 106 :dname "XYZ Widgets"}])
-;;     (returning *))
-;;   (is (= :insert (:op stmt)))
-;;   (is (= [] (:columns stmt)))
-;;   (is (= (parse-table :distributors) (:table stmt)))
-;;   (is (= [(parse-expr *)] (:returning stmt))))
+(deftest-stmt test-insert-returning
+  ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
+  (insert :distributors []
+    (values [{:did 106 :dname "XYZ Widgets"}])
+    (returning *))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= (parse-table :distributors) (:table stmt)))
+  (is (= [(parse-expr *)] (:returning stmt))))
 
 ;; (deftest-stmt test-insert-subselect
 ;;   ["INSERT INTO \"films\" SELECT * FROM \"tmp_films\" WHERE (\"date_prod\" < ?)" "2004-05-07"]
@@ -355,9 +355,9 @@
 ;;                    (is-not-null :a.iata-code)
 ;;                    (is-null :airports.iata-code))))))
 
-;; (deftest-stmt test-insert-only-columns
-;;   ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (?, ?)" 1 2]
-;;   (insert :x [:a :b] (values [{:a 1 :b 2 :c 3}])))
+(deftest-stmt test-insert-only-columns
+  ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (?, ?)" 1 2]
+  (insert :x [:a :b] (values [{:a 1 :b 2 :c 3}])))
 
 ;; SELECT
 

@@ -132,20 +132,11 @@
       ((m-seq (remove nil? body))
        {:op :copy :table table :columns columns}))))
 
-;; (defn create-table
-;;   "Returns a fn that builds a CREATE TABLE statement."
-;;   [table & body]
-;;   (Stmt. (fn [stmt]
-;;            (with-monad state-m
-;;              ((m-seq (remove nil? body))
-;;               {:op :create-table
-;;                :table (parse-table table)})))))
-
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
   [table & body]
   (let [table (parse-table table)]
-    (fn [stmt]
+    (fn [_]
       ((m-seq (remove nil? body))
        {:op :create-table :table table}))))
 
@@ -212,15 +203,14 @@
     (fn [stmt]
       [tables (assoc stmt :inherits tables)])))
 
-;; (defn insert
-;;   "Returns a fn that builds a INSERT statement."
-;;   [table columns & body]
-;;   (Stmt. (fn [stmt]
-;;            (with-monad state-m
-;;              ((m-seq (remove nil? body))
-;;               {:op :insert
-;;                :table (parse-table table)
-;;                :columns (map parse-column columns)})))))
+(defn insert
+  "Returns a fn that builds a INSERT statement."
+  [table columns & body]
+  (let [table (parse-table table)
+        columns (map parse-column columns)]
+    (fn [_]
+      ((m-seq (remove nil? body))
+       {:op :insert :table table :columns columns}))))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
@@ -388,6 +378,15 @@
 ;;   (case values
 ;;     :default (set-val :default-values true)
 ;;     (concat-val :values (if (sequential? values) values [values]))))
+
+(defn values
+  "Returns a fn that adds a VALUES clause to an SQL statement."
+  [values]
+  (fn [stmt]
+    (if (= :default values)
+      [nil (assoc stmt :default-values true)]
+      [nil (update-in stmt [:values] #(concat %1 (if (sequential? values)
+                                                   values [values])))])))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
