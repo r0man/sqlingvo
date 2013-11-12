@@ -52,15 +52,15 @@
 ;;     ['(count *) :count]
 ;;     {:as :count :op :fn :name :count :args [{:op :constant :form '*}]}))
 
-;; ;; CAST
+;; CAST
 
-;; (deftest-stmt test-cast-int-as-text
-;;   ["SELECT CAST(1 AS text)"]
-;;   (select [`(cast 1 :text)]))
+(deftest-stmt test-cast-int-as-text
+  ["SELECT CAST(1 AS text)"]
+  (select [`(cast 1 :text)]))
 
-;; (deftest-stmt test-cast-text-as-int
-;;   ["SELECT CAST(? AS int)" "1"]
-;;   (select [`(cast "1" :int)]))
+(deftest-stmt test-cast-text-as-int
+  ["SELECT CAST(? AS int)" "1"]
+  (select [`(cast "1" :int)]))
 
 ;; ;; CREATE TABLE
 
