@@ -234,21 +234,21 @@
 ;;   (is (= (parse-condition `(and (= :company-id 1)
 ;;                                 (> :date ~(select ['(min :date)] (from :import)))
 ;;                                 (> :date ~(select ['(max :date)] (from :import)))))
-;;          (:where stmt))))
+;; (:where stmt))))
 
-;; ;; DROP TABLE
+;; DROP TABLE
 
-;; (deftest-stmt test-drop-continents
-;;   ["DROP TABLE \"continents\""]
-;;   (drop-table [:continents])
-;;   (is (= :drop-table (:op stmt)))
-;;   (is (= [(parse-table :continents)] (:tables stmt))))
+(deftest-stmt test-drop-continents
+  ["DROP TABLE \"continents\""]
+  (drop-table [:continents])
+  (is (= :drop-table (:op stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt))))
 
-;; (deftest-stmt test-drop-continents-and-countries
-;;   ["DROP TABLE \"continents\", \"countries\""]
-;;   (drop-table [:continents :countries])
-;;   (is (= :drop-table (:op stmt)))
-;;   (is (= (map parse-table [:continents :countries]) (:tables stmt))))
+(deftest-stmt test-drop-continents-and-countries
+  ["DROP TABLE \"continents\", \"countries\""]
+  (drop-table [:continents :countries])
+  (is (= :drop-table (:op stmt)))
+  (is (= (map parse-table [:continents :countries]) (:tables stmt))))
 
 ;; (deftest-stmt test-drop-continents-countries-if-exists-restrict
 ;;   ["DROP TABLE IF EXISTS \"continents\", \"countries\" RESTRICT"]

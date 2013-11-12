@@ -147,14 +147,13 @@
       ((m-seq (remove nil? body))
        {:op :delete :table table}))))
 
-;; (defn drop-table
-;;   "Returns a fn that builds a DROP TABLE statement."
-;;   [tables & body]
-;;   (Stmt. (fn [stmt]
-;;            (with-monad state-m
-;;              ((m-seq (remove nil? body))
-;;               {:op :drop-table
-;;                :tables (map parse-table tables)})))))
+(defn drop-table
+  "Returns a fn that builds a DROP TABLE statement."
+  [tables & body]
+  (let [tables (map parse-table tables)]
+    (fn [stmt]
+      ((m-seq (remove nil? body))
+       {:op :drop-table :tables tables}))))
 
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
