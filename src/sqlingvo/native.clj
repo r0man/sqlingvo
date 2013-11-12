@@ -213,10 +213,13 @@
 ;;                    (map parse-from from)))]
 ;;     from))
 
-;; (defn group-by
-;;   "Returns a fn that adds a GROUP BY clause to an SQL statement."
-;;   [& exprs]
-;;   (concat-val :group-by (parse-exprs exprs)))
+(defn group-by
+  "Returns a fn that adds a GROUP BY clause to an SQL statement."
+  [& exprs]
+  (concat-val :group-by (parse-exprs exprs))
+  (let [exprs (parse-exprs exprs)]
+    (fn [stmt]
+      [exprs (update-in stmt [:group-by] #(concat %1 exprs))])))
 
 ;; (defn if-exists
 ;;   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
