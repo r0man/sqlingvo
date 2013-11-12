@@ -122,21 +122,21 @@
 ;;     (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
 ;;     (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
 
-;; ;; COPY
+;; COPY
 
-;; (deftest-stmt test-copy-stdin
-;;   ["COPY \"country\" FROM STDIN"]
-;;   (copy :country []
-;;     (from :stdin))
-;;   (is (= :copy (:op stmt)))
-;;   (is (= [:stdin] (:from stmt))))
+(deftest-stmt test-copy-stdin
+  ["COPY \"country\" FROM STDIN"]
+  (copy :country []
+    (from :stdin))
+  (is (= :copy (:op stmt)))
+  (is (= [:stdin] (:from stmt))))
 
-;; (deftest-stmt test-copy-country
-;;   ["COPY \"country\" FROM ?" "/usr1/proj/bray/sql/country_data"]
-;;   (copy :country []
-;;     (from "/usr1/proj/bray/sql/country_data"))
-;;   (is (= :copy (:op stmt)))
-;;   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
+(deftest-stmt test-copy-country
+  ["COPY \"country\" FROM ?" "/usr1/proj/bray/sql/country_data"]
+  (copy :country []
+    (from "/usr1/proj/bray/sql/country_data"))
+  (is (= :copy (:op stmt)))
+  (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
 ;; (deftest-stmt test-copy-country-with-encoding
 ;;   ["COPY \"country\" FROM ? ENCODING ?" "/usr1/proj/bray/sql/country_data" "UTF-8"]

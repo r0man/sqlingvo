@@ -119,15 +119,15 @@
 ;;   [encoding]
 ;;   (set-val :encoding encoding))
 
-;; (defn copy
-;;   "Returns a fn that builds a COPY statement."
-;;   [table columns & body]
-;;   (Stmt. (fn [stmt]
-;;            (with-monad state-m
-;;              ((m-seq (remove nil? body))
-;;               {:op :copy
-;;                :table (parse-table table)
-;;                :columns (map parse-column columns)})))))
+(defn copy
+  "Returns a fn that builds a COPY statement."
+  [table columns & body]
+  (let [table (parse-table table)
+        columns (map parse-column columns)]
+    (fn [_]
+      (let [[_ stmt] ((m-seq (remove nil? body))
+                      {:op :copy :table table :columns columns})]
+        [[table columns] stmt]))))
 
 ;; (defn create-table
 ;;   "Returns a fn that builds a CREATE TABLE statement."
@@ -166,9 +166,11 @@
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement."
   [& from]
-  (let [from (map parse-from from)]
-    (fn [stmt]
-      [from (assoc stmt :from from)])))
+  (fn [stmt]
+    (let [from (case (:op stmt)
+                 :copy [(first from)]
+                 (map parse-from from))]
+      [from (update-in stmt [:from] #(concat %1 from))])))
 
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
