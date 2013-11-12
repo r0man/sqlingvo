@@ -127,9 +127,8 @@
   (let [table (parse-table table)
         columns (map parse-column columns)]
     (fn [_]
-      (let [[_ stmt] ((m-seq (remove nil? body))
-                      {:op :copy :table table :columns columns})]
-        [[table columns] stmt]))))
+      ((m-seq (remove nil? body))
+       {:op :copy :table table :columns columns}))))
 
 ;; (defn create-table
 ;;   "Returns a fn that builds a CREATE TABLE statement."
@@ -140,14 +139,13 @@
 ;;               {:op :create-table
 ;;                :table (parse-table table)})))))
 
-;; (defn delete
-;;   "Returns a fn that builds a DELETE statement."
-;;   [table & body]
-;;   (Stmt. (fn [stmt]
-;;            (with-monad state-m
-;;              ((m-seq (remove nil? body))
-;;               {:op :delete
-;;                :table (parse-table table)})))))
+(defn delete
+  "Returns a fn that builds a DELETE statement."
+  [table & body]
+  (let [table (parse-table table)]
+    (fn [_]
+      ((m-seq (remove nil? body))
+       {:op :delete :table table}))))
 
 ;; (defn drop-table
 ;;   "Returns a fn that builds a DROP TABLE statement."

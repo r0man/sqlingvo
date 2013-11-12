@@ -181,21 +181,21 @@
     (from :continents)
     (where '(in 1 ()))))
 
-;; ;; DELETE
+;; DELETE
 
-;; (deftest-stmt test-delete-films
-;;   ["DELETE FROM \"films\""]
-;;   (delete :films)
-;;   (is (= :delete (:op stmt)))
-;;   (is (= (parse-table :films) (:table stmt))))
+(deftest-stmt test-delete-films
+  ["DELETE FROM \"films\""]
+  (delete :films)
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :films) (:table stmt))))
 
-;; (deftest-stmt test-delete-all-films-but-musicals
-;;   ["DELETE FROM \"films\" WHERE (\"kind\" <> ?)" "Musical"]
-;;   (delete :films
-;;     (where '(<> :kind "Musical")))
-;;   (is (= :delete (:op stmt)))
-;;   (is (= (parse-table :films) (:table stmt)))
-;;   (is (= (parse-condition '(<> :kind "Musical")) (:where stmt))))
+(deftest-stmt test-delete-all-films-but-musicals
+  ["DELETE FROM \"films\" WHERE (\"kind\" <> ?)" "Musical"]
+  (delete :films
+    (where '(<> :kind "Musical")))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= (parse-condition '(<> :kind "Musical")) (:where stmt))))
 
 ;; (deftest-stmt test-delete-completed-tasks-returning-all
 ;;   ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
