@@ -39,3 +39,20 @@
         [exprs (assoc stmt
                  :op :select
                  :exprs exprs)]))))
+
+(defn where
+  "Returns a fn that adds a WHERE clause to an SQL statement."
+  [condition & [combine]]
+  (let [condition (parse-condition condition)]
+    (fn [stmt]
+      (cond
+       (or (nil? combine)
+           (nil? (:condition (:where stmt))))
+       [nil (assoc stmt :where condition)]
+       :else
+       [nil (assoc-in stmt [:where :condition]
+                      {:op :condition
+                       :condition {:op :fn
+                                   :name combine
+                                   :args [(:condition (:where stmt))
+                                          (:condition condition)]}})]))))

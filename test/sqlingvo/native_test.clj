@@ -1,6 +1,8 @@
 (ns sqlingvo.native-test
+  (:import java.util.Date)
   (:refer-clojure :exclude [distinct group-by])
-  (:require [sqlingvo.compiler :refer [compile-stmt]])
+  (:require [sqlingvo.compiler :refer [compile-stmt]]
+            [sqlingvo.util :refer :all])
   (:use clojure.test
         sqlingvo.native))
 
@@ -19,14 +21,6 @@
   (let [[from stmt] ((from :continents) {})]
     (is (= [{:op :table, :schema nil, :name :continents, :as nil}] from))
     (is (= {:from [{:op :table, :schema nil, :name :continents, :as nil}]} stmt))))
-
-(deftest-stmt test-select-from
-  ["SELECT * FROM \"continents\""]
-  (select [:*] (from :continents))
-  (is (= {:op :select,
-          :exprs [{:op :column, :schema nil, :table nil, :name :*, :as nil}],
-          :from [{:op :table, :schema nil, :name :continents, :as nil}]}
-         stmt)))
 
 ;; ;; COMPOSE
 
@@ -437,109 +431,109 @@
 ;;   (is (= [(parse-expr *)] (:exprs stmt)))
 ;;   (is (= (parse-condition '(= :name "Europe")) (:where stmt))))
 
-;; (deftest-stmt test-select-where-single-arg-and
-;;   ["SELECT 1 WHERE (1 = 1)"]
-;;   (select [1]
-;;     (where '(and (= 1 1))))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt)))
-;;   (is (= (parse-condition '(and (= 1 1))) (:where stmt))))
+(deftest-stmt test-select-where-single-arg-and
+  ["SELECT 1 WHERE (1 = 1)"]
+  (select [1]
+    (where '(and (= 1 1))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(and (= 1 1))) (:where stmt))))
 
-;; (deftest-stmt test-select-less-2-arity
-;;   ["SELECT 1 WHERE (1 < 2)"]
-;;   (select [1]
-;;     (where '(< 1 2)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt)))
-;;   (is (= (parse-condition '(< 1 2)) (:where stmt))))
+(deftest-stmt test-select-less-2-arity
+  ["SELECT 1 WHERE (1 < 2)"]
+  (select [1]
+    (where '(< 1 2)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(< 1 2)) (:where stmt))))
 
-;; (deftest-stmt test-select-less-3-arity
-;;   ["SELECT 1 WHERE (1 < 2) AND (2 < 3)"]
-;;   (select [1]
-;;     (where '(< 1 2 3)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt)))
-;;   (is (= (parse-condition '(< 1 2 3)) (:where stmt))))
+(deftest-stmt test-select-less-3-arity
+  ["SELECT 1 WHERE (1 < 2) AND (2 < 3)"]
+  (select [1]
+    (where '(< 1 2 3)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(< 1 2 3)) (:where stmt))))
 
-;; (deftest-stmt test-select-continents
-;;   ["SELECT * FROM \"continents\""]
-;;   (select [*]
-;;     (from :continents))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt))))
+(deftest-stmt test-select-continents
+  ["SELECT * FROM \"continents\""]
+  (select [*]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt))))
 
-;; (deftest-stmt test-select-continents-qualified
-;;   ["SELECT \"continents\".* FROM \"continents\""]
-;;   (select [:continents.*]
-;;     (from :continents))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr :continents.*)] (:exprs stmt)))
-;;   (is (= [(parse-from :continents)] (:from stmt))))
+(deftest-stmt test-select-continents-qualified
+  ["SELECT \"continents\".* FROM \"continents\""]
+  (select [:continents.*]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr :continents.*)] (:exprs stmt)))
+  (is (= [(parse-from :continents)] (:from stmt))))
 
-;; (deftest-stmt test-select-films
-;;   ["SELECT * FROM \"films\""]
-;;   (select [*] (from :films))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-from :films)] (:from stmt))))
+(deftest-stmt test-select-films
+  ["SELECT * FROM \"films\""]
+  (select [*] (from :films))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :films)] (:from stmt))))
 
-;; (deftest-stmt test-select-comedy-films
-;;   ["SELECT * FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
-;;   (select [*]
-;;     (from :films)
-;;     (where '(= :kind "Comedy")))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= (parse-condition '(= :kind "Comedy")) (:where stmt)))
-;;   (is (= [(parse-from :films)] (:from stmt))))
+(deftest-stmt test-select-comedy-films
+  ["SELECT * FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
+  (select [*]
+    (from :films)
+    (where '(= :kind "Comedy")))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= (parse-condition '(= :kind "Comedy")) (:where stmt)))
+  (is (= [(parse-from :films)] (:from stmt))))
 
-;; (deftest-stmt test-select-is-null
-;;   ["SELECT 1 WHERE (NULL IS NULL)"]
-;;   (select [1]
-;;     (where '(is-null nil)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt)))
-;;   (is (= (parse-condition '(is-null nil)) (:where stmt))))
+(deftest-stmt test-select-is-null
+  ["SELECT 1 WHERE (NULL IS NULL)"]
+  (select [1]
+    (where '(is-null nil)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(is-null nil)) (:where stmt))))
 
-;; (deftest-stmt test-select-is-not-null
-;;   ["SELECT 1 WHERE (NULL IS NOT NULL)"]
-;;   (select [1]
-;;     (where '(is-not-null nil)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt)))
-;;   (is (= (parse-condition '(is-not-null nil)) (:where stmt))))
+(deftest-stmt test-select-is-not-null
+  ["SELECT 1 WHERE (NULL IS NOT NULL)"]
+  (select [1]
+    (where '(is-not-null nil)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(is-not-null nil)) (:where stmt))))
 
-;; (deftest-stmt test-select-backquote-date
-;;   ["SELECT * FROM \"countries\" WHERE (\"created_at\" > ?)" (Date. 0)]
-;;   (select [*]
-;;     (from :countries)
-;;     (where `(> :created-at ~(Date. 0))))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= (parse-condition `(> :created-at ~(Date. 0))) (:where stmt))))
+(deftest-stmt test-select-backquote-date
+  ["SELECT * FROM \"countries\" WHERE (\"created_at\" > ?)" (Date. 0)]
+  (select [*]
+    (from :countries)
+    (where `(> :created-at ~(Date. 0))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= (parse-condition `(> :created-at ~(Date. 0))) (:where stmt))))
 
-;; (deftest-stmt test-select-star-number-string
-;;   ["SELECT *, 1, ?" "x"]
-;;   (select [* 1 "x"])
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [* 1 "x"]) (:exprs stmt))))
+(deftest-stmt test-select-star-number-string
+  ["SELECT *, 1, ?" "x"]
+  (select [* 1 "x"])
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [* 1 "x"]) (:exprs stmt))))
 
-;; (deftest-stmt test-select-column
-;;   ["SELECT \"created_at\" FROM \"continents\""]
-;;   (select [:created-at]
-;;     (from :continents))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-table :continents)] (:from stmt)))
-;;   (is (= [(parse-expr :created-at)] (:exprs stmt))))
+(deftest-stmt test-select-column
+  ["SELECT \"created_at\" FROM \"continents\""]
+  (select [:created-at]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= [(parse-expr :created-at)] (:exprs stmt))))
 
-;; (deftest-stmt test-select-columns
-;;   ["SELECT \"name\", \"created_at\" FROM \"continents\""]
-;;   (select [:name :created-at]
-;;     (from :continents))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-table :continents)] (:from stmt)))
-;;   (is (= (map parse-expr [:name :created-at]) (:exprs stmt))))
+(deftest-stmt test-select-columns
+  ["SELECT \"name\", \"created_at\" FROM \"continents\""]
+  (select [:name :created-at]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= (map parse-expr [:name :created-at]) (:exprs stmt))))
 
 ;; (deftest-stmt test-select-column-alias
 ;;   ["SELECT \"created_at\" AS \"c\" FROM \"continents\""]
@@ -549,17 +543,17 @@
 ;;   (is (= [(parse-table :continents)] (:from stmt)))
 ;;   (is (= [(parse-expr (as :created-at :c))] (:exprs stmt))))
 
-;; (deftest-stmt test-select-multiple-fns
-;;   ["SELECT greatest(1, 2), lower(?)" "X"]
-;;   (select ['(greatest 1 2) '(lower "X")])
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr ['(greatest 1 2) '(lower "X")]) (:exprs stmt))))
+(deftest-stmt test-select-multiple-fns
+  ["SELECT greatest(1, 2), lower(?)" "X"]
+  (select ['(greatest 1 2) '(lower "X")])
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr ['(greatest 1 2) '(lower "X")]) (:exprs stmt))))
 
-;; (deftest-stmt test-select-nested-fns
-;;   ["SELECT (1 + greatest(2, 3))"]
-;;   (select ['(+ 1 (greatest 2 3))])
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr '(+ 1 (greatest 2 3)))] (:exprs stmt))))
+(deftest-stmt test-select-nested-fns
+  ["SELECT (1 + greatest(2, 3))"]
+  (select ['(+ 1 (greatest 2 3))])
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr '(+ 1 (greatest 2 3)))] (:exprs stmt))))
 
 ;; (deftest-stmt test-select-fn-alias
 ;;   ["SELECT max(\"created_at\") AS \"m\" FROM \"continents\""]
