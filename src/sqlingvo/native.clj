@@ -114,10 +114,11 @@
 ;;   [delimiter]
 ;;   (set-val :delimiter delimiter))
 
-;; (defn encoding
-;;   "Returns a fn that adds a ENCODING clause to an SQL statement."
-;;   [encoding]
-;;   (set-val :encoding encoding))
+(defn encoding
+  "Returns a fn that adds a ENCODING clause to an SQL statement."
+  [encoding]
+  (fn [stmt]
+    [encoding (assoc stmt :encoding encoding)]))
 
 (defn copy
   "Returns a fn that builds a COPY statement."

@@ -138,13 +138,13 @@
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
-;; (deftest-stmt test-copy-country-with-encoding
-;;   ["COPY \"country\" FROM ? ENCODING ?" "/usr1/proj/bray/sql/country_data" "UTF-8"]
-;;   (copy :country []
-;;     (from "/usr1/proj/bray/sql/country_data")
-;;     (encoding "UTF-8"))
-;;   (is (= :copy (:op stmt)))
-;;   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
+(deftest-stmt test-copy-country-with-encoding
+  ["COPY \"country\" FROM ? ENCODING ?" "/usr1/proj/bray/sql/country_data" "UTF-8"]
+  (copy :country []
+    (from "/usr1/proj/bray/sql/country_data")
+    (encoding "UTF-8"))
+  (is (= :copy (:op stmt)))
+  (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
 ;; (deftest-stmt test-copy-country-with-delimiter
 ;;   ["COPY \"country\" FROM ? DELIMITER ?" "/usr1/proj/bray/sql/country_data" " "]
