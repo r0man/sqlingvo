@@ -294,10 +294,12 @@
 ;;     (set-val :restrict {:op :restrict})
 ;;     (fetch-state)))
 
-;; (defn returning
-;;   "Returns a fn that adds a RETURNING clause to an SQL statement."
-;;   [& exprs]
-;;   (concat-val :returning (parse-exprs exprs)))
+(defn returning
+  "Returns a fn that adds a RETURNING clause to an SQL statement."
+  [& exprs]
+  (let [exprs (parse-exprs exprs)]
+    (fn [stmt]
+      [exprs (update-in stmt [:returning] #(concat %1 exprs))])))
 
 
 ;; (defn select

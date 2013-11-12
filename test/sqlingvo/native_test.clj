@@ -197,15 +197,15 @@
   (is (= (parse-table :films) (:table stmt)))
   (is (= (parse-condition '(<> :kind "Musical")) (:where stmt))))
 
-;; (deftest-stmt test-delete-completed-tasks-returning-all
-;;   ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
-;;   (delete :tasks
-;;     (where '(= :status "DONE"))
-;;     (returning *))
-;;   (is (= :delete (:op stmt)))
-;;   (is (= (parse-table :tasks) (:table stmt)))
-;;   (is (= (parse-condition '(= :status "DONE")) (:where stmt)))
-;;   (is (= [(parse-expr *)] (:returning stmt))))
+(deftest-stmt test-delete-completed-tasks-returning-all
+  ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
+  (delete :tasks
+    (where '(= :status "DONE"))
+    (returning *))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :tasks) (:table stmt)))
+  (is (= (parse-condition '(= :status "DONE")) (:where stmt)))
+  (is (= [(parse-expr *)] (:returning stmt))))
 
 ;; (deftest-stmt test-delete-films-by-producer-name
 ;;   ["DELETE FROM \"films\" WHERE \"producer_id\" IN (SELECT \"id\" FROM \"producers\" WHERE (\"name\" = ?))" "foo"]
