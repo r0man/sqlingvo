@@ -28,45 +28,6 @@
           (m-result '())
           (reverse ms)))
 
-(defn from
-  "Returns a fn that adds a FROM clause to an SQL statement."
-  [& from]
-  (let [from (map parse-from from)]
-    (fn [stmt]
-      [from (assoc stmt :from from)])))
-
-(defn select
-  "Returns a fn that builds a SELECT statement."
-  [exprs & body]
-  (let [exprs (if (sequential? exprs)
-                (parse-exprs exprs))]
-    (fn [_]
-      (let [[_ stmt] ((m-seq (remove nil? body)) {})]
-        [exprs (assoc stmt
-                 :op :select
-                 :exprs exprs)]))))
-
-(defn where
-  "Returns a fn that adds a WHERE clause to an SQL statement."
-  [condition & [combine]]
-  (let [condition (parse-condition condition)]
-    (fn [stmt]
-      (cond
-       (or (nil? combine)
-           (nil? (:condition (:where stmt))))
-       [nil (assoc stmt :where condition)]
-       :else
-       [nil (assoc-in stmt [:where :condition]
-                      {:op :condition
-                       :condition {:op :fn
-                                   :name combine
-                                   :args [(:condition (:where stmt))
-                                          (:condition condition)]}})]))))
-
-
-
-;; OLD
-
 (defn sql-name [db x]
   (vendor/sql-name db x))
 
@@ -202,16 +163,12 @@
     (fn [stmt-1]
       [nil (update-in stmt-1 [:set] conj {:op :except :stmt stmt-2 :all all})])))
 
-;; (defn from
-;;   "Returns a fn that adds a FROM clause to an SQL statement."
-;;   [& from]
-;;   (domonad state-m
-;;     [op (fetch-val :op)
-;;      from (concat-val
-;;            :from (case op
-;;                    :copy [(first from)]
-;;                    (map parse-from from)))]
-;;     from))
+(defn from
+  "Returns a fn that adds a FROM clause to an SQL statement."
+  [& from]
+  (let [from (map parse-from from)]
+    (fn [stmt]
+      [from (assoc stmt :from from)])))
 
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
@@ -340,6 +297,7 @@
 ;;   [& exprs]
 ;;   (concat-val :returning (parse-exprs exprs)))
 
+
 ;; (defn select
 ;;   "Returns a fn that builds a SELECT statement."
 ;;   [exprs & body]
@@ -354,6 +312,17 @@
 ;;              (case (:op stmt)
 ;;                nil [select select]
 ;;                :insert (repeat 2 (assoc stmt :select select)))))))
+
+(defn select
+  "Returns a fn that builds a SELECT statement."
+  [exprs & body]
+  (let [exprs (if (sequential? exprs)
+                (parse-exprs exprs))]
+    (fn [_]
+      (let [[_ stmt] ((m-seq (remove nil? body)) {})]
+        [exprs (assoc stmt
+                 :op :select
+                 :exprs exprs)]))))
 
 ;; (defn temporary
 ;;   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
@@ -396,22 +365,22 @@
 ;;     :default (set-val :default-values true)
 ;;     (concat-val :values (if (sequential? values) values [values]))))
 
-;; (defn where
-;;   "Returns a fn that adds a WHERE clause to an SQL statement."
-;;   [condition & [combine]]
-;;   (let [condition (parse-condition condition)]
-;;     (fn [stmt]
-;;       (cond
-;;        (or (nil? combine)
-;;            (nil? (:condition (:where stmt))))
-;;        [nil (assoc stmt :where condition)]
-;;        :else
-;;        [nil (assoc-in stmt [:where :condition]
-;;                       {:op :condition
-;;                        :condition {:op :fn
-;;                                    :name combine
-;;                                    :args [(:condition (:where stmt))
-;;                                           (:condition condition)]}})]))))
+(defn where
+  "Returns a fn that adds a WHERE clause to an SQL statement."
+  [condition & [combine]]
+  (let [condition (parse-condition condition)]
+    (fn [stmt]
+      (cond
+       (or (nil? combine)
+           (nil? (:condition (:where stmt))))
+       [nil (assoc stmt :where condition)]
+       :else
+       [nil (assoc-in stmt [:where :condition]
+                      {:op :condition
+                       :condition {:op :fn
+                                   :name combine
+                                   :args [(:condition (:where stmt))
+                                          (:condition condition)]}})]))))
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
