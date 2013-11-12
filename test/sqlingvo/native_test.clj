@@ -62,65 +62,65 @@
   ["SELECT CAST(? AS int)" "1"]
   (select [`(cast "1" :int)]))
 
-;; ;; CREATE TABLE
+;; CREATE TABLE
 
-;; (deftest-stmt test-create-table-tmp-if-not-exists-inherits
-;;   ["CREATE TEMPORARY TABLE IF NOT EXISTS \"import\" () INHERITS (\"quotes\")"]
-;;   (create-table :import
-;;     (temporary true)
-;;     (if-not-exists true)
-;;     (inherits :quotes))
-;;   (is (= :create-table (:op stmt)))
-;;   (is (= {:op :temporary} (:temporary stmt)))
-;;   (is (= {:op :if-not-exists} (:if-not-exists stmt)))
-;;   (is (= [(parse-table :quotes)] (:inherits stmt))))
+(deftest-stmt test-create-table-tmp-if-not-exists-inherits
+  ["CREATE TEMPORARY TABLE IF NOT EXISTS \"import\" () INHERITS (\"quotes\")"]
+  (create-table :import
+    (temporary true)
+    (if-not-exists true)
+    (inherits :quotes))
+  (is (= :create-table (:op stmt)))
+  (is (= {:op :temporary} (:temporary stmt)))
+  (is (= {:op :if-not-exists} (:if-not-exists stmt)))
+  (is (= [(parse-table :quotes)] (:inherits stmt))))
 
-;; (deftest-stmt test-create-table-tmp-if-not-exists-false
-;;   ["CREATE TEMPORARY TABLE \"import\" () INHERITS (\"quotes\")"]
-;;   (create-table :import
-;;     (temporary true)
-;;     (if-not-exists false)
-;;     (inherits :quotes)))
+(deftest-stmt test-create-table-tmp-if-not-exists-false
+  ["CREATE TEMPORARY TABLE \"import\" () INHERITS (\"quotes\")"]
+  (create-table :import
+    (temporary true)
+    (if-not-exists false)
+    (inherits :quotes)))
 
-;; (deftest-stmt test-create-table-like-including-defaults
-;;   ["CREATE TABLE \"tmp_films\" (LIKE \"films\" INCLUDING DEFAULTS)"]
-;;   (create-table :tmp-films
-;;     (like :films :including [:defaults]))
-;;   (is (= :create-table (:op stmt)))
-;;   (let [like (:like stmt)]
-;;     (is (= :like (:op like)))
-;;     (is (= (parse-table :films) (:table like)))
-;;     (is (= [:defaults] (:including like)))))
+(deftest-stmt test-create-table-like-including-defaults
+  ["CREATE TABLE \"tmp_films\" (LIKE \"films\" INCLUDING DEFAULTS)"]
+  (create-table :tmp-films
+    (like :films :including [:defaults]))
+  (is (= :create-table (:op stmt)))
+  (let [like (:like stmt)]
+    (is (= :like (:op like)))
+    (is (= (parse-table :films) (:table like)))
+    (is (= [:defaults] (:including like)))))
 
-;; (deftest-stmt test-create-table-like-excluding-indexes
-;;   ["CREATE TABLE \"tmp_films\" (LIKE \"films\" EXCLUDING INDEXES)"]
-;;   (create-table :tmp-films
-;;     (like :films :excluding [:indexes]))
-;;   (is (= :create-table (:op stmt)))
-;;   (let [like (:like stmt)]
-;;     (is (= :like (:op like)))
-;;     (is (= (parse-table :films) (:table like)))
-;;     (is (= [:indexes] (:excluding like)))))
+(deftest-stmt test-create-table-like-excluding-indexes
+  ["CREATE TABLE \"tmp_films\" (LIKE \"films\" EXCLUDING INDEXES)"]
+  (create-table :tmp-films
+    (like :films :excluding [:indexes]))
+  (is (= :create-table (:op stmt)))
+  (let [like (:like stmt)]
+    (is (= :like (:op like)))
+    (is (= (parse-table :films) (:table like)))
+    (is (= [:indexes] (:excluding like)))))
 
-;; (deftest-stmt test-create-table-films
-;;   [(str "CREATE TABLE \"films\" ("
-;;         "\"code\" CHAR(5) PRIMARY KEY, "
-;;         "\"title\" VARCHAR(40) NOT NULL, "
-;;         "\"did\" INTEGER NOT NULL, "
-;;         "\"date_prod\" DATE, "
-;;         "\"kind\" VARCHAR(10), "
-;;         "\"len\" INTERVAL, "
-;;         "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
-;;         "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())")]
-;;   (create-table :films
-;;     (column :code :char :length 5 :primary-key? true)
-;;     (column :title :varchar :length 40 :not-null? true)
-;;     (column :did :integer :not-null? true)
-;;     (column :date-prod :date)
-;;     (column :kind :varchar :length 10)
-;;     (column :len :interval)
-;;     (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
-;;     (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
+(deftest-stmt test-create-table-films
+  [(str "CREATE TABLE \"films\" ("
+        "\"code\" CHAR(5) PRIMARY KEY, "
+        "\"title\" VARCHAR(40) NOT NULL, "
+        "\"did\" INTEGER NOT NULL, "
+        "\"date_prod\" DATE, "
+        "\"kind\" VARCHAR(10), "
+        "\"len\" INTERVAL, "
+        "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
+        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())")]
+  (create-table :films
+    (column :code :char :length 5 :primary-key? true)
+    (column :title :varchar :length 40 :not-null? true)
+    (column :did :integer :not-null? true)
+    (column :date-prod :date)
+    (column :kind :varchar :length 10)
+    (column :len :interval)
+    (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
+    (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
 
 ;; COPY
 

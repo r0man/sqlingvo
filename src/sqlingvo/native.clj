@@ -139,6 +139,14 @@
 ;;               {:op :create-table
 ;;                :table (parse-table table)})))))
 
+(defn create-table
+  "Returns a fn that builds a CREATE TABLE statement."
+  [table & body]
+  (let [table (parse-table table)]
+    (fn [stmt]
+      ((m-seq (remove nil? body))
+       {:op :create-table :table table}))))
+
 (defn delete
   "Returns a fn that builds a DELETE statement."
   [table & body]
@@ -185,19 +193,22 @@
   (fn [stmt]
     (if condition
       [condition (assoc stmt :if-exists {:op :if-exists})]
-      [condition stmt])))
+      [condition (dissoc stmt :if-exists)])))
 
-;; (defn if-not-exists
-;;   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
-;;   [if-not-exists?]
-;;   (if if-not-exists?
-;;     (set-val :if-not-exists {:op :if-not-exists})
-;;     (fetch-state)))
+(defn if-not-exists
+  "Returns a fn that adds a IF EXISTS clause to an SQL statement."
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :if-not-exists {:op :if-not-exists})]
+      [condition (dissoc stmt :if-not-exists)])))
 
-;; (defn inherits
-;;   "Returns a fn that adds an INHERITS clause to an SQL statement."
-;;   [& tables]
-;;   (set-val :inherits (map parse-table tables)))
+(defn inherits
+  "Returns a fn that adds an INHERITS clause to an SQL statement."
+  [& tables]
+  (let [tables (map parse-table tables)]
+    (fn [stmt]
+      [tables (assoc stmt :inherits tables)])))
 
 ;; (defn insert
 ;;   "Returns a fn that builds a INSERT statement."
@@ -243,10 +254,13 @@
 ;;   (let [join (make-join from condition :type type :outer outer :pk pk)]
 ;;     (concat-val :joins [join])))
 
-;; (defn like
-;;   "Returns a fn that adds a LIKE clause to an SQL statement."
-;;   [table & {:as opts}]
-;;   (set-val :like (assoc opts :op :like :table (parse-table table))))
+(defn like
+  "Returns a fn that adds a LIKE clause to an SQL statement."
+  [table & {:as opts}]
+  (let [table (parse-table table)
+        like (assoc opts :op :like :table table)]
+    (fn [stmt]
+      [table (assoc stmt :like like)])))
 
 ;; (defn limit
 ;;   "Returns a fn that adds a LIMIT clause to an SQL statement."
@@ -335,6 +349,14 @@
 ;;   (if temporary?
 ;;     (set-val :temporary {:op :temporary})
 ;;     (fetch-state)))
+
+(defn temporary
+  "Returns a fn that adds a TEMPORARY clause to an SQL statement."
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :temporary {:op :temporary})]
+      [condition (dissoc stmt :temporary)])))
 
 ;; (defn truncate
 ;;   "Returns a fn that builds a TRUNCATE statement."
