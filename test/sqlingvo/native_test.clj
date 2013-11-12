@@ -535,13 +535,13 @@
   (is (= [(parse-table :continents)] (:from stmt)))
   (is (= (map parse-expr [:name :created-at]) (:exprs stmt))))
 
-;; (deftest-stmt test-select-column-alias
-;;   ["SELECT \"created_at\" AS \"c\" FROM \"continents\""]
-;;   (select [(as :created-at :c)]
-;;     (from :continents))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-table :continents)] (:from stmt)))
-;;   (is (= [(parse-expr (as :created-at :c))] (:exprs stmt))))
+(deftest-stmt test-select-column-alias
+  ["SELECT \"created_at\" AS \"c\" FROM \"continents\""]
+  (select [(as :created-at :c)]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= [(parse-expr (as :created-at :c))] (:exprs stmt))))
 
 (deftest-stmt test-select-multiple-fns
   ["SELECT greatest(1, 2), lower(?)" "X"]
@@ -555,45 +555,45 @@
   (is (= :select (:op stmt)))
   (is (= [(parse-expr '(+ 1 (greatest 2 3)))] (:exprs stmt))))
 
-;; (deftest-stmt test-select-fn-alias
-;;   ["SELECT max(\"created_at\") AS \"m\" FROM \"continents\""]
-;;   (select [(as '(max :created-at) :m)]
-;;     (from :continents))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr (as '(max :created-at) :m))] (:exprs stmt)))
-;;   (is (= [(parse-table :continents)] (:from stmt))))
+(deftest-stmt test-select-fn-alias
+  ["SELECT max(\"created_at\") AS \"m\" FROM \"continents\""]
+  (select [(as '(max :created-at) :m)]
+    (from :continents))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr (as '(max :created-at) :m))] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt))))
 
-;; (deftest-stmt test-select-limit
-;;   ["SELECT * FROM \"continents\" LIMIT 10"]
-;;   (select [*]
-;;     (from :continents)
-;;     (limit 10))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-table :continents)] (:from stmt)))
-;;   (is (= {:op :limit :count 10} (:limit stmt))))
+(deftest-stmt test-select-limit
+  ["SELECT * FROM \"continents\" LIMIT 10"]
+  (select [*]
+    (from :continents)
+    (limit 10))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= {:op :limit :count 10} (:limit stmt))))
 
-;; (deftest-stmt test-select-offset
-;;   ["SELECT * FROM \"continents\" OFFSET 15"]
-;;   (select [*]
-;;     (from :continents)
-;;     (offset 15))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-table :continents)] (:from stmt)))
-;;   (is (= {:op :offset :start 15} (:offset stmt))))
+(deftest-stmt test-select-offset
+  ["SELECT * FROM \"continents\" OFFSET 15"]
+  (select [*]
+    (from :continents)
+    (offset 15))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= {:op :offset :start 15} (:offset stmt))))
 
-;; (deftest-stmt test-select-limit-offset
-;;   ["SELECT * FROM \"continents\" LIMIT 10 OFFSET 20"]
-;;   (select [*]
-;;     (from :continents)
-;;     (limit 10)
-;;     (offset 20))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= [(parse-table :continents)] (:from stmt)))
-;;   (is (= {:op :limit :count 10} (:limit stmt)))
-;;   (is (= {:op :offset :start 20} (:offset stmt))))
+(deftest-stmt test-select-limit-offset
+  ["SELECT * FROM \"continents\" LIMIT 10 OFFSET 20"]
+  (select [*]
+    (from :continents)
+    (limit 10)
+    (offset 20))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= {:op :limit :count 10} (:limit stmt)))
+  (is (= {:op :offset :start 20} (:offset stmt))))
 
 ;; (deftest-stmt test-select-column-max
 ;;   ["SELECT max(\"created_at\") FROM \"continents\""]
