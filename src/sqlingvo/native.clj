@@ -240,12 +240,6 @@
        :on (parse-expr `(= ~from ~condition)))
      :else (throw (IllegalArgumentException. (format "Invalid JOIN condition: %s" condition))))))
 
-;; (defn join
-;;   "Returns a fn that adds a JOIN clause to an SQL statement."
-;;   [from condition & {:keys [type outer pk]}]
-;;   (let [join (make-join from condition :type type :outer outer :pk pk)]
-;;     (concat-val :joins [join])))
-
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from condition & {:keys [type outer pk]}]
@@ -361,23 +355,18 @@
     (fn [stmt-1]
       [nil (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all})])))
 
-;; (defn update
-;;   "Returns a fn that builds a UPDATE statement."
-;;   [table row & body]
-;;   (Stmt. (fn [stmt]
-;;            (with-monad state-m
-;;              ((chain-state body)
-;;               {:op :update
-;;                :table (parse-table table)
-;;                :exprs (if (sequential? row) (parse-exprs row))
-;;                :row (if (map? row) row)})))))
-
-;; (defn values
-;;   "Returns a fn that adds a VALUES clause to an SQL statement."
-;;   [values]
-;;   (case values
-;;     :default (set-val :default-values true)
-;;     (concat-val :values (if (sequential? values) values [values]))))
+(defn update
+  "Returns a fn that builds a UPDATE statement."
+  [table row & body]
+  (let [table (parse-table table)
+        exprs (if (sequential? row) (parse-exprs row))
+        row (if (map? row) row)]
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              {:op :update
+               :table table
+               :exprs exprs
+               :row row})))))
 
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
@@ -385,8 +374,7 @@
   (fn [stmt]
     (if (= :default values)
       [nil (assoc stmt :default-values true)]
-      [nil (update-in stmt [:values] #(concat %1 (if (sequential? values)
-                                                   values [values])))])))
+      [nil (update-in stmt [:values] #(concat %1 (if (sequential? values) values [values])))])))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."

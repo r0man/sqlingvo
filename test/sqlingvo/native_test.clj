@@ -2,7 +2,8 @@
   (:import java.util.Date)
   (:refer-clojure :exclude [distinct group-by])
   (:require [sqlingvo.compiler :refer [compile-stmt]]
-            [sqlingvo.util :refer :all])
+            [sqlingvo.util :refer :all]
+            [sqlingvo.vendor :as vendor])
   (:use clojure.test
         sqlingvo.native))
 
@@ -1162,27 +1163,27 @@
   (truncate [:continents]
     (restrict false)))
 
-;; ;; UPDATE
+;; UPDATE
 
-;; (deftest-stmt test-update-drama-to-dramatic
-;;   ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
-;;   (update :films {:kind "Dramatic"}
-;;     (where '(= :kind "Drama")))
-;;   (is (= :update (:op stmt)))
-;;   (is (= (parse-table :films) (:table stmt)))
-;;   (is (= (parse-condition '(= :kind "Drama")) (:where stmt)))
-;;   (is (= {:kind "Dramatic"} (:row stmt))))
+(deftest-stmt test-update-drama-to-dramatic
+  ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
+  (update :films {:kind "Dramatic"}
+    (where '(= :kind "Drama")))
+  (is (= :update (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= (parse-condition '(= :kind "Drama")) (:where stmt)))
+  (is (= {:kind "Dramatic"} (:row stmt))))
 
-;; (deftest-stmt test-update-drama-to-dramatic-returning
-;;   ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?) RETURNING *" "Dramatic" "Drama"]
-;;   (update :films {:kind "Dramatic"}
-;;     (where '(= :kind "Drama"))
-;;     (returning *))
-;;   (is (= :update (:op stmt)))
-;;   (is (= (parse-table :films) (:table stmt)))
-;;   (is (= (parse-condition '(= :kind "Drama")) (:where stmt)))
-;;   (is (= {:kind "Dramatic"} (:row stmt)))
-;;   (is (= [(parse-expr *)] (:returning stmt))))
+(deftest-stmt test-update-drama-to-dramatic-returning
+  ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?) RETURNING *" "Dramatic" "Drama"]
+  (update :films {:kind "Dramatic"}
+    (where '(= :kind "Drama"))
+    (returning *))
+  (is (= :update (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= (parse-condition '(= :kind "Drama")) (:where stmt)))
+  (is (= {:kind "Dramatic"} (:row stmt)))
+  (is (= [(parse-expr *)] (:returning stmt))))
 
 ;; (deftest-stmt test-update-daily-return
 ;;   ["UPDATE \"quotes\" SET \"daily_return\" = \"u\".\"daily_return\" FROM (SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) AS \"daily_return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
@@ -1237,14 +1238,14 @@
 ;;     (where '(or (= (lower :countries.iso-3166-1-alpha-2) (lower :u.iso-a2))
 ;;                 (= (lower :countries.iso-3166-1-alpha-3) (lower :u.iso-a3))))))
 
-;; ;; QUOTING
+;; QUOTING
 
-;; (deftest test-vendor-specifiy-quoting
-;;   (are [db expected]
-;;     (is (= expected (sql db (select [:continents.id] (from :continents)))))
-;;     (vendor/->mysql) ["SELECT `continents`.`id` FROM `continents`"]
-;;     (vendor/->postgresql) ["SELECT \"continents\".\"id\" FROM \"continents\""]
-;;     (vendor/->vertica) ["SELECT \"continents\".\"id\" FROM \"continents\""]))
+(deftest test-vendor-specifiy-quoting
+  (are [db expected]
+    (is (= expected (sql db (select [:continents.id] (from :continents)))))
+    (vendor/->mysql) ["SELECT `continents`.`id` FROM `continents`"]
+    (vendor/->postgresql) ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    (vendor/->vertica) ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
 ;; POSTGRESQL ARRAYS
 
