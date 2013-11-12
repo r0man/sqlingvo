@@ -128,33 +128,33 @@
   [table columns & body]
   (let [table (parse-table table)
         columns (map parse-column columns)]
-    (fn [_]
-      ((m-seq (remove nil? body))
-       {:op :copy :table table :columns columns}))))
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              {:op :copy :table table :columns columns})))))
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
   [table & body]
   (let [table (parse-table table)]
-    (fn [_]
-      ((m-seq (remove nil? body))
-       {:op :create-table :table table}))))
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              {:op :create-table :table table})))))
 
 (defn delete
   "Returns a fn that builds a DELETE statement."
   [table & body]
   (let [table (parse-table table)]
-    (fn [_]
-      ((m-seq (remove nil? body))
-       {:op :delete :table table}))))
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              {:op :delete :table table})))))
 
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
   [tables & body]
   (let [tables (map parse-table tables)]
-    (fn [stmt]
-      ((m-seq (remove nil? body))
-       {:op :drop-table :tables tables}))))
+    (Stmt. (fn [stmt]
+             ((m-seq (remove nil? body))
+              {:op :drop-table :tables tables})))))
 
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
@@ -325,11 +325,11 @@
   [exprs & body]
   (let [exprs (if (sequential? exprs)
                 (parse-exprs exprs))]
-    (fn [_]
-      (let [[_ stmt] ((m-seq (remove nil? body)) {})]
-        [exprs (assoc stmt
-                 :op :select
-                 :exprs exprs)]))))
+    (Stmt. (fn [_]
+             (let [[_ stmt] ((m-seq (remove nil? body)) {})]
+               [exprs (assoc stmt
+                        :op :select
+                        :exprs exprs)])))))
 
 ;; (defn temporary
 ;;   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
@@ -350,9 +350,9 @@
   "Returns a fn that builds a TRUNCATE statement."
   [tables & body]
   (let [tables (map parse-table tables)]
-    (fn [_]
-      ((m-seq (remove nil? body))
-       {:op :truncate :tables tables}))))
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              {:op :truncate :tables tables})))))
 
 (defn union
   "Returns a fn that adds a UNION clause to an SQL statement."
