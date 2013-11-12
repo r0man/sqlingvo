@@ -146,40 +146,40 @@
   (is (= :copy (:op stmt)))
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt))))
 
-;; (deftest-stmt test-copy-country-with-delimiter
-;;   ["COPY \"country\" FROM ? DELIMITER ?" "/usr1/proj/bray/sql/country_data" " "]
-;;   (copy :country []
-;;     (from "/usr1/proj/bray/sql/country_data")
-;;     (delimiter " ")))
+(deftest-stmt test-copy-country-with-delimiter
+  ["COPY \"country\" FROM ? DELIMITER ?" "/usr1/proj/bray/sql/country_data" " "]
+  (copy :country []
+    (from "/usr1/proj/bray/sql/country_data")
+    (delimiter " ")))
 
-;; (deftest-stmt test-copy-country-columns
-;;   ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
-;;   (copy :country [:id :name]
-;;     (from "/usr1/proj/bray/sql/country_data"))
-;;   (is (= :copy (:op stmt)))
-;;   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt)))
-;;   (is (= (map parse-column [:id :name]) (:columns stmt))))
+(deftest-stmt test-copy-country-columns
+  ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
+  (copy :country [:id :name]
+    (from "/usr1/proj/bray/sql/country_data"))
+  (is (= :copy (:op stmt)))
+  (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt)))
+  (is (= (map parse-column [:id :name]) (:columns stmt))))
 
 ;; (deftest test-copy-from-expands-to-absolute-path
 ;;   (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
 ;;          (sql (copy :country [] (from "country_data"))))))
 
-;; (deftest-stmt test-select-from
-;;   ["SELECT * FROM \"continents\""]
-;;   (select [:*]
-;;     (from :continents)))
+(deftest-stmt test-select-from
+  ["SELECT * FROM \"continents\""]
+  (select [:*]
+    (from :continents)))
 
-;; (deftest-stmt test-select-in-list
-;;   ["SELECT * FROM \"continents\" WHERE 1 IN (1, 2, 3)"]
-;;   (select [:*]
-;;     (from :continents)
-;;     (where '(in 1 (1 2 3)))))
+(deftest-stmt test-select-in-list
+  ["SELECT * FROM \"continents\" WHERE 1 IN (1, 2, 3)"]
+  (select [:*]
+    (from :continents)
+    (where '(in 1 (1 2 3)))))
 
-;; (deftest-stmt test-select-in-empty-list
-;;   ["SELECT * FROM \"continents\" WHERE 1 IN (NULL)"]
-;;   (select [:*]
-;;     (from :continents)
-;;     (where '(in 1 ()))))
+(deftest-stmt test-select-in-empty-list
+  ["SELECT * FROM \"continents\" WHERE 1 IN (NULL)"]
+  (select [:*]
+    (from :continents)
+    (where '(in 1 ()))))
 
 ;; ;; DELETE
 
