@@ -157,6 +157,11 @@
   (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
          (sql (copy :country [] (from "country_data"))))))
 
+(deftest-stmt test-select-from
+  ["SELECT * FROM \"continents\""]
+  (select [:*]
+    (from :continents)))
+
 (deftest-stmt test-select-in-list
   ["SELECT * FROM \"continents\" WHERE 1 IN (1, 2, 3)"]
   (select [:*]
