@@ -359,62 +359,62 @@
 ;;   ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (?, ?)" 1 2]
 ;;   (insert :x [:a :b] (values [{:a 1 :b 2 :c 3}])))
 
-;; ;; SELECT
+;; SELECT
 
-;; (deftest-stmt test-select-1
-;;   ["SELECT 1"]
-;;   (select [1])
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt))))
+(deftest-stmt test-select-1
+  ["SELECT 1"]
+  (select [1])
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt))))
 
-;; (deftest-stmt test-select-1-as
-;;   ["SELECT 1 AS \"n\""]
-;;   (select [(as 1 :n)])
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr (as 1 :n))] (:exprs stmt))))
+(deftest-stmt test-select-1-as
+  ["SELECT 1 AS \"n\""]
+  (select [(as 1 :n)])
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr (as 1 :n))] (:exprs stmt))))
 
-;; (deftest-stmt test-select-x-as-x
-;;   ["SELECT ? AS \"x\"" "x"]
-;;   (select [(as "x" :x)])
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr (as "x" :x))] (:exprs stmt))))
+(deftest-stmt test-select-x-as-x
+  ["SELECT ? AS \"x\"" "x"]
+  (select [(as "x" :x)])
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr (as "x" :x))] (:exprs stmt))))
 
-;; (deftest-stmt test-select-1-2-3
-;;   ["SELECT 1, 2, 3"]
-;;   (select [1 2 3])
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [1 2 3]) (:exprs stmt))))
+(deftest-stmt test-select-1-2-3
+  ["SELECT 1, 2, 3"]
+  (select [1 2 3])
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1 2 3]) (:exprs stmt))))
 
-;; (deftest-stmt test-select-1-2-3-as
-;;   ["SELECT 1 AS \"a\", 2 AS \"b\", 3 AS \"c\""]
-;;   (select [(as 1 :a) (as 2 :b) (as 3 :c)])
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [(as 1 :a) (as 2 :b) (as 3 :c)])
-;;          (:exprs stmt))))
+(deftest-stmt test-select-1-2-3-as
+  ["SELECT 1 AS \"a\", 2 AS \"b\", 3 AS \"c\""]
+  (select [(as 1 :a) (as 2 :b) (as 3 :c)])
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [(as 1 :a) (as 2 :b) (as 3 :c)])
+         (:exprs stmt))))
 
-;; (deftest-stmt test-select-count-distinct
-;;   ["SELECT count(DISTINCT \"user_id\") FROM \"tweets\""]
-;;   (select ['(count distinct :user-id)]
-;;     (from :tweets)))
+(deftest-stmt test-select-count-distinct
+  ["SELECT count(DISTINCT \"user_id\") FROM \"tweets\""]
+  (select ['(count distinct :user-id)]
+    (from :tweets)))
 
 ;; (deftest-stmt test-select-select-1
 ;;   ["SELECT (SELECT 1)"]
 ;;   (select [(select [1])])
 ;;   (is (= :select (:op stmt)))
-;;   (is (= [(ast (select [1]))] (:exprs stmt))))
+;; (is (= [(ast (select [1]))] (:exprs stmt))))
 
-;; (deftest-stmt test-select-1-in-1-2-3
-;;   ["SELECT 1 WHERE 1 IN (1, 2, 3)"]
-;;   (select [1]
-;;     (where '(in 1 (1 2 3))))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr 1)] (:exprs stmt)))
-;;   (is (= (parse-condition '(in 1 (1 2 3))) (:where stmt))))
+(deftest-stmt test-select-1-in-1-2-3
+  ["SELECT 1 WHERE 1 IN (1, 2, 3)"]
+  (select [1]
+    (where '(in 1 (1 2 3))))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr 1)] (:exprs stmt)))
+  (is (= (parse-condition '(in 1 (1 2 3))) (:where stmt))))
 
-;; (deftest-stmt test-select-1-in-1-2-3-backquote
-;;   ["SELECT 1 WHERE 1 IN (1, 2, 3)"]
-;;   (select [1]
-;;     (where `(in 1 (1 2 3)))))
+(deftest-stmt test-select-1-in-1-2-3-backquote
+  ["SELECT 1 WHERE 1 IN (1, 2, 3)"]
+  (select [1]
+    (where `(in 1 (1 2 3)))))
 
 ;; (deftest-stmt test-select-select-1-select-x
 ;;   ["SELECT (SELECT 1), (SELECT ?)" "x"]
@@ -422,14 +422,14 @@
 ;;   (is (= :select (:op stmt)))
 ;;   (is (= [(ast (select [1])) (ast (select ["x"]))] (:exprs stmt))))
 
-;; (deftest-stmt test-select-string
-;;   ["SELECT * FROM \"continents\" WHERE (\"name\" = ?)" "Europe"]
-;;   (select [*]
-;;     (from :continents)
-;;     (where '(= :name "Europe")))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (is (= (parse-condition '(= :name "Europe")) (:where stmt))))
+(deftest-stmt test-select-string
+  ["SELECT * FROM \"continents\" WHERE (\"name\" = ?)" "Europe"]
+  (select [*]
+    (from :continents)
+    (where '(= :name "Europe")))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= (parse-condition '(= :name "Europe")) (:where stmt))))
 
 (deftest-stmt test-select-where-single-arg-and
   ["SELECT 1 WHERE (1 = 1)"]
@@ -767,32 +767,32 @@
 ;;     (is (= :y (:as from)))
 ;;     (is (= [(parse-expr 2)] (:exprs from)))))
 
-;; (deftest-stmt test-select-parition-by
-;;   ["SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) FROM \"quotes\""]
-;;   (select [:id '((lag :close) over (partition by :company-id order by :date desc))]
-;;     (from :quotes))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [:id '((lag :close) over (partition by :company-id order by :date desc))])
-;;          (:exprs stmt)))
-;;   (is (= [(parse-from :quotes)] (:from stmt))))
+(deftest-stmt test-select-parition-by
+  ["SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) FROM \"quotes\""]
+  (select [:id '((lag :close) over (partition by :company-id order by :date desc))]
+    (from :quotes))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [:id '((lag :close) over (partition by :company-id order by :date desc))])
+         (:exprs stmt)))
+  (is (= [(parse-from :quotes)] (:from stmt))))
 
-;; (deftest-stmt test-select-total-return
-;;   ["SELECT \"id\", (\"close\" / (lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) FROM \"quotes\""]
-;;   (select [:id '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))]
-;;     (from :quotes))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [:id '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))])
-;;          (:exprs stmt)))
-;;   (is (= [(parse-from :quotes)] (:from stmt))))
+(deftest-stmt test-select-total-return
+  ["SELECT \"id\", (\"close\" / (lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) FROM \"quotes\""]
+  (select [:id '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))]
+    (from :quotes))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [:id '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))])
+         (:exprs stmt)))
+  (is (= [(parse-from :quotes)] (:from stmt))))
 
-;; (deftest-stmt test-select-total-return-alias
-;;   ["SELECT \"id\", (\"close\" / (lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) AS \"daily_return\" FROM \"quotes\""]
-;;   (select [:id (as '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)]
-;;     (from :quotes))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [:id (as '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)])
-;;          (:exprs stmt)))
-;;   (is (= [(parse-from :quotes)] (:from stmt))))
+(deftest-stmt test-select-total-return-alias
+  ["SELECT \"id\", (\"close\" / (lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) AS \"daily_return\" FROM \"quotes\""]
+  (select [:id (as '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)]
+    (from :quotes))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [:id (as '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)])
+         (:exprs stmt)))
+  (is (= [(parse-from :quotes)] (:from stmt))))
 
 ;; (deftest-stmt test-select-group-by-a-order-by-1
 ;;   ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
