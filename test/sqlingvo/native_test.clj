@@ -1086,81 +1086,81 @@
   ["SELECT \"continents\".\"id\" FROM \"continents\""]
   (select [:continents.id] (from :continents)))
 
-;; ;; TRUNCATE
+;; TRUNCATE
 
-;; (deftest-stmt test-truncate-continents
-;;   ["TRUNCATE TABLE \"continents\""]
-;;   (truncate [:continents])
-;;   (is (= :truncate (:op stmt)))
-;;   (is (= [(parse-table :continents)] (:tables stmt)))
-;;   (is (nil? (:children stmt))))
+(deftest-stmt test-truncate-continents
+  ["TRUNCATE TABLE \"continents\""]
+  (truncate [:continents])
+  (is (= :truncate (:op stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt)))
+  (is (nil? (:children stmt))))
 
-;; (deftest-stmt test-truncate-continents-and-countries
-;;   ["TRUNCATE TABLE \"continents\", \"countries\""]
-;;   (truncate [:continents :countries])
-;;   (is (= :truncate (:op stmt)))
-;;   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
-;;   (is (nil? (:children stmt))))
+(deftest-stmt test-truncate-continents-and-countries
+  ["TRUNCATE TABLE \"continents\", \"countries\""]
+  (truncate [:continents :countries])
+  (is (= :truncate (:op stmt)))
+  (is (= (map parse-table [:continents :countries]) (:tables stmt)))
+  (is (nil? (:children stmt))))
 
-;; (deftest-stmt test-truncate-continents-restart-restrict
-;;   ["TRUNCATE TABLE \"continents\" RESTART IDENTITY RESTRICT"]
-;;   (truncate [:continents]
-;;     (restart-identity true)
-;;     (restrict true))
-;;   (is (= :truncate (:op stmt)))
-;;   (is (= [(parse-table :continents)] (:tables stmt)))
-;;   (is (= {:op :restrict} (:restrict stmt)))
-;;   (is (= {:op :restart-identity} (:restart-identity stmt))))
+(deftest-stmt test-truncate-continents-restart-restrict
+  ["TRUNCATE TABLE \"continents\" RESTART IDENTITY RESTRICT"]
+  (truncate [:continents]
+    (restart-identity true)
+    (restrict true))
+  (is (= :truncate (:op stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt)))
+  (is (= {:op :restrict} (:restrict stmt)))
+  (is (= {:op :restart-identity} (:restart-identity stmt))))
 
-;; (deftest-stmt test-truncate-continents-continue-cascade
-;;   ["TRUNCATE TABLE \"continents\" CONTINUE IDENTITY CASCADE"]
-;;   (truncate [:continents]
-;;     (continue-identity true)
-;;     (cascade true))
-;;   (is (= :truncate (:op stmt)))
-;;   (is (= [(parse-table :continents)] (:tables stmt)))
-;;   (is (= {:op :cascade} (:cascade stmt)))
-;;   (is (= {:op :continue-identity} (:continue-identity stmt))))
+(deftest-stmt test-truncate-continents-continue-cascade
+  ["TRUNCATE TABLE \"continents\" CONTINUE IDENTITY CASCADE"]
+  (truncate [:continents]
+    (continue-identity true)
+    (cascade true))
+  (is (= :truncate (:op stmt)))
+  (is (= [(parse-table :continents)] (:tables stmt)))
+  (is (= {:op :cascade} (:cascade stmt)))
+  (is (= {:op :continue-identity} (:continue-identity stmt))))
 
-;; (deftest-stmt test-truncate-continue-identity
-;;   ["TRUNCATE TABLE \"continents\" CONTINUE IDENTITY"]
-;;   (truncate [:continents]
-;;     (continue-identity true)))
+(deftest-stmt test-truncate-continue-identity
+  ["TRUNCATE TABLE \"continents\" CONTINUE IDENTITY"]
+  (truncate [:continents]
+    (continue-identity true)))
 
-;; (deftest-stmt test-truncate-continue-identity-false
-;;   ["TRUNCATE TABLE \"continents\""]
-;;   (truncate [:continents]
-;;     (continue-identity false)))
+(deftest-stmt test-truncate-continue-identity-false
+  ["TRUNCATE TABLE \"continents\""]
+  (truncate [:continents]
+    (continue-identity false)))
 
-;; (deftest-stmt test-truncate-cascade-true
-;;   ["TRUNCATE TABLE \"continents\" CASCADE"]
-;;   (truncate [:continents]
-;;     (cascade true)))
+(deftest-stmt test-truncate-cascade-true
+  ["TRUNCATE TABLE \"continents\" CASCADE"]
+  (truncate [:continents]
+    (cascade true)))
 
-;; (deftest-stmt test-truncate-cascade-false
-;;   ["TRUNCATE TABLE \"continents\""]
-;;   (truncate [:continents]
-;;     (cascade false)))
+(deftest-stmt test-truncate-cascade-false
+  ["TRUNCATE TABLE \"continents\""]
+  (truncate [:continents]
+    (cascade false)))
 
-;; (deftest-stmt test-truncate-restart-identity
-;;   ["TRUNCATE TABLE \"continents\" RESTART IDENTITY"]
-;;   (truncate [:continents]
-;;     (restart-identity true)))
+(deftest-stmt test-truncate-restart-identity
+  ["TRUNCATE TABLE \"continents\" RESTART IDENTITY"]
+  (truncate [:continents]
+    (restart-identity true)))
 
-;; (deftest-stmt test-truncate-restart-identity-false
-;;   ["TRUNCATE TABLE \"continents\""]
-;;   (truncate [:continents]
-;;     (restart-identity false)))
+(deftest-stmt test-truncate-restart-identity-false
+  ["TRUNCATE TABLE \"continents\""]
+  (truncate [:continents]
+    (restart-identity false)))
 
-;; (deftest-stmt test-truncate-restrict
-;;   ["TRUNCATE TABLE \"continents\""]
-;;   (truncate [:continents]
-;;     (restrict false)))
+(deftest-stmt test-truncate-restrict
+  ["TRUNCATE TABLE \"continents\""]
+  (truncate [:continents]
+    (restrict false)))
 
-;; (deftest-stmt test-truncate-restrict-false
-;;   ["TRUNCATE TABLE \"continents\""]
-;;   (truncate [:continents]
-;;     (restrict false)))
+(deftest-stmt test-truncate-restrict-false
+  ["TRUNCATE TABLE \"continents\""]
+  (truncate [:continents]
+    (restrict false)))
 
 ;; ;; UPDATE
 

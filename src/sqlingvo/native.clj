@@ -72,12 +72,13 @@
   "Parse `expr` and return an ORDER BY expr using ascending order."
   [expr] (assoc (parse-expr expr) :direction :asc))
 
-;; (defn cascade
-;;   "Returns a fn that adds a CASCADE clause to an SQL statement."
-;;   [cascade?]
-;;   (if cascade?
-;;     (set-val :cascade {:op :cascade})
-;;     (fetch-state)))
+(defn cascade
+  "Returns a fn that adds a CASCADE clause to an SQL statement."
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :cascade {:op :cascade})]
+      [condition (dissoc stmt :cascade)])))
 
 (defn column
   "Add a column to `stmt`."
@@ -91,12 +92,13 @@
                            :schema (:schema stmt)
                            :table (:name stmt))))])))
 
-;; (defn continue-identity
-;;   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
-;;   [continue-identity?]
-;;   (if continue-identity?
-;;     (set-val :continue-identity {:op :continue-identity})
-;;     (fetch-state)))
+(defn continue-identity
+  "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :continue-identity {:op :continue-identity})]
+      [condition (dissoc stmt :continue-identity)])))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -262,11 +264,6 @@
     (fn [stmt]
       [table (assoc stmt :like like)])))
 
-;; (defn limit
-;;   "Returns a fn that adds a LIMIT clause to an SQL statement."
-;;   [count]
-;;   (set-val :limit {:op :limit :count count}))
-
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
   [count]
@@ -294,12 +291,13 @@
         [exprs (update-in stmt [:order-by] #(concat %1 exprs))]
         [exprs stmt]))))
 
-;; (defn restart-identity
-;;   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
-;;   [restart-identity?]
-;;   (if restart-identity?
-;;     (set-val :restart-identity {:op :restart-identity})
-;;     (fetch-state)))
+(defn restart-identity
+  "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :restart-identity {:op :restart-identity})]
+      [condition (dissoc stmt :restart-identity)])))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
@@ -358,14 +356,13 @@
       [condition (assoc stmt :temporary {:op :temporary})]
       [condition (dissoc stmt :temporary)])))
 
-;; (defn truncate
-;;   "Returns a fn that builds a TRUNCATE statement."
-;;   [tables & body]
-;;   (let [[_ truncate]
-;;         ((chain-state body)
-;;          {:op :truncate
-;;           :tables (map parse-table tables)})]
-;;     (Stmt. (fn [stmt] [truncate truncate]))))
+(defn truncate
+  "Returns a fn that builds a TRUNCATE statement."
+  [tables & body]
+  (let [tables (map parse-table tables)]
+    (fn [_]
+      ((m-seq (remove nil? body))
+       {:op :truncate :tables tables}))))
 
 (defn union
   "Returns a fn that adds a UNION clause to an SQL statement."
