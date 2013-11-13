@@ -87,7 +87,7 @@
   [db {:keys [as args name] :as node}]
   (cond
    (> 2 (count args))
-   (throw (IllegalArgumentException. "More than 1 arg needed."))
+   (throw (ex-info "More than 1 arg needed." node))
    (= 2 (count args))
    (let [[[s1 & a1] [s2 & a2]] (map #(compile-expr db %1) args)]
      (cons (str "(" s1 " " (core/name name) " " s2 ")"

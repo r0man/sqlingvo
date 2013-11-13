@@ -235,7 +235,7 @@
      (assoc join
        :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
        :on (parse-expr `(= ~from ~condition)))
-     :else (throw (IllegalArgumentException. (format "Invalid JOIN condition: %s" condition))))))
+     :else (throw (ex-info "Invalid JOIN condition." {:condition condition})))))
 
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
