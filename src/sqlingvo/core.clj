@@ -36,11 +36,11 @@
 (defn sql-quote [db x]
   (vendor/sql-quote db x))
 
-;; (defn chain-state [body]
-;;   (with-monad state-m (m-seq (remove nil? body))))
+(defn chain-state [body]
+  (m-seq (remove nil? body)))
 
 (defn compose [stmt & body]
-  (m-seq (remove nil? (cons stmt body))))
+  (chain-state (cons stmt body)))
 
 (defn ast
   "Returns the abstract syntax tree of `stmt`."
