@@ -305,32 +305,20 @@
     (fn [stmt]
       [exprs (update-in stmt [:returning] #(concat %1 exprs))])))
 
-
-;; (defn select
-;;   "Returns a fn that builds a SELECT statement."
-;;   [exprs & body]
-;;   (let [[_ select]
-;;         ((chain-state body)
-;;          {:op :select
-;;           :distinct (if (= :distinct (:op exprs))
-;;                       exprs)
-;;           :exprs (if (sequential? exprs)
-;;                    (parse-exprs exprs))})]
-;;     (Stmt. (fn [stmt]
-;;              (case (:op stmt)
-;;                nil [select select]
-;;                :insert (repeat 2 (assoc stmt :select select)))))))
-
 (defn select
   "Returns a fn that builds a SELECT statement."
   [exprs & body]
-  (let [exprs (if (sequential? exprs)
-                (parse-exprs exprs))]
-    (Stmt. (fn [_]
-             (let [[_ stmt] ((m-seq (remove nil? body)) {})]
-               [exprs (assoc stmt
-                        :op :select
-                        :exprs exprs)])))))
+  (let [[_ select]
+        ((m-seq (remove nil? body))
+         {:op :select
+          :distinct (if (= :distinct (:op exprs))
+                      exprs)
+          :exprs (if (sequential? exprs)
+                   (parse-exprs exprs))})]
+    (Stmt. (fn [stmt]
+             (case (:op stmt)
+               nil [select select]
+               :insert (repeat 2 (assoc stmt :select select)))))))
 
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."

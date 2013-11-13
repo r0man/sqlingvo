@@ -13,11 +13,6 @@
        (is (= ~sql (compile-stmt ~'stmt)))
        ~@body)))
 
-(deftest test-select
-  (let [[exprs stmt] ((select [1]) {})]
-    (is (= [{:op :constant, :form 1}] exprs))
-    (is (= {:exprs [{:op :constant, :form 1}], :op :select} stmt))))
-
 (deftest test-from
   (let [[from stmt] ((from :continents) {})]
     (is (= [{:op :table, :schema nil, :name :continents, :as nil}] from))
@@ -208,34 +203,34 @@
   (is (= (parse-condition '(= :status "DONE")) (:where stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
-;; (deftest-stmt test-delete-films-by-producer-name
-;;   ["DELETE FROM \"films\" WHERE \"producer_id\" IN (SELECT \"id\" FROM \"producers\" WHERE (\"name\" = ?))" "foo"]
-;;   (delete :films
-;;     (where `(in :producer-id
-;;                 ~(select [:id]
-;;                    (from :producers)
-;;                    (where '(= :name "foo"))))))
-;;   (is (= :delete (:op stmt)))
-;;   (is (= (parse-table :films) (:table stmt)))
-;;   (is (= (parse-condition `(in :producer-id
-;;                                ~(select [:id]
-;;                                   (from :producers)
-;;                                   (where '(= :name "foo")))))
-;;          (:where stmt))))
+(deftest-stmt test-delete-films-by-producer-name
+  ["DELETE FROM \"films\" WHERE \"producer_id\" IN (SELECT \"id\" FROM \"producers\" WHERE (\"name\" = ?))" "foo"]
+  (delete :films
+    (where `(in :producer-id
+                ~(select [:id]
+                   (from :producers)
+                   (where '(= :name "foo"))))))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= (parse-condition `(in :producer-id
+                               ~(select [:id]
+                                  (from :producers)
+                                  (where '(= :name "foo")))))
+         (:where stmt))))
 
-;; (deftest-stmt test-delete-quotes
-;;   [(str "DELETE FROM \"quotes\" WHERE ((\"company_id\" = 1) and (\"date\" > (SELECT min(\"date\") FROM \"import\")) and "
-;;         "(\"date\" > (SELECT max(\"date\") FROM \"import\")))")]
-;;   (delete :quotes
-;;     (where `(and (= :company-id 1)
-;;                  (> :date ~(select ['(min :date)] (from :import)))
-;;                  (> :date ~(select ['(max :date)] (from :import))))))
-;;   (is (= :delete (:op stmt)))
-;;   (is (= (parse-table :quotes) (:table stmt)))
-;;   (is (= (parse-condition `(and (= :company-id 1)
-;;                                 (> :date ~(select ['(min :date)] (from :import)))
-;;                                 (> :date ~(select ['(max :date)] (from :import)))))
-;; (:where stmt))))
+(deftest-stmt test-delete-quotes
+  [(str "DELETE FROM \"quotes\" WHERE ((\"company_id\" = 1) and (\"date\" > (SELECT min(\"date\") FROM \"import\")) and "
+        "(\"date\" > (SELECT max(\"date\") FROM \"import\")))")]
+  (delete :quotes
+    (where `(and (= :company-id 1)
+                 (> :date ~(select ['(min :date)] (from :import)))
+                 (> :date ~(select ['(max :date)] (from :import))))))
+  (is (= :delete (:op stmt)))
+  (is (= (parse-table :quotes) (:table stmt)))
+  (is (= (parse-condition `(and (= :company-id 1)
+                                (> :date ~(select ['(min :date)] (from :import)))
+                                (> :date ~(select ['(max :date)] (from :import)))))
+         (:where stmt))))
 
 ;; DROP TABLE
 
@@ -327,34 +322,34 @@
   (is (= (parse-table :distributors) (:table stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
-;; (deftest-stmt test-insert-subselect
-;;   ["INSERT INTO \"films\" SELECT * FROM \"tmp_films\" WHERE (\"date_prod\" < ?)" "2004-05-07"]
-;;   (insert :films []
-;;     (select [*]
-;;       (from :tmp-films)
-;;       (where '(< :date-prod "2004-05-07"))))
-;;   (is (= :insert (:op stmt)))
-;;   (is (= [] (:columns stmt)))
-;;   (is (= (parse-table :films) (:table stmt)))
-;;   (is (= (ast (select [*]
-;;                 (from :tmp-films)
-;;                 (where '(< :date-prod "2004-05-07"))))
-;;          (:select stmt))))
+(deftest-stmt test-insert-subselect
+  ["INSERT INTO \"films\" SELECT * FROM \"tmp_films\" WHERE (\"date_prod\" < ?)" "2004-05-07"]
+  (insert :films []
+    (select [*]
+      (from :tmp-films)
+      (where '(< :date-prod "2004-05-07"))))
+  (is (= :insert (:op stmt)))
+  (is (= [] (:columns stmt)))
+  (is (= (parse-table :films) (:table stmt)))
+  (is (= (ast (select [*]
+                (from :tmp-films)
+                (where '(< :date-prod "2004-05-07"))))
+         (:select stmt))))
 
-;; (deftest-stmt test-insert-airports
-;;   [(str "INSERT INTO \"airports\" (\"country_id\", \"name\", \"gps_code\", \"iata_code\", \"wikipedia_url\", \"location\") "
-;;         "SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
-;;         "FROM \"natural_earth\".\"airports\" AS \"a\" JOIN \"countries\" AS \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
-;;         "LEFT JOIN \"airports\" ON (\"airports\".\"iata_code\" = \"a\".\"iata_code\") "
-;;         "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NULL))")]
-;;   (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
-;;     (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
-;;       (from (as :natural-earth.airports :a))
-;;       (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
-;;       (join :airports '(on (= :airports.iata-code :a.iata-code)) :type :left)
-;;       (where '(and (is-not-null :a.gps-code)
-;;                    (is-not-null :a.iata-code)
-;;                    (is-null :airports.iata-code))))))
+(deftest-stmt test-insert-airports
+  [(str "INSERT INTO \"airports\" (\"country_id\", \"name\", \"gps_code\", \"iata_code\", \"wikipedia_url\", \"location\") "
+        "SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
+        "FROM \"natural_earth\".\"airports\" AS \"a\" JOIN \"countries\" AS \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
+        "LEFT JOIN \"airports\" ON (\"airports\".\"iata_code\" = \"a\".\"iata_code\") "
+        "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NULL))")]
+  (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
+    (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
+      (from (as :natural-earth.airports :a))
+      (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
+      (join :airports '(on (= :airports.iata-code :a.iata-code)) :type :left)
+      (where '(and (is-not-null :a.gps-code)
+                   (is-not-null :a.iata-code)
+                   (is-null :airports.iata-code))))))
 
 (deftest-stmt test-insert-only-columns
   ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (?, ?)" 1 2]
@@ -398,11 +393,11 @@
   (select ['(count distinct :user-id)]
     (from :tweets)))
 
-;; (deftest-stmt test-select-select-1
-;;   ["SELECT (SELECT 1)"]
-;;   (select [(select [1])])
-;;   (is (= :select (:op stmt)))
-;; (is (= [(ast (select [1]))] (:exprs stmt))))
+(deftest-stmt test-select-select-1
+  ["SELECT (SELECT 1)"]
+  (select [(select [1])])
+  (is (= :select (:op stmt)))
+  (is (= [(ast (select [1]))] (:exprs stmt))))
 
 (deftest-stmt test-select-1-in-1-2-3
   ["SELECT 1 WHERE 1 IN (1, 2, 3)"]
@@ -417,11 +412,11 @@
   (select [1]
     (where `(in 1 (1 2 3)))))
 
-;; (deftest-stmt test-select-select-1-select-x
-;;   ["SELECT (SELECT 1), (SELECT ?)" "x"]
-;;   (select [(select [1]) (select ["x"])])
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(ast (select [1])) (ast (select ["x"]))] (:exprs stmt))))
+(deftest-stmt test-select-select-1-select-x
+  ["SELECT (SELECT 1), (SELECT ?)" "x"]
+  (select [(select [1]) (select ["x"])])
+  (is (= :select (:op stmt)))
+  (is (= [(ast (select [1])) (ast (select ["x"]))] (:exprs stmt))))
 
 (deftest-stmt test-select-string
   ["SELECT * FROM \"continents\" WHERE (\"name\" = ?)" "Europe"]
@@ -604,46 +599,46 @@
   (is (= [(parse-expr '(max :created-at))] (:exprs stmt)))
   (is (= [(parse-table :continents)] (:from stmt))))
 
-;; (deftest-stmt test-select-distinct-subquery-alias
-;;   ["SELECT DISTINCT \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
-;;   (select (distinct [:x.a :x.b])
-;;     (from (as (select [(as 1 :a) (as 2 :b)]) :x)))
-;;   (is (= :select (:op stmt)))
-;;   (let [distinct (:distinct stmt)]
-;;     (is (= :distinct (:op distinct)))
-;;     (is (= (map parse-expr [:x.a :x.b]) (:exprs distinct)))
-;;     (is (= [] (:on distinct))))
-;;   (let [from (first (:from stmt))]
-;;     (is (= :select (:op from)))
-;;     (is (= :x (:as from)))
-;;     (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from)))))
+(deftest-stmt test-select-distinct-subquery-alias
+  ["SELECT DISTINCT \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
+  (select (distinct [:x.a :x.b])
+    (from (as (select [(as 1 :a) (as 2 :b)]) :x)))
+  (is (= :select (:op stmt)))
+  (let [distinct (:distinct stmt)]
+    (is (= :distinct (:op distinct)))
+    (is (= (map parse-expr [:x.a :x.b]) (:exprs distinct)))
+    (is (= [] (:on distinct))))
+  (let [from (first (:from stmt))]
+    (is (= :select (:op from)))
+    (is (= :x (:as from)))
+    (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from)))))
 
-;; (deftest-stmt test-select-distinct-on-subquery-alias
-;;   ["SELECT DISTINCT ON (\"x\".\"a\", \"x\".\"b\") \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
-;;   (select (distinct [:x.a :x.b] :on [:x.a :x.b])
-;;     (from (as (select [(as 1 :a) (as 2 :b)]) :x)))
-;;   (is (= :select (:op stmt)))
-;;   (let [distinct (:distinct stmt)]
-;;     (is (= :distinct (:op distinct)))
-;;     (is (= (map parse-expr [:x.a :x.b]) (:exprs distinct)))
-;;     (is (= (map parse-expr [:x.a :x.b]) (:on distinct))))
-;;   (let [from (first (:from stmt))]
-;;     (is (= :select (:op from)))
-;;     (is (= :x (:as from)))
-;;     (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from)))))
+(deftest-stmt test-select-distinct-on-subquery-alias
+  ["SELECT DISTINCT ON (\"x\".\"a\", \"x\".\"b\") \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
+  (select (distinct [:x.a :x.b] :on [:x.a :x.b])
+    (from (as (select [(as 1 :a) (as 2 :b)]) :x)))
+  (is (= :select (:op stmt)))
+  (let [distinct (:distinct stmt)]
+    (is (= :distinct (:op distinct)))
+    (is (= (map parse-expr [:x.a :x.b]) (:exprs distinct)))
+    (is (= (map parse-expr [:x.a :x.b]) (:on distinct))))
+  (let [from (first (:from stmt))]
+    (is (= :select (:op from)))
+    (is (= :x (:as from)))
+    (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from)))))
 
-;; (deftest-stmt test-select-most-recent-weather-report
-;;   ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
-;;   (select (distinct [:location :time :report] :on [:location])
-;;     (from :weather-reports)
-;;     (order-by :location (desc :time)))
-;;   (is (= :select (:op stmt)))
-;;   (let [distinct (:distinct stmt)]
-;;     (is (= :distinct (:op distinct)))
-;;     (is (= (map parse-expr [:location :time :report]) (:exprs distinct)))
-;;     (is (= [(parse-expr :location)] (:on distinct))))
-;;   (is (= [(parse-from :weather-reports)] (:from stmt)))
-;;   (is (= [(parse-expr :location) (desc :time)] (:order-by stmt))))
+(deftest-stmt test-select-most-recent-weather-report
+  ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
+  (select (distinct [:location :time :report] :on [:location])
+    (from :weather-reports)
+    (order-by :location (desc :time)))
+  (is (= :select (:op stmt)))
+  (let [distinct (:distinct stmt)]
+    (is (= :distinct (:op distinct)))
+    (is (= (map parse-expr [:location :time :report]) (:exprs distinct)))
+    (is (= [(parse-expr :location)] (:on distinct))))
+  (is (= [(parse-from :weather-reports)] (:from stmt)))
+  (is (= [(parse-expr :location) (desc :time)] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-asc
   ["SELECT * FROM \"continents\" ORDER BY \"created_at\" ASC"]
@@ -741,32 +736,32 @@
   (is (= [(parse-expr 1)] (:exprs stmt)))
   (is (= (parse-condition '(= 1 2 3)) (:where stmt))))
 
-;; (deftest-stmt test-select-subquery-alias
-;;   ["SELECT * FROM (SELECT 1, 2, 3) AS \"x\""]
-;;   (select [*]
-;;     (from (as (select [1 2 3]) :x)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (let [from (first (:from stmt))]
-;;     (is (= :select (:op from)))
-;;     (is (= :x (:as from)))
-;;     (is (= (map parse-expr [1 2 3]) (:exprs from)))))
+(deftest-stmt test-select-subquery-alias
+  ["SELECT * FROM (SELECT 1, 2, 3) AS \"x\""]
+  (select [*]
+    (from (as (select [1 2 3]) :x)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [from (first (:from stmt))]
+    (is (= :select (:op from)))
+    (is (= :x (:as from)))
+    (is (= (map parse-expr [1 2 3]) (:exprs from)))))
 
-;; (deftest-stmt test-select-subqueries-alias
-;;   ["SELECT * FROM (SELECT 1) AS \"x\", (SELECT 2) AS \"y\""]
-;;   (select [*]
-;;     (from (as (select [1]) :x)
-;;           (as (select [2]) :y)))
-;;   (is (= :select (:op stmt)))
-;;   (is (= [(parse-expr *)] (:exprs stmt)))
-;;   (let [from (first (:from stmt))]
-;;     (is (= :select (:op from)))
-;;     (is (= :x (:as from)))
-;;     (is (= [(parse-expr 1)] (:exprs from))))
-;;   (let [from (second (:from stmt))]
-;;     (is (= :select (:op from)))
-;;     (is (= :y (:as from)))
-;;     (is (= [(parse-expr 2)] (:exprs from)))))
+(deftest-stmt test-select-subqueries-alias
+  ["SELECT * FROM (SELECT 1) AS \"x\", (SELECT 2) AS \"y\""]
+  (select [*]
+    (from (as (select [1]) :x)
+          (as (select [2]) :y)))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (let [from (first (:from stmt))]
+    (is (= :select (:op from)))
+    (is (= :x (:as from)))
+    (is (= [(parse-expr 1)] (:exprs from))))
+  (let [from (second (:from stmt))]
+    (is (= :select (:op from)))
+    (is (= :y (:as from)))
+    (is (= [(parse-expr 2)] (:exprs from)))))
 
 (deftest-stmt test-select-parition-by
   ["SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) FROM \"quotes\""]
@@ -826,12 +821,12 @@
   (is (= [(parse-from :table-1)] (:from stmt)))
   (is (= [(parse-expr :sum)] (:order-by stmt))))
 
-;; (deftest-stmt test-select-setval
-;;   ["SELECT setval(\"continent_id_seq\", (SELECT max(\"id\") FROM \"continents\"))"]
-;;   (select [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
-;;          (:exprs stmt))))
+(deftest-stmt test-select-setval
+  ["SELECT setval(\"continent_id_seq\", (SELECT max(\"id\") FROM \"continents\"))"]
+  (select [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [`(setval :continent-id-seq ~(select [`(max :id)] (from :continents)))])
+         (:exprs stmt))))
 
 (deftest-stmt test-select-regex-match
   ["SELECT \"id\", \"symbol\", \"quote\" FROM \"quotes\" WHERE (? ~ concat(?, \"symbol\", ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
@@ -920,92 +915,92 @@
     (from (as :countries :c))
     (join :continents `(on (= :continents.id :c.continent-id)))))
 
-;; (deftest-stmt test-select-join-subselect-alias
-;;   [(str "SELECT \"quotes\".*, \"start_date\" FROM \"quotes\" JOIN (SELECT \"company_id\", min(\"date\") AS \"start_date\" "
-;;         "FROM \"quotes\" GROUP BY \"company_id\") AS \"start_dates\" ON ((\"quotes\".\"company_id\" = \"start_dates\".\"company_id\") and (\"quotes\".\"date\" = \"start_dates\".\"start_date\"))")]
-;;   (select [:quotes.* :start-date]
-;;     (from :quotes)
-;;     (join (as (select [:company-id (as '(min :date) :start-date)]
-;;                 (from :quotes)
-;;                 (group-by :company-id))
-;;               :start-dates)
-;;           '(on (and (= :quotes.company-id :start-dates.company-id)
-;;                     (= :quotes.date :start-dates.start-date))))))
+(deftest-stmt test-select-join-subselect-alias
+  [(str "SELECT \"quotes\".*, \"start_date\" FROM \"quotes\" JOIN (SELECT \"company_id\", min(\"date\") AS \"start_date\" "
+        "FROM \"quotes\" GROUP BY \"company_id\") AS \"start_dates\" ON ((\"quotes\".\"company_id\" = \"start_dates\".\"company_id\") and (\"quotes\".\"date\" = \"start_dates\".\"start_date\"))")]
+  (select [:quotes.* :start-date]
+    (from :quotes)
+    (join (as (select [:company-id (as '(min :date) :start-date)]
+                (from :quotes)
+                (group-by :company-id))
+              :start-dates)
+          '(on (and (= :quotes.company-id :start-dates.company-id)
+                    (= :quotes.date :start-dates.start-date))))))
 
-;; (deftest-stmt test-select-except
-;;   ["SELECT 1 EXCEPT SELECT 2"]
-;;   (select [1]
-;;     (except (select [2])))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [1]) (:exprs stmt)))
-;;   (let [except (first (:set stmt))]
-;;     (is (= :except (:op except)))
-;;     (let [stmt (:stmt except)]
-;;       (is (= :select (:op stmt)))
-;;       (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest-stmt test-select-except
+  ["SELECT 1 EXCEPT SELECT 2"]
+  (select [1]
+    (except (select [2])))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [except (first (:set stmt))]
+    (is (= :except (:op except)))
+    (let [stmt (:stmt except)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
 
-;; (deftest-stmt test-select-except-all
-;;   ["SELECT 1 EXCEPT ALL SELECT 2"]
-;;   (select [1]
-;;     (except (select [2]) :all true))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [1]) (:exprs stmt)))
-;;   (let [except (first (:set stmt))]
-;;     (is (= :except (:op except)))
-;;     (is (= true (:all except)))
-;;     (let [stmt (:stmt except)]
-;;       (is (= :select (:op stmt)))
-;;       (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest-stmt test-select-except-all
+  ["SELECT 1 EXCEPT ALL SELECT 2"]
+  (select [1]
+    (except (select [2]) :all true))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [except (first (:set stmt))]
+    (is (= :except (:op except)))
+    (is (= true (:all except)))
+    (let [stmt (:stmt except)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
 
-;; (deftest-stmt test-select-intersect
-;;   ["SELECT 1 INTERSECT SELECT 2"]
-;;   (select [1]
-;;     (intersect (select [2])))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [1]) (:exprs stmt)))
-;;   (let [intersect (first (:set stmt))]
-;;     (is (= :intersect (:op intersect)))
-;;     (let [stmt (:stmt intersect)]
-;;       (is (= :select (:op stmt)))
-;;       (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest-stmt test-select-intersect
+  ["SELECT 1 INTERSECT SELECT 2"]
+  (select [1]
+    (intersect (select [2])))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [intersect (first (:set stmt))]
+    (is (= :intersect (:op intersect)))
+    (let [stmt (:stmt intersect)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
 
-;; (deftest-stmt test-select-intersect-all
-;;   ["SELECT 1 INTERSECT ALL SELECT 2"]
-;;   (select [1]
-;;     (intersect (select [2]) :all true))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [1]) (:exprs stmt)))
-;;   (let [intersect (first (:set stmt))]
-;;     (is (= :intersect (:op intersect)))
-;;     (is (= true (:all intersect)))
-;;     (let [stmt (:stmt intersect)]
-;;       (is (= :select (:op stmt)))
-;;       (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest-stmt test-select-intersect-all
+  ["SELECT 1 INTERSECT ALL SELECT 2"]
+  (select [1]
+    (intersect (select [2]) :all true))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [intersect (first (:set stmt))]
+    (is (= :intersect (:op intersect)))
+    (is (= true (:all intersect)))
+    (let [stmt (:stmt intersect)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
 
-;; (deftest-stmt test-select-union
-;;   ["SELECT 1 UNION SELECT 2"]
-;;   (select [1]
-;;     (union (select [2])))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [1]) (:exprs stmt)))
-;;   (let [union (first (:set stmt))]
-;;     (is (= :union (:op union)))
-;;     (let [stmt (:stmt union)]
-;;       (is (= :select (:op stmt)))
-;;       (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest-stmt test-select-union
+  ["SELECT 1 UNION SELECT 2"]
+  (select [1]
+    (union (select [2])))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [union (first (:set stmt))]
+    (is (= :union (:op union)))
+    (let [stmt (:stmt union)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
 
-;; (deftest-stmt test-select-union-all
-;;   ["SELECT 1 UNION ALL SELECT 2"]
-;;   (select [1]
-;;     (union (select [2]) :all true))
-;;   (is (= :select (:op stmt)))
-;;   (is (= (map parse-expr [1]) (:exprs stmt)))
-;;   (let [union (first (:set stmt))]
-;;     (is (= :union (:op union)))
-;;     (is (= true (:all union)))
-;;     (let [stmt (:stmt union)]
-;;       (is (= :select (:op stmt)))
-;;       (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest-stmt test-select-union-all
+  ["SELECT 1 UNION ALL SELECT 2"]
+  (select [1]
+    (union (select [2]) :all true))
+  (is (= :select (:op stmt)))
+  (is (= (map parse-expr [1]) (:exprs stmt)))
+  (let [union (first (:set stmt))]
+    (is (= :union (:op union)))
+    (is (= true (:all union)))
+    (let [stmt (:stmt union)]
+      (is (= :select (:op stmt)))
+      (is (= (map parse-expr [2]) (:exprs stmt))))))
 
 (deftest-stmt test-select-where-combine-and-1
   ["SELECT 1 WHERE (1 = 1)"]
@@ -1185,58 +1180,58 @@
   (is (= {:kind "Dramatic"} (:row stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
-;; (deftest-stmt test-update-daily-return
-;;   ["UPDATE \"quotes\" SET \"daily_return\" = \"u\".\"daily_return\" FROM (SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) AS \"daily_return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
-;;   (update :quotes '((= :daily-return :u.daily-return))
-;;     (where '(= :quotes.id :u.id))
-;;     (from (as (select [:id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return)]
-;;                 (from :quotes))
-;;               :u))))
+(deftest-stmt test-update-daily-return
+  ["UPDATE \"quotes\" SET \"daily_return\" = \"u\".\"daily_return\" FROM (SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) AS \"daily_return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
+  (update :quotes '((= :daily-return :u.daily-return))
+    (where '(= :quotes.id :u.id))
+    (from (as (select [:id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return)]
+                (from :quotes))
+              :u))))
 
-;; (deftest-stmt test-update-prices
-;;   [(str "UPDATE \"prices\" SET \"daily_return\" = \"u\".\"daily_return\" "
-;;         "FROM (SELECT \"id\", ((\"close\" / lag(\"close\") over (partition by \"quote_id\" order by \"date\" desc)) - 1) AS \"daily_return\" "
-;;         "FROM \"prices\" WHERE (\"prices\".\"quote_id\" = 1)) AS \"u\" WHERE ((\"prices\".\"id\" = \"u\".\"id\") and (\"prices\".\"quote_id\" = 1))")]
-;;   (let [quote {:id 1}]
-;;     (update :prices '((= :daily-return :u.daily-return))
-;;       (from (as (select [:id (as '(- (/ :close ((lag :close) over (partition by :quote-id order by :date desc))) 1) :daily-return)]
-;;                   (from :prices)
-;;                   (where `(= :prices.quote-id ~(:id quote))))
-;;                 :u))
-;;       (where `(and (= :prices.id :u.id)
-;;                    (= :prices.quote-id ~(:id quote)))))))
+(deftest-stmt test-update-prices
+  [(str "UPDATE \"prices\" SET \"daily_return\" = \"u\".\"daily_return\" "
+        "FROM (SELECT \"id\", ((\"close\" / lag(\"close\") over (partition by \"quote_id\" order by \"date\" desc)) - 1) AS \"daily_return\" "
+        "FROM \"prices\" WHERE (\"prices\".\"quote_id\" = 1)) AS \"u\" WHERE ((\"prices\".\"id\" = \"u\".\"id\") and (\"prices\".\"quote_id\" = 1))")]
+  (let [quote {:id 1}]
+    (update :prices '((= :daily-return :u.daily-return))
+      (from (as (select [:id (as '(- (/ :close ((lag :close) over (partition by :quote-id order by :date desc))) 1) :daily-return)]
+                  (from :prices)
+                  (where `(= :prices.quote-id ~(:id quote))))
+                :u))
+      (where `(and (= :prices.id :u.id)
+                   (= :prices.quote-id ~(:id quote)))))))
 
-;; (deftest-stmt test-update-airports
-;;   [(str "UPDATE \"airports\" SET \"country_id\" = \"u\".\"id\", \"gps_code\" = \"u\".\"gps_code\", \"wikipedia_url\" = \"u\".\"wikipedia\", \"location\" = \"u\".\"geom\" "
-;;         "FROM (SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
-;;         "FROM \"natural_earth\".\"airports\" AS \"a\" JOIN \"countries\" AS \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
-;;         "LEFT JOIN \"airports\" ON (lower(\"airports\".\"iata_code\") = lower(\"a\".\"iata_code\")) "
-;;         "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NOT NULL))) AS \"u\" "
-;;         "WHERE (\"airports\".\"iata_code\" = \"u\".\"iata_code\")")]
-;;   (update :airports
-;;       '((= :country-id :u.id)
-;;         (= :gps-code :u.gps-code)
-;;         (= :wikipedia-url :u.wikipedia)
-;;         (= :location :u.geom))
-;;     (from (as (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
-;;                 (from (as :natural-earth.airports :a))
-;;                 (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
-;;                 (join :airports '(on (= (lower :airports.iata-code) (lower :a.iata-code))) :type :left)
-;;                 (where '(and (is-not-null :a.gps-code)
-;;                              (is-not-null :a.iata-code)
-;;                              (is-not-null :airports.iata-code))))
-;;               :u))
-;;     (where '(= :airports.iata-code :u.iata-code))))
+(deftest-stmt test-update-airports
+  [(str "UPDATE \"airports\" SET \"country_id\" = \"u\".\"id\", \"gps_code\" = \"u\".\"gps_code\", \"wikipedia_url\" = \"u\".\"wikipedia\", \"location\" = \"u\".\"geom\" "
+        "FROM (SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
+        "FROM \"natural_earth\".\"airports\" AS \"a\" JOIN \"countries\" AS \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
+        "LEFT JOIN \"airports\" ON (lower(\"airports\".\"iata_code\") = lower(\"a\".\"iata_code\")) "
+        "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NOT NULL))) AS \"u\" "
+        "WHERE (\"airports\".\"iata_code\" = \"u\".\"iata_code\")")]
+  (update :airports
+      '((= :country-id :u.id)
+        (= :gps-code :u.gps-code)
+        (= :wikipedia-url :u.wikipedia)
+        (= :location :u.geom))
+    (from (as (select (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
+                (from (as :natural-earth.airports :a))
+                (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
+                (join :airports '(on (= (lower :airports.iata-code) (lower :a.iata-code))) :type :left)
+                (where '(and (is-not-null :a.gps-code)
+                             (is-not-null :a.iata-code)
+                             (is-not-null :airports.iata-code))))
+              :u))
+    (where '(= :airports.iata-code :u.iata-code))))
 
-;; (deftest-stmt test-update-countries
-;;   [(str "UPDATE \"countries\" SET \"geom\" = \"u\".\"geom\" FROM (SELECT \"iso_a2\", \"iso_a3\", \"iso_n3\", \"geom\" FROM \"natural_earth\".\"countries\") AS \"u\" "
-;;         "WHERE ((lower(\"countries\".\"iso_3166_1_alpha_2\") = lower(\"u\".\"iso_a2\")) or (lower(\"countries\".\"iso_3166_1_alpha_3\") = lower(\"u\".\"iso_a3\")))")]
-;;   (update :countries
-;;       '((= :geom :u.geom))
-;;     (from (as (select [:iso-a2 :iso-a3 :iso-n3 :geom]
-;;                 (from :natural-earth.countries)) :u))
-;;     (where '(or (= (lower :countries.iso-3166-1-alpha-2) (lower :u.iso-a2))
-;;                 (= (lower :countries.iso-3166-1-alpha-3) (lower :u.iso-a3))))))
+(deftest-stmt test-update-countries
+  [(str "UPDATE \"countries\" SET \"geom\" = \"u\".\"geom\" FROM (SELECT \"iso_a2\", \"iso_a3\", \"iso_n3\", \"geom\" FROM \"natural_earth\".\"countries\") AS \"u\" "
+        "WHERE ((lower(\"countries\".\"iso_3166_1_alpha_2\") = lower(\"u\".\"iso_a2\")) or (lower(\"countries\".\"iso_3166_1_alpha_3\") = lower(\"u\".\"iso_a3\")))")]
+  (update :countries
+      '((= :geom :u.geom))
+    (from (as (select [:iso-a2 :iso-a3 :iso-n3 :geom]
+                (from :natural-earth.countries)) :u))
+    (where '(or (= (lower :countries.iso-3166-1-alpha-2) (lower :u.iso-a2))
+                (= (lower :countries.iso-3166-1-alpha-3) (lower :u.iso-a3))))))
 
 ;; QUOTING
 
