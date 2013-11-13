@@ -40,9 +40,8 @@
 ;; (defn chain-state [body]
 ;;   (with-monad state-m (m-seq (remove nil? body))))
 
-;; (defn compose [stmt & body]
-;;   (with-monad state-m
-;;     (m-seq (remove nil? (cons stmt body)))))
+(defn compose [stmt & body]
+  (m-seq (remove nil? (cons stmt body))))
 
 (defn ast
   "Returns the abstract syntax tree of `stmt`."

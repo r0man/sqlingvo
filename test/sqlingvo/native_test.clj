@@ -18,19 +18,19 @@
     (is (= [{:op :table, :schema nil, :name :continents, :as nil}] from))
     (is (= {:from [{:op :table, :schema nil, :name :continents, :as nil}]} stmt))))
 
-;; ;; COMPOSE
+;; COMPOSE
 
-;; (deftest-stmt test-compose
-;;   ["SELECT \"id\", \"name\" FROM \"continents\" WHERE (\"id\" = 1) ORDER BY \"name\""]
-;;   (compose (select [:id :name] (from :continents))
-;;            (where '(= :id 1))
-;;            (order-by :name)))
+(deftest-stmt test-compose
+  ["SELECT \"id\", \"name\" FROM \"continents\" WHERE (\"id\" = 1) ORDER BY \"name\""]
+  (compose (select [:id :name] (from :continents))
+           (where '(= :id 1))
+           (order-by :name)))
 
-;; (deftest-stmt test-compose-where-clause-using-and
-;;   ["SELECT \"color\", \"num_sides\" FROM \"shapes\" WHERE ((\"num_sides\" = 3) and (\"color\" = ?))" "green"]
-;;   (let [triangles (compose (select [:color :num_sides] (from :shapes))
-;;                            (where '(= :num_sides 3)))]
-;;     (compose triangles (where '(= :color "green") :and))))
+(deftest-stmt test-compose-where-clause-using-and
+  ["SELECT \"color\", \"num_sides\" FROM \"shapes\" WHERE ((\"num_sides\" = 3) and (\"color\" = ?))" "green"]
+  (let [triangles (compose (select [:color :num_sides] (from :shapes))
+                           (where '(= :num_sides 3)))]
+    (compose triangles (where '(= :color "green") :and))))
 
 ;; AS
 
@@ -1251,14 +1251,6 @@
 (deftest-stmt test-array-concat
   ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
   (select ['(|| [1 2] [3 4] [5 6])]))
-
-;; (deftest test-comp-stmts
-;;   (let [s (select [*]
-;;             (from :continents))
-;;         o (order-by :name)]
-;;     (is (= ["SELECT * FROM \"continents\" ORDER BY \"name\""]
-;;            (sql (with-monad state-m
-;;                   (m-seq [s o])))))))
 
 ;; POSTGRESQL FULLTEXT
 
