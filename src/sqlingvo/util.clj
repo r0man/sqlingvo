@@ -1,7 +1,6 @@
 (ns sqlingvo.util
   (:refer-clojure :exclude [replace])
-  (:require [clojure.string :refer [blank? join replace]]
-            [inflections.core :refer [hyphenize underscore]]))
+  (:require [clojure.string :refer [blank? join replace]]))
 
 (deftype Stmt [f]
   clojure.lang.IFn
@@ -14,11 +13,11 @@
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
 
-(def sql-name-underscore
-  (comp underscore name))
+(defn sql-name-underscore [x]
+  (replace (name x) "-" "_"))
 
-(def sql-keyword-hyphenize
-  (comp keyword hyphenize))
+(defn sql-keyword-hyphenize [x]
+  (keyword (replace (name x) "_" "-")))
 
 (defn sql-quote-backtick [x]
   (str "`" x "`"))

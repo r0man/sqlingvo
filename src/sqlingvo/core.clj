@@ -1,7 +1,6 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by replace])
   (:require [clojure.string :as str]
-            [inflections.core :refer [foreign-key hyphenize underscore]]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]
             [sqlingvo.vendor :as vendor])
