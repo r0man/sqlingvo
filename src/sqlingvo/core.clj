@@ -1,12 +1,32 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by replace])
-  (:require [clojure.algo.monads :refer :all]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [inflections.core :refer [foreign-key hyphenize underscore]]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]
             [sqlingvo.vendor :as vendor])
   (:import sqlingvo.util.Stmt))
+
+(defn m-bind [mv mf]
+  (fn [state]
+    (let [[temp-v temp-state] (mv state)
+          new-mv (mf temp-v)]
+      (new-mv temp-state))))
+
+(defn m-result [x]
+  (fn [state]
+    [x state]))
+
+(defn m-seq
+  "'Executes' the monadic values in ms and returns a sequence of the
+   basic values contained in them."
+  [ms]
+  (reduce (fn [q p]
+            (m-bind p (fn [x]
+                        (m-bind q (fn [y]
+                                    (m-result (cons x y)))) )))
+          (m-result '())
+          (reverse ms)))
 
 (defn sql-name [db x]
   (vendor/sql-name db x))
@@ -17,12 +37,11 @@
 (defn sql-quote [db x]
   (vendor/sql-quote db x))
 
-(defn chain-state [body]
-  (with-monad state-m (m-seq (remove nil? body))))
+;; (defn chain-state [body]
+;;   (with-monad state-m (m-seq (remove nil? body))))
 
 (defn compose [stmt & body]
-  (with-monad state-m
-    (m-seq (remove nil? (cons stmt body)))))
+  (m-seq (remove nil? (cons stmt body))))
 
 (defn ast
   "Returns the abstract syntax tree of `stmt`."
@@ -54,10 +73,11 @@
 
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
-  [cascade?]
-  (if cascade?
-    (set-val :cascade {:op :cascade})
-    (fetch-state)))
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :cascade {:op :cascade})]
+      [condition (dissoc stmt :cascade)])))
 
 (defn column
   "Add a column to `stmt`."
@@ -73,10 +93,11 @@
 
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
-  [continue-identity?]
-  (if continue-identity?
-    (set-val :continue-identity {:op :continue-identity})
-    (fetch-state)))
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :continue-identity {:op :continue-identity})]
+      [condition (dissoc stmt :continue-identity)])))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -92,49 +113,47 @@
 (defn delimiter
   "Returns a fn that adds a DELIMITER clause to an SQL statement."
   [delimiter]
-  (set-val :delimiter delimiter))
+  (fn [stmt]
+    [delimiter (assoc stmt :delimiter delimiter)]))
 
 (defn encoding
   "Returns a fn that adds a ENCODING clause to an SQL statement."
   [encoding]
-  (set-val :encoding encoding))
+  (fn [stmt]
+    [encoding (assoc stmt :encoding encoding)]))
 
 (defn copy
   "Returns a fn that builds a COPY statement."
   [table columns & body]
-  (Stmt. (fn [stmt]
-           (with-monad state-m
+  (let [table (parse-table table)
+        columns (map parse-column columns)]
+    (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :copy
-               :table (parse-table table)
-               :columns (map parse-column columns)})))))
+              {:op :copy :table table :columns columns})))))
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
   [table & body]
-  (Stmt. (fn [stmt]
-           (with-monad state-m
+  (let [table (parse-table table)]
+    (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :create-table
-               :table (parse-table table)})))))
+              {:op :create-table :table table})))))
 
 (defn delete
   "Returns a fn that builds a DELETE statement."
   [table & body]
-  (Stmt. (fn [stmt]
-           (with-monad state-m
+  (let [table (parse-table table)]
+    (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :delete
-               :table (parse-table table)})))))
+              {:op :delete :table table})))))
 
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
   [tables & body]
-  (Stmt. (fn [stmt]
-           (with-monad state-m
+  (let [tables (map parse-table tables)]
+    (Stmt. (fn [stmt]
              ((m-seq (remove nil? body))
-              {:op :drop-table
-               :tables (map parse-table tables)})))))
+              {:op :drop-table :tables tables})))))
 
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
@@ -146,47 +165,50 @@
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement."
   [& from]
-  (domonad state-m
-    [op (fetch-val :op)
-     from (concat-val
-           :from (case op
-                   :copy [(first from)]
-                   (map parse-from from)))]
-    from))
+  (fn [stmt]
+    (let [from (case (:op stmt)
+                 :copy [(first from)]
+                 (map parse-from from))]
+      [from (update-in stmt [:from] #(concat %1 from))])))
 
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (concat-val :group-by (parse-exprs exprs)))
+  (let [exprs (parse-exprs exprs)]
+    (fn [stmt]
+      [exprs (update-in stmt [:group-by] #(concat %1 exprs))])))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
-  [if-exists?]
-  (if if-exists?
-    (set-val :if-exists {:op :if-exists})
-    (fetch-state)))
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :if-exists {:op :if-exists})]
+      [condition (dissoc stmt :if-exists)])))
 
 (defn if-not-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
-  [if-not-exists?]
-  (if if-not-exists?
-    (set-val :if-not-exists {:op :if-not-exists})
-    (fetch-state)))
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :if-not-exists {:op :if-not-exists})]
+      [condition (dissoc stmt :if-not-exists)])))
 
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
   [& tables]
-  (set-val :inherits (map parse-table tables)))
+  (let [tables (map parse-table tables)]
+    (fn [stmt]
+      [tables (assoc stmt :inherits tables)])))
 
 (defn insert
   "Returns a fn that builds a INSERT statement."
   [table columns & body]
-  (Stmt. (fn [stmt]
-           (with-monad state-m
-             ((m-seq (remove nil? body))
-              {:op :insert
-               :table (parse-table table)
-               :columns (map parse-column columns)})))))
+  (let [table (parse-table table)
+        columns (map parse-column columns)]
+    (fn [_]
+      ((m-seq (remove nil? body))
+       {:op :insert :table table :columns columns}))))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
@@ -220,17 +242,23 @@
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from condition & {:keys [type outer pk]}]
   (let [join (make-join from condition :type type :outer outer :pk pk)]
-    (concat-val :joins [join])))
+    (fn [stmt]
+      [join (update-in stmt [:joins] #(concat %1 [join]))])))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
   [table & {:as opts}]
-  (set-val :like (assoc opts :op :like :table (parse-table table))))
+  (let [table (parse-table table)
+        like (assoc opts :op :like :table table)]
+    (fn [stmt]
+      [table (assoc stmt :like like)])))
 
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
   [count]
-  (set-val :limit {:op :limit :count count}))
+  (let [limit {:op :limit :count count}]
+    (fn [stmt]
+      [limit (assoc stmt :limit limit)])))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
@@ -239,41 +267,47 @@
 (defn offset
   "Returns a fn that adds a OFFSET clause to an SQL statement."
   [start]
-  (with-monad state-m
-    (set-val :offset {:op :offset :start start})))
+  (let [offset {:op :offset :start start}]
+    (fn [stmt]
+      [offset (assoc stmt :offset offset)])))
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
   (let [exprs (parse-exprs exprs)]
-    (if-not (empty? exprs)
-      (concat-val :order-by exprs)
-      (fetch-state))))
+    (fn [stmt]
+      (if-not (empty? exprs)
+        [exprs (update-in stmt [:order-by] #(concat %1 exprs))]
+        [exprs stmt]))))
 
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
-  [restart-identity?]
-  (if restart-identity?
-    (set-val :restart-identity {:op :restart-identity})
-    (fetch-state)))
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :restart-identity {:op :restart-identity})]
+      [condition (dissoc stmt :restart-identity)])))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
-  [restrict?]
-  (if restrict?
-    (set-val :restrict {:op :restrict})
-    (fetch-state)))
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :restrict {:op :restrict})]
+      [condition stmt])))
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (concat-val :returning (parse-exprs exprs)))
+  (let [exprs (parse-exprs exprs)]
+    (fn [stmt]
+      [exprs (update-in stmt [:returning] #(concat %1 exprs))])))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
   [exprs & body]
   (let [[_ select]
-        ((chain-state body)
+        ((m-seq (remove nil? body))
          {:op :select
           :distinct (if (= :distinct (:op exprs))
                       exprs)
@@ -286,19 +320,19 @@
 
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
-  [temporary?]
-  (if temporary?
-    (set-val :temporary {:op :temporary})
-    (fetch-state)))
+  [condition]
+  (fn [stmt]
+    (if condition
+      [condition (assoc stmt :temporary {:op :temporary})]
+      [condition (dissoc stmt :temporary)])))
 
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement."
   [tables & body]
-  (let [[_ truncate]
-        ((chain-state body)
-         {:op :truncate
-          :tables (map parse-table tables)})]
-    (Stmt. (fn [stmt] [truncate truncate]))))
+  (let [tables (map parse-table tables)]
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              {:op :truncate :tables tables})))))
 
 (defn union
   "Returns a fn that adds a UNION clause to an SQL statement."
@@ -310,20 +344,23 @@
 (defn update
   "Returns a fn that builds a UPDATE statement."
   [table row & body]
-  (Stmt. (fn [stmt]
-           (with-monad state-m
-             ((chain-state body)
+  (let [table (parse-table table)
+        exprs (if (sequential? row) (parse-exprs row))
+        row (if (map? row) row)]
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
               {:op :update
-               :table (parse-table table)
-               :exprs (if (sequential? row) (parse-exprs row))
-               :row (if (map? row) row)})))))
+               :table table
+               :exprs exprs
+               :row row})))))
 
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
   [values]
-  (case values
-    :default (set-val :default-values true)
-    (concat-val :values (if (sequential? values) values [values]))))
+  (fn [stmt]
+    (if (= :default values)
+      [nil (assoc stmt :default-values true)]
+      [nil (update-in stmt [:values] #(concat %1 (if (sequential? values) values [values])))])))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."

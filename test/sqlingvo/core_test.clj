@@ -1,19 +1,22 @@
 (ns sqlingvo.core-test
-  (:import java.sql.Date)
+  (:import java.util.Date)
   (:refer-clojure :exclude [distinct group-by])
-  (:require [clojure.algo.monads :refer :all]
-            [clojure.java.io :refer [file]]
+  (:require [sqlingvo.compiler :refer [compile-stmt]]
+            [sqlingvo.util :refer :all]
             [sqlingvo.vendor :as vendor])
   (:use clojure.test
-        sqlingvo.compiler
-        sqlingvo.util
         sqlingvo.core))
 
-(defmacro deftest-stmt [name sql stmt & body]
+(defmacro deftest-stmt [name sql forms & body]
   `(deftest ~name
-     (let [~'stmt (ast ~stmt)]
-       (is (= ~sql (sql ~stmt)))
+     (let [[result# ~'stmt] (~forms {})]
+       (is (= ~sql (compile-stmt ~'stmt)))
        ~@body)))
+
+(deftest test-from
+  (let [[from stmt] ((from :continents) {})]
+    (is (= [{:op :table, :schema nil, :name :continents, :as nil}] from))
+    (is (= {:from [{:op :table, :schema nil, :name :continents, :as nil}]} stmt))))
 
 ;; COMPOSE
 
@@ -153,9 +156,9 @@
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt)))
   (is (= (map parse-column [:id :name]) (:columns stmt))))
 
-(deftest test-copy-from-expands-to-absolute-path
-  (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
-         (sql (copy :country [] (from "country_data"))))))
+;; (deftest test-copy-from-expands-to-absolute-path
+;;   (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
+;;          (sql (copy :country [] (from "country_data"))))))
 
 (deftest-stmt test-select-from
   ["SELECT * FROM \"continents\""]
@@ -1248,14 +1251,6 @@
 (deftest-stmt test-array-concat
   ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
   (select ['(|| [1 2] [3 4] [5 6])]))
-
-(deftest test-comp-stmts
-  (let [s (select [*]
-            (from :continents))
-        o (order-by :name)]
-    (is (= ["SELECT * FROM \"continents\" ORDER BY \"name\""]
-           (sql (with-monad state-m
-                  (m-seq [s o])))))))
 
 ;; POSTGRESQL FULLTEXT
 

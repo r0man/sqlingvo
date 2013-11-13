@@ -1,7 +1,6 @@
 (ns sqlingvo.util
   (:refer-clojure :exclude [replace])
-  (:require [clojure.algo.monads :refer :all]
-            [clojure.string :refer [blank? join replace]]
+  (:require [clojure.string :refer [blank? join replace]]
             [inflections.core :refer [hyphenize underscore]]))
 
 (deftype Stmt [f]
@@ -29,16 +28,6 @@
 
 (defn concat-in [m ks & args]
   (apply update-in m ks concat args))
-
-(defn concat-val
-  "Return a state-monad function that assumes the state to be a map
-   and concats `v` onto the value stored under `k` in the state. The
-   old value is returned."
-  [k v]
-  (domonad state-m
-    [old-v (fetch-val k)
-     old-s (set-val k (concat old-v v))]
-    old-s))
 
 (defn qualified-name
   "Returns the qualified name of `k`."
