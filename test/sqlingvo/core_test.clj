@@ -1316,3 +1316,36 @@
              (to_tsquery "create & table")))
     (order-by (desc :last-mod-date))
     (limit 10)))
+
+;; WITH QUERIES (COMMON TABLE EXPRESSIONS)
+
+(deftest-stmt test-with-query
+  [(str "WITH regional_sales AS ("
+        "SELECT \"region\", sum(\"amount\") AS \"total_sales\" "
+        "FROM \"orders\" GROUP BY \"region\"), "
+        "top_regions AS ("
+        "SELECT \"region\" "
+        "FROM \"regional_sales\" "
+        "WHERE (\"total_sales\" > (SELECT (sum(\"total_sales\") / 10) FROM \"regional_sales\"))) "
+        "SELECT \"region\", \"product\", sum(\"quantity\") AS \"product_units\", sum(\"amount\") AS \"product_sales\" "
+        "FROM \"orders\" "
+        "WHERE \"region\" IN (SELECT \"region\" "
+        "FROM \"top_regions\") "
+        "GROUP BY \"region\", \"product\"")]
+  (with [:regional-sales
+         (select [:region (as '(sum :amount) :total-sales)]
+           (from :orders)
+           (group-by :region))
+         :top-regions
+         (select [:region]
+           (from :regional-sales)
+           (where `(> :total-sales
+                      ~(select ['(/ (sum :total-sales) 10)]
+                         (from :regional-sales)))))]
+        (select [:region :product
+                 (as '(sum :quantity) :product-units)
+                 (as '(sum :amount) :product-sales)]
+          (from :orders)
+          (where `(in :region ~(select [:region]
+                                 (from :top-regions))))
+          (group-by :region :product))))

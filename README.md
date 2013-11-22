@@ -163,6 +163,39 @@ or the number of an output column.
            (order-by 1)))
     ;=> ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
 
+### [With Queries (Common Table Expressions)](http://www.postgresql.org/docs/9.2/static/queries-with.html)
+
+    (sql (with [:regional-sales
+		(select [:region (as '(sum :amount) :total-sales)]
+		  (from :orders)
+		  (group-by :region))
+		:top-regions
+		(select [:region]
+		  (from :regional-sales)
+		  (where `(> :total-sales
+			     ~(select ['(/ (sum :total-sales) 10)]
+				(from :regional-sales)))))]
+	       (select [:region :product
+			(as '(sum :quantity) :product-units)
+			(as '(sum :amount) :product-sales)]
+		 (from :orders)
+		 (where `(in :region ~(select [:region]
+					(from :top-regions))))
+		 (group-by :region :product))))
+
+    ;=> ["WITH regional_sales AS ("
+    ;=>  "SELECT \"region\", sum(\"amount\") AS \"total_sales\" "
+    ;=>  "FROM \"orders\" GROUP BY \"region\"), "
+    ;=>  "top_regions AS ("
+    ;=>  "SELECT \"region\" "
+    ;=>  "FROM \"regional_sales\" "
+    ;=>  "WHERE (\"total_sales\" > (SELECT (sum(\"total_sales\") / 10) FROM \"regional_sales\"))) "
+    ;=>  "SELECT \"region\", \"product\", sum(\"quantity\") AS \"product_units\", sum(\"amount\") AS \"product_sales\" "
+    ;=>  "FROM \"orders\" "
+    ;=>  "WHERE \"region\" IN (SELECT \"region\" "
+    ;=>  "FROM \"top_regions\") "
+    ;=>  "GROUP BY \"region\", \"product\""]
+
 For more complex examples, look at the [tests](https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj).
 
 ## Tips & Tricks

@@ -378,6 +378,21 @@
                                    :args [(:condition (:where stmt))
                                           (:condition condition)]}})]))))
 
+(defn with
+  "Returns a fn that builds a WITH (common table expressions) query."
+  [bindings query]
+  (assert (even? (count bindings)) "The WITH bindings must be even.")
+  (let [bindings (map (fn [[name stmt]]
+                        (vector (keyword name)
+                                (ast stmt)))
+                      (partition 2 bindings))
+        query (ast query)]
+    (Stmt. (fn [stmt]
+             [nil
+              {:op :with
+               :bindings bindings
+               :query query}]))))
+
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
   ([stmt]
