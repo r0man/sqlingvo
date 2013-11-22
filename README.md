@@ -166,22 +166,22 @@ or the number of an output column.
 ### [With Queries (Common Table Expressions)](http://www.postgresql.org/docs/9.2/static/queries-with.html)
 
     (sql (with [:regional-sales
-		(select [:region (as '(sum :amount) :total-sales)]
-		  (from :orders)
-		  (group-by :region))
-		:top-regions
-		(select [:region]
-		  (from :regional-sales)
-		  (where `(> :total-sales
-			     ~(select ['(/ (sum :total-sales) 10)]
-				(from :regional-sales)))))]
-	       (select [:region :product
-			(as '(sum :quantity) :product-units)
-			(as '(sum :amount) :product-sales)]
-		 (from :orders)
-		 (where `(in :region ~(select [:region]
-					(from :top-regions))))
-		 (group-by :region :product))))
+                (select [:region (as '(sum :amount) :total-sales)]
+                  (from :orders)
+                  (group-by :region))
+                :top-regions
+                (select [:region]
+                  (from :regional-sales)
+                  (where `(> :total-sales
+                             ~(select ['(/ (sum :total-sales) 10)]
+                                (from :regional-sales)))))]
+               (select [:region :product
+                        (as '(sum :quantity) :product-units)
+                        (as '(sum :amount) :product-sales)]
+                 (from :orders)
+                 (where `(in :region ~(select [:region]
+                                        (from :top-regions))))
+                 (group-by :region :product))))
 
     ;=> ["WITH regional_sales AS ("
     ;=>  "SELECT \"region\", sum(\"amount\") AS \"total_sales\" "
