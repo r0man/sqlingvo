@@ -1,11 +1,11 @@
 (ns sqlingvo.core-test
   (:import java.util.Date)
   (:refer-clojure :exclude [distinct group-by])
-  (:require [sqlingvo.compiler :refer [compile-stmt]]
+  (:require [clojure.test :refer :all]
+            [sqlingvo.compiler :refer [compile-stmt]]
+            [sqlingvo.core :refer :all]
             [sqlingvo.util :refer :all]
-            [sqlingvo.vendor :as vendor])
-  (:use clojure.test
-        sqlingvo.core))
+            [sqlingvo.vendor :as vendor]))
 
 (defmacro deftest-stmt [name sql forms & body]
   `(deftest ~name

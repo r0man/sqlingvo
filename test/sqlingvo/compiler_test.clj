@@ -1,7 +1,7 @@
 (ns sqlingvo.compiler-test
-  (:require [sqlingvo.vendor :refer [->postgresql]])
-  (:use clojure.test
-        sqlingvo.compiler))
+  (:require [clojure.test :refer :all]
+            [sqlingvo.compiler :refer :all]
+            [sqlingvo.vendor :refer [->postgresql]]))
 
 (def db (->postgresql))
 

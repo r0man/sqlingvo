@@ -1,6 +1,6 @@
 (ns sqlingvo.util-test
-  (:use clojure.test
-        sqlingvo.util))
+  (:require [clojure.test :refer :all]
+            [sqlingvo.util :refer :all]))
 
 (deftest test-parse-column
   (are [table expected]
