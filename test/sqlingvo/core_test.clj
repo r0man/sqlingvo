@@ -1349,3 +1349,8 @@
           (where `(in :region ~(select [:region]
                                  (from :top-regions))))
           (group-by :region :product))))
+
+(deftest-stmt test-with-delete
+  ["WITH t AS (DELETE FROM \"foo\") DELETE FROM \"bar\""]
+  (with [:t (delete :foo)]
+        (delete :bar)))
