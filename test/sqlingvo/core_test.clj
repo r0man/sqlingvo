@@ -1350,6 +1350,21 @@
                                  (from :top-regions))))
           (group-by :region :product))))
 
+(deftest-stmt test-with-modify-data
+  [(str "WITH moved_rows AS ("
+        "DELETE FROM \"products\" "
+        "WHERE ((\"date\" >= ?) and (\"date\" < ?)) "
+        "RETURNING *) "
+        "INSERT INTO \"product_logs\" SELECT * FROM \"moved_rows\"")
+   "2010-10-01" "2010-11-01"]
+  (with [:moved-rows
+         (delete :products
+           (where '(and (>= :date "2010-10-01")
+                        (< :date "2010-11-01")))
+           (returning :*))]
+        (insert :product-logs []
+          (select [:*] (from :moved-rows)))))
+
 (deftest-stmt test-with-delete
   ["WITH t AS (DELETE FROM \"foo\") DELETE FROM \"bar\""]
   (with [:t (delete :foo)]
