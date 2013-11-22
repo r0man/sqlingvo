@@ -2,7 +2,7 @@
 
 A SQL DSL in Clojure.
 
-(http://imgs.xkcd.com/comics/exploits_of_a_mom.png)
+![](http://imgs.xkcd.com/comics/exploits_of_a_mom.png)
 
 ## Installation
 
