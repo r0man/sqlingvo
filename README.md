@@ -2,6 +2,8 @@
 
 A SQL DSL in Clojure.
 
+(http://imgs.xkcd.com/comics/exploits_of_a_mom.png)
+
 ## Installation
 
 Via Clojars: https://clojars.org/sqlingvo
