@@ -54,10 +54,9 @@
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
   [condition]
-  (fn [stmt]
-    (if condition
-      [condition (assoc stmt :cascade {:op :cascade})]
-      [condition (dissoc stmt :cascade)])))
+  (if condition
+    (assoc-op :cascade)
+    (dissoc-op :cascade)))
 
 (defn column
   "Add a column to `stmt`."
@@ -74,10 +73,9 @@
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
   [condition]
-  (fn [stmt]
-    (if condition
-      [condition (assoc stmt :continue-identity {:op :continue-identity})]
-      [condition (dissoc stmt :continue-identity)])))
+  (if condition
+    (assoc-op :continue-identity)
+    (dissoc-op :continue-identity)))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -93,14 +91,12 @@
 (defn delimiter
   "Returns a fn that adds a DELIMITER clause to an SQL statement."
   [delimiter]
-  (fn [stmt]
-    [delimiter (assoc stmt :delimiter delimiter)]))
+  (set-val :delimiter delimiter))
 
 (defn encoding
   "Returns a fn that adds a ENCODING clause to an SQL statement."
   [encoding]
-  (fn [stmt]
-    [encoding (assoc stmt :encoding encoding)]))
+  (set-val :encoding encoding))
 
 (defn copy
   "Returns a fn that builds a COPY statement."
@@ -161,18 +157,16 @@
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [condition]
-  (fn [stmt]
-    (if condition
-      [condition (assoc stmt :if-exists {:op :if-exists})]
-      [condition (dissoc stmt :if-exists)])))
+  (if condition
+    (assoc-op :if-exists)
+    (dissoc-op :if-exists)))
 
 (defn if-not-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [condition]
-  (fn [stmt]
-    (if condition
-      [condition (assoc stmt :if-not-exists {:op :if-not-exists})]
-      [condition (dissoc stmt :if-not-exists)])))
+  (if condition
+    (assoc-op :if-not-exists)
+    (dissoc-op :if-not-exists)))
 
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
@@ -236,9 +230,7 @@
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
   [count]
-  (let [limit {:op :limit :count count}]
-    (fn [stmt]
-      [limit (assoc stmt :limit limit)])))
+  (assoc-op :limit :count count))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
@@ -247,9 +239,7 @@
 (defn offset
   "Returns a fn that adds a OFFSET clause to an SQL statement."
   [start]
-  (let [offset {:op :offset :start start}]
-    (fn [stmt]
-      [offset (assoc stmt :offset offset)])))
+  (assoc-op :offset :start start))
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
@@ -270,25 +260,21 @@
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
   [condition]
-  (fn [stmt]
-    (if condition
-      [condition (assoc stmt :restart-identity {:op :restart-identity})]
-      [condition (dissoc stmt :restart-identity)])))
+  (if condition
+    (assoc-op :restart-identity)
+    (dissoc-op :restart-identity)))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
   [condition]
-  (fn [stmt]
-    (if condition
-      [condition (assoc stmt :restrict {:op :restrict})]
-      [condition stmt])))
+  (if condition
+    (assoc-op :restrict)
+    (dissoc-op :restrict)))
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (let [exprs (parse-exprs exprs)]
-    (fn [stmt]
-      [exprs (update-in stmt [:returning] #(concat %1 exprs))])))
+  (append-in [:returning] (parse-exprs exprs)))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
@@ -308,10 +294,9 @@
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
   [condition]
-  (fn [stmt]
-    (if condition
-      [condition (assoc stmt :temporary {:op :temporary})]
-      [condition (dissoc stmt :temporary)])))
+  (if condition
+    (assoc-op :temporary)
+    (dissoc-op :temporary)))
 
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement."

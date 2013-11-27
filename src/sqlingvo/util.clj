@@ -34,6 +34,21 @@
           (m-result '())
           (reverse ms)))
 
+(defn set-val [k v]
+  (fn [stmt]
+    [v (assoc stmt k v)]))
+
+(defn assoc-op [op & {:as opts}]
+  (set-val op (assoc opts :op op)))
+
+(defn append-in [ks coll]
+  (fn [stmt]
+    [nil (update-in stmt ks #(concat %1 coll))]))
+
+(defn dissoc-op [k]
+  (fn [stmt]
+    [nil (dissoc stmt k)]))
+
 (defn sql-name-underscore [x]
   (replace (name x) "-" "_"))
 
