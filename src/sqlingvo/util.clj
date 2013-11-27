@@ -50,12 +50,16 @@
   (fn [stmt]
     [nil (dissoc stmt k)]))
 
-
 (defn sequential
   "Returns `x` as a sequential data structure."
   [x]
   (if (sequential? x)
     x [x]))
+
+(defn conditional-clause [clause condition]
+  (if condition
+    (assoc-op clause)
+    (dissoc-op clause)))
 
 (defn sql-name-underscore [x]
   (replace (name x) "-" "_"))

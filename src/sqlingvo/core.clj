@@ -54,9 +54,7 @@
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
   [condition]
-  (if condition
-    (assoc-op :cascade)
-    (dissoc-op :cascade)))
+  (conditional-clause :cascade condition))
 
 (defn column
   "Add a column to `stmt`."
@@ -73,9 +71,7 @@
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
   [condition]
-  (if condition
-    (assoc-op :continue-identity)
-    (dissoc-op :continue-identity)))
+  (conditional-clause :continue-identity condition))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
@@ -155,16 +151,12 @@
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [condition]
-  (if condition
-    (assoc-op :if-exists)
-    (dissoc-op :if-exists)))
+  (conditional-clause :if-exists condition))
 
 (defn if-not-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [condition]
-  (if condition
-    (assoc-op :if-not-exists)
-    (dissoc-op :if-not-exists)))
+  (conditional-clause :if-not-exists condition))
 
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
@@ -250,16 +242,12 @@
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
   [condition]
-  (if condition
-    (assoc-op :restart-identity)
-    (dissoc-op :restart-identity)))
+  (conditional-clause :restart-identity condition))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
   [condition]
-  (if condition
-    (assoc-op :restrict)
-    (dissoc-op :restrict)))
+  (conditional-clause :restrict condition))
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
@@ -284,9 +272,7 @@
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
   [condition]
-  (if condition
-    (assoc-op :temporary)
-    (dissoc-op :temporary)))
+  (conditional-clause :temporary condition))
 
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement."
