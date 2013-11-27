@@ -1,6 +1,8 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by replace])
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
+            [clojure.pprint :refer [pprint]]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]
             [sqlingvo.vendor :as vendor])
@@ -257,6 +259,13 @@
       (if-not (empty? exprs)
         [exprs (update-in stmt [:order-by] #(concat %1 exprs))]
         [exprs stmt]))))
+
+(defn primary-key
+  "Returns a fn that adds the primary key to a table."
+  [& keys]
+  (fn [stmt]
+    (assert :table (:op stmt))
+    [nil (assoc stmt :primary-key keys)]))
 
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."

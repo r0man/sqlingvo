@@ -118,6 +118,25 @@
     (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
     (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
 
+(deftest-stmt test-create-table-compound-primary-key
+  [(str "CREATE TABLE \"ratings\" ("
+        "\"id\" SERIAL, "
+        "\"user_id\" INTEGER NOT NULL, "
+        "\"spot_id\" INTEGER NOT NULL, "
+        "\"rating\" INTEGER NOT NULL, "
+        "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
+        "\"updated_at\" TIMESTAMP WITH "
+        "TIME ZONE NOT NULL DEFAULT now(), "
+        "PRIMARY KEY(user_id, spot_id, created_at))")]
+  (create-table :ratings
+    (column :id :serial)
+    (column :user-id :integer :not-null? true :references :users/id)
+    (column :spot-id :integer :not-null? true :references :spots/id)
+    (column :rating :integer :not-null? true)
+    (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
+    (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))
+    (primary-key :user-id :spot-id :created-at)))
+
 ;; COPY
 
 (deftest-stmt test-copy-stdin

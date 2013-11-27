@@ -214,7 +214,7 @@
         (if-let [default (:default column)]
           (str " DEFAULT " (first (compile-sql db default)))))])
 
-(defmethod compile-sql :create-table [db {:keys [table if-not-exists inherits like temporary] :as node}]
+(defmethod compile-sql :create-table [db {:keys [table if-not-exists inherits like primary-key temporary] :as node}]
   (let [columns (map #(compile-column db %1) (map (:column node) (:columns node)))]
     (cons (str "CREATE"
                (if temporary " TEMPORARY")
@@ -227,6 +227,8 @@
                 (join ", " (map first columns))
                 like
                 (first (compile-sql db like)))
+               (if-not (empty? primary-key)
+                 (str ", PRIMARY KEY(" (join ", " (map #(sql-name db %1) primary-key)) ")"))
                ")"
                (if inherits
                  (str " INHERITS (" (join ", " (map (comp first #(compile-sql db %1)) inherits)) ")")))
