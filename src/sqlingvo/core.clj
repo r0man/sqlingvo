@@ -146,7 +146,7 @@
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (append-in [:group-by] (parse-exprs exprs)))
+  (concat-in [:group-by] (parse-exprs exprs)))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
@@ -184,7 +184,7 @@
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from condition & {:keys [type outer pk]}]
-  (append-in
+  (concat-in
    [:joins]
    [(let [join {:op :join
                 :from (parse-from from)
@@ -230,7 +230,7 @@
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
-  (append-in [:order-by] (parse-exprs exprs)))
+  (concat-in [:order-by] (parse-exprs exprs)))
 
 (defn primary-key
   "Returns a fn that adds the primary key to a table."
@@ -252,7 +252,7 @@
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (append-in [:returning] (parse-exprs exprs)))
+  (concat-in [:returning] (parse-exprs exprs)))
 
 (defn select
   "Returns a fn that builds a SELECT statement."
@@ -307,7 +307,7 @@
   [values]
   (if (= :default values)
     (set-val :default-values true)
-    (append-in [:values] (sequential values))))
+    (concat-in [:values] (sequential values))))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."

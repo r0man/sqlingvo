@@ -41,7 +41,7 @@
 (defn assoc-op [op & {:as opts}]
   (set-val op (assoc opts :op op)))
 
-(defn append-in [ks coll]
+(defn concat-in [ks coll]
   (fn [stmt]
     [nil (if (empty? coll)
            stmt (update-in stmt ks #(concat %1 coll)))]))
@@ -72,9 +72,6 @@
 
 (defn sql-quote-double-quote [x]
   (str "\"" x "\""))
-
-(defn concat-in [m ks & args]
-  (apply update-in m ks concat args))
 
 (defn qualified-name
   "Returns the qualified name of `k`."
