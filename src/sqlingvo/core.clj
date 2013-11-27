@@ -150,9 +150,7 @@
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (let [exprs (parse-exprs exprs)]
-    (fn [stmt]
-      [exprs (update-in stmt [:group-by] #(concat %1 exprs))])))
+  (append-in [:group-by] (parse-exprs exprs)))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
@@ -191,41 +189,37 @@
     (fn [stmt-1]
       [nil (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all})])))
 
-(defn- make-join [from condition & {:keys [type outer pk]}]
-  (let [join {:op :join
-              :from (parse-from from)
-              :type type
-              :outer outer}]
-    (cond
-     (and (sequential? condition)
-          (= :on (keyword (name (first condition)))))
-     (assoc join
-       :on (parse-expr (first (rest condition))))
-     (and (sequential? condition)
-          (= :using (keyword (name (first condition)))))
-     (assoc join
-       :using (parse-exprs (rest condition)))
-     (and (keyword? from)
-          (keyword? condition))
-     (assoc join
-       :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
-       :on (parse-expr `(= ~from ~condition)))
-     :else (throw (ex-info "Invalid JOIN condition." {:condition condition})))))
-
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from condition & {:keys [type outer pk]}]
-  (let [join (make-join from condition :type type :outer outer :pk pk)]
-    (fn [stmt]
-      [join (update-in stmt [:joins] #(concat %1 [join]))])))
+  (append-in
+   [:joins]
+   [(let [join {:op :join
+                :from (parse-from from)
+                :type type
+                :outer outer}]
+      (cond
+       (and (sequential? condition)
+            (= :on (keyword (name (first condition)))))
+       (assoc join
+         :on (parse-expr (first (rest condition))))
+       (and (sequential? condition)
+            (= :using (keyword (name (first condition)))))
+       (assoc join
+         :using (parse-exprs (rest condition)))
+       (and (keyword? from)
+            (keyword? condition))
+       (assoc join
+         :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
+         :on (parse-expr `(= ~from ~condition)))
+       :else (throw (ex-info "Invalid JOIN condition." {:condition condition}))))]))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
   [table & {:as opts}]
   (let [table (parse-table table)
         like (assoc opts :op :like :table table)]
-    (fn [stmt]
-      [table (assoc stmt :like like)])))
+    (set-val :like like)))
 
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
@@ -244,11 +238,7 @@
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
-  (let [exprs (parse-exprs exprs)]
-    (fn [stmt]
-      (if-not (empty? exprs)
-        [exprs (update-in stmt [:order-by] #(concat %1 exprs))]
-        [exprs stmt]))))
+  (append-in [:order-by] (parse-exprs exprs)))
 
 (defn primary-key
   "Returns a fn that adds the primary key to a table."
@@ -329,10 +319,9 @@
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
   [values]
-  (fn [stmt]
-    (if (= :default values)
-      [nil (assoc stmt :default-values true)]
-      [nil (update-in stmt [:values] #(concat %1 (if (sequential? values) values [values])))])))
+  (if (= :default values)
+    (set-val :default-values true)
+    (append-in [:values] (sequential values))))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."

@@ -43,11 +43,19 @@
 
 (defn append-in [ks coll]
   (fn [stmt]
-    [nil (update-in stmt ks #(concat %1 coll))]))
+    [nil (if (empty? coll)
+           stmt (update-in stmt ks #(concat %1 coll)))]))
 
 (defn dissoc-op [k]
   (fn [stmt]
     [nil (dissoc stmt k)]))
+
+
+(defn sequential
+  "Returns `x` as a sequential data structure."
+  [x]
+  (if (sequential? x)
+    x [x]))
 
 (defn sql-name-underscore [x]
   (replace (name x) "-" "_"))
