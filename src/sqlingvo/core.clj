@@ -1,12 +1,10 @@
 (ns sqlingvo.core
-  (:refer-clojure :exclude [distinct group-by replace])
-  (:require [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.pprint :refer [pprint]]
+  (:require [clojure.string :as str]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]
             [sqlingvo.vendor :as vendor])
-  (:import sqlingvo.util.Stmt))
+  (:import (sqlingvo.util Stmt))
+  (:refer-clojure :exclude [distinct group-by replace]))
 
 (defn sql-name [db x]
   (vendor/sql-name db x))

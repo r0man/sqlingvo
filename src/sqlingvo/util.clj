@@ -1,6 +1,6 @@
 (ns sqlingvo.util
-  (:refer-clojure :exclude [replace])
-  (:require [clojure.string :refer [blank? join replace]]))
+  (:require [clojure.string :refer [replace]])
+  (:refer-clojure :exclude [replace]))
 
 (deftype Stmt [f]
   clojure.lang.IFn
