@@ -59,9 +59,6 @@
     (cons (join separator (map first stmts))
           (apply concat (map rest stmts)))))
 
-(defn- stmt [db & stmts]
-  (apply join-stmt db " " (remove empty? stmts)))
-
 (defn- compile-set-op [db op {:keys [stmt all] :as node}]
   (concat-sql (upper-case (name op))
               (if all " ALL") " "
