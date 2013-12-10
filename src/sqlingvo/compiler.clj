@@ -5,6 +5,13 @@
             [clojure.string :refer [blank? join replace upper-case]]
             [sqlingvo.vendor :refer [->postgresql sql-quote sql-name]]))
 
+(defprotocol SQLType
+  (sql-type [arg] "Convert `arg` into an SQL type."))
+
+(extend-type Object
+  SQLType
+  (sql-type [obj] obj))
+
 (defn to-sql [arg]
   (cond
    (string? arg)
@@ -24,13 +31,6 @@
   (let [args (map to-sql args)]
     (cons (join separator (remove blank? (map first args)))
           (apply concat (map rest args)))))
-
-(defprotocol SQLType
-  (sql-type [arg] "Convert `arg` into an SQL type."))
-
-(extend-type Object
-  SQLType
-  (sql-type [obj] obj))
 
 (defn compile-alias
   "Compile a SQL alias expression."
@@ -91,6 +91,9 @@
 (defmethod compile-expr :default [db node]
   (compile-sql db node))
 
+(defn compile-exprs [db exprs]
+  (map #(compile-expr db %1) exprs))
+
 ;; COMPILE FN CALL
 
 (defn compile-2-ary
@@ -100,7 +103,7 @@
    (> 2 (count args))
    (throw (ex-info "More than 1 arg needed." node))
    (= 2 (count args))
-   (let [[[s1 & a1] [s2 & a2]] (map #(compile-expr db %1) args)]
+   (let [[[s1 & a1] [s2 & a2]] (compile-exprs db args)]
      (cons (str "(" s1 " " (core/name name) " " s2 ")"
                 (compile-alias db as))
            (concat a1 a2)))
@@ -116,7 +119,7 @@
    (= 1 (count args))
    (compile-expr db (first args))
    :else
-   (let [args (map #(compile-expr db %1) args)]
+   (let [args (compile-exprs db args)]
      (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
                 (compile-alias db as))
            (apply concat (map rest args))))))
@@ -158,11 +161,11 @@
   (concat-sql "(" (compile-expr db (first args)) " IS NOT NULL)"))
 
 (defmethod compile-fn :range [db {:keys [args]}]
-  (concat-sql "(" (join-sql ", " (map #(compile-expr db %1) args)) ")"))
+  (concat-sql "(" (join-sql ", " (compile-exprs db args)) ")"))
 
 (defmethod compile-fn :default [db {:keys [as args name]}]
   (concat-sql (sql-name db name)
-              "(" (join-sql ", " (map #(compile-expr db %1) args)) ")"
+              "(" (join-sql ", " (compile-exprs db args)) ")"
               (compile-alias db as)))
 
 ;; COMPILE FROM CLAUSE
