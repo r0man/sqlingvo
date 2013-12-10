@@ -53,12 +53,6 @@
   (let [[sql & args] stmt]
     (cons (replace sql #"^\(|\)$" "") args)))
 
-(defn- join-stmt [db separator & stmts]
-  (let [stmts (map #(if (compiled? %1) %1 (compile-sql db %1)) (remove empty? stmts))
-        stmts (remove (comp blank? first) stmts)]
-    (cons (join separator (map first stmts))
-          (apply concat (map rest stmts)))))
-
 (defn- compile-set-op [db op {:keys [stmt all] :as node}]
   (concat-sql (upper-case (name op))
               (if all " ALL") " "
