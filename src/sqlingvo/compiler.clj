@@ -182,7 +182,45 @@
 (defmethod compile-from :table [db node]
   (compile-sql db node))
 
+(defn compile-column [db column]
+  (concat-sql
+   (sql-quote db (:name column))
+   " " (replace (upper-case (name (:type column))) "-" " ")
+   (if-let [length (:length column)]
+     (str "(" length ")"))
+   (if (:not-null? column)
+     " NOT NULL")
+   (if (:unique? column)
+     " UNIQUE")
+   (if (:primary-key? column)
+     " PRIMARY KEY")
+   (if-let [default (:default column)]
+     (concat-sql " DEFAULT " (compile-sql db default)))))
+
 ;; COMPILE SQL
+
+(defmethod compile-sql :cascade [db {:keys [op]}]
+  ["CASCADE"])
+
+(defmethod compile-sql :condition [db {:keys [condition]}]
+  (compile-sql db condition))
+
+(defmethod compile-sql :column [db {:keys [as schema name table direction nulls]}]
+  (concat-sql
+   (->> [(if schema (sql-quote db schema))
+         (if table (sql-quote db table))
+         (if name (if (= :* name) "*" (sql-quote db name)))]
+        (remove nil?)
+        (join "."))
+   (compile-alias db as)
+   (if direction (str " " (upper-case (core/name direction))))
+   (if nulls (str " NULLS " (keyword-sql nulls)))))
+
+(defmethod compile-sql :constant [db node]
+  (compile-const db node))
+
+(defmethod compile-sql :continue-identity [db {:keys [op]}]
+  ["CONTINUE IDENTITY"])
 
 (defmethod compile-sql :copy [db {:keys [columns delimiter encoding from to table]}]
   (concat-sql
@@ -203,21 +241,6 @@
      [" ENCODING ?" encoding])
    (if delimiter
      [" DELIMITER ?" delimiter])))
-
-(defn compile-column [db column]
-  (concat-sql
-   (sql-quote db (:name column))
-   " " (replace (upper-case (name (:type column))) "-" " ")
-   (if-let [length (:length column)]
-     (str "(" length ")"))
-   (if (:not-null? column)
-     " NOT NULL")
-   (if (:unique? column)
-     " UNIQUE")
-   (if (:primary-key? column)
-     " PRIMARY KEY")
-   (if-let [default (:default column)]
-     (concat-sql " DEFAULT " (compile-sql db default)))))
 
 (defmethod compile-sql :create-table [db {:keys [table if-not-exists inherits like primary-key temporary] :as node}]
   (let [columns (map (:column node) (:columns node))]
@@ -249,29 +272,12 @@
    (if-not (empty? returning)
      (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning)))) ))
 
-(defmethod compile-sql :column [db {:keys [as schema name table direction nulls]}]
+(defmethod compile-sql :distinct [db {:keys [exprs on]}]
   (concat-sql
-   (join "." (map #(sql-quote db %1) (remove nil? [schema table name])))
-   (compile-alias db as)
-   (if direction (str " " (upper-case (core/name direction))))
-   (if nulls (str " NULLS " (keyword-sql nulls)))))
-
-(defmethod compile-sql :column [db {:keys [as schema name table direction nulls]}]
-  (concat-sql
-   (->> [(if schema (sql-quote db schema))
-         (if table (sql-quote db table))
-         (if name (if (= :* name) "*" (sql-quote db name)))]
-        (remove nil?)
-        (join "."))
-   (compile-alias db as)
-   (if direction (str " " (upper-case (core/name direction))))
-   (if nulls (str " NULLS " (keyword-sql nulls)))))
-
-(defmethod compile-sql :constant [db node]
-  (compile-const db node))
-
-(defmethod compile-sql :condition [db {:keys [condition]}]
-  (compile-sql db condition))
+   "DISTINCT "
+   (if-not (empty? on)
+     (concat-sql "ON (" (join-sql ", " (map #(compile-sql db %1) on)) ") "))
+   (join-sql ", " (map #(compile-sql db %1) exprs))))
 
 (defmethod compile-sql :drop-table [db {:keys [cascade if-exists restrict tables]}]
   (join-sql " " ["DROP TABLE"
@@ -299,6 +305,9 @@
 
 (defmethod compile-sql :group-by [db {:keys [exprs]}]
   (concat-sql "GROUP BY" (compile-sql db exprs)))
+
+(defmethod compile-sql :if-exists [db {:keys [op]}]
+  ["IF EXISTS"])
 
 (defmethod compile-sql :insert [db {:keys [table columns rows default-values values returning select]}]
   (let [columns (if (and (empty? columns)
@@ -358,6 +367,9 @@
    (if-not (empty? excluding)
      (str " EXCLUDING " (join " " (map keyword-sql excluding))))))
 
+(defmethod compile-sql :list [db {:keys [children]}]
+  (concat-sql "(" (join-sql ", " (map #(compile-sql db %1) children)) ")"))
+
 (defmethod compile-sql :nil [db _] ["NULL"])
 
 (defmethod compile-sql :offset [db {:keys [start]}]
@@ -370,12 +382,11 @@
   [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name])))
         (compile-alias db as))])
 
-(defmethod compile-sql :distinct [db {:keys [exprs on]}]
-  (concat-sql
-   "DISTINCT "
-   (if-not (empty? on)
-     (concat-sql "ON (" (join-sql ", " (map #(compile-sql db %1) on)) ") "))
-   (join-sql ", " (map #(compile-sql db %1) exprs))))
+(defmethod compile-sql :restrict [db {:keys [op]}]
+  ["RESTRICT"])
+
+(defmethod compile-sql :restart-identity [db {:keys [op]}]
+  ["RESTART IDENTITY"])
 
 (defmethod compile-sql :select [db {:keys [exprs distinct joins from where group-by limit offset order-by set]}]
   (concat-sql
@@ -398,27 +409,6 @@
      (concat-sql " " (compile-sql db offset)))
    (if-not (empty? set)
      (concat-sql " " (join-sql ", " (map #(compile-sql db %1) set))))))
-
-(defmethod compile-sql :if-exists [db {:keys [op]}]
-  ["IF EXISTS"])
-
-(defmethod compile-sql :cascade [db {:keys [op]}]
-  ["CASCADE"])
-
-(defmethod compile-sql :restrict [db {:keys [op]}]
-  ["RESTRICT"])
-
-(defmethod compile-sql :continue-identity [db {:keys [op]}]
-  ["CONTINUE IDENTITY"])
-
-(defmethod compile-sql :restart-identity [db {:keys [op]}]
-  ["RESTART IDENTITY"])
-
-(defmethod compile-sql nil [db {:keys [op]}]
-  [])
-
-(defmethod compile-sql :list [db {:keys [children]}]
-  (concat-sql "(" (join-sql ", " (map #(compile-sql db %1) children)) ")"))
 
 (defmethod compile-sql :truncate [db {:keys [tables continue-identity restart-identity cascade restrict]}]
   (join-sql " " ["TRUNCATE TABLE"
@@ -456,6 +446,9 @@
               (map first bindings)
               (map second bindings)))
    " " (compile-sql db query)))
+
+(defmethod compile-sql nil [db {:keys [op]}]
+  [])
 
 ;; DEFINE SQL FN ARITY
 
