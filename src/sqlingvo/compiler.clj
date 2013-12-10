@@ -307,25 +307,29 @@
   (concat-sql "GROUP BY" (compile-sql db exprs)))
 
 (defmethod compile-sql :insert [db {:keys [table columns rows default-values values returning select]}]
-  (let [[sql & args] (if select (compile-sql db select))
-        returning (map #(compile-sql db %1) returning)
-        columns (if (and (empty? columns) (not (empty? values)))
+  (let [columns (if (and (empty? columns)
+                         (not (empty? values)))
                   (map (fn [k] {:op :column :name k})
                        (keys (first values)))
                   columns)]
-    (cons (str "INSERT INTO " (first (compile-sql db table))
-               (if-not (empty? columns)
-                 (str " (" (first (apply join-stmt db ", " columns)) ")"))
-               (if-not (empty? values)
-                 (let [template (str "(" (join ", " (repeat (count columns) "?")) ")")]
-                   (str " VALUES " (join ", " (repeat (count values) template)))))
-               (if sql (str " " sql))
-               (if default-values " DEFAULT VALUES")
-               (if-not (empty? returning)
-                 (apply str " RETURNING " (join ", " (map first returning)))))
-          (if-not (empty? values)
-            (apply concat (map (fn [r] (map r (map :name columns))) values))
-            args))))
+    (concat-sql
+     "INSERT INTO " (compile-sql db table)
+     (if-not (empty? columns)
+       (concat-sql " (" (join-sql ", " (map #(compile-sql db %1) columns)) ")"))
+     (if-not (empty? values)
+       (let [template (str "(" (join ", " (repeat (count columns) "?")) ")")]
+         (concat-sql
+          " VALUES "
+          (join-sql
+           ", "
+           (for [value values]
+             (cons template (map value (map :name columns))))))))
+     (if select
+       (concat-sql " " (compile-sql db select)))
+     (if default-values
+       " DEFAULT VALUES")
+     (if-not (empty? returning)
+       (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning)))))))
 
 (defmethod compile-sql :intersect [db node]
   (compile-set-op db :intersect node))

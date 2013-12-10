@@ -168,9 +168,9 @@
   [table columns & body]
   (let [table (parse-table table)
         columns (map parse-column columns)]
-    (fn [_]
-      ((m-seq (remove nil? body))
-       {:op :insert :table table :columns columns}))))
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              {:op :insert :table table :columns columns})))))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
