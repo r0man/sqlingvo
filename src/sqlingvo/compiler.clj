@@ -226,24 +226,26 @@
      (concat-sql " DEFAULT " (compile-sql db default)))))
 
 (defmethod compile-sql :create-table [db {:keys [table if-not-exists inherits like primary-key temporary] :as node}]
-  (let [columns (map #(compile-column db %1) (map (:column node) (:columns node)))]
-    (cons (str "CREATE"
-               (if temporary " TEMPORARY")
-               " TABLE"
-               (if if-not-exists " IF NOT EXISTS")
-               (str " " (first (compile-sql db table)))
-               " ("
-               (cond
-                (not (empty? columns))
-                (join ", " (map first columns))
-                like
-                (first (compile-sql db like)))
-               (if-not (empty? primary-key)
-                 (str ", PRIMARY KEY(" (join ", " (map #(sql-name db %1) primary-key)) ")"))
-               ")"
-               (if inherits
-                 (str " INHERITS (" (join ", " (map (comp first #(compile-sql db %1)) inherits)) ")")))
-          [])))
+  (let [columns (map (:column node) (:columns node))]
+    (concat-sql
+     "CREATE"
+     (if temporary
+       " TEMPORARY")
+     " TABLE"
+     (if if-not-exists
+       " IF NOT EXISTS")
+     (concat-sql " " (compile-sql db table))
+     " ("
+     (cond
+      (not (empty? columns))
+      (join-sql ", " (map #(compile-column db %1) columns))
+      like
+      (compile-sql db like))
+     (if-not (empty? primary-key)
+       (concat-sql ", PRIMARY KEY(" (join ", " (map #(sql-name db %1) primary-key)) ")"))
+     ")"
+     (if inherits
+       (concat-sql " INHERITS (" (join-sql ", " (map #(compile-sql db %1) inherits)) ")")))))
 
 (defmethod compile-sql :delete [db {:keys [where table returning]}]
   (concat-sql
