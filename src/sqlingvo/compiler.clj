@@ -455,16 +455,14 @@
                   (mapcat rest returning)))))
 
 (defmethod compile-sql :with [db {:keys [bindings query]}]
-  (let [aliases (map first bindings)
-        stmts (map #(compile-sql db %1) (map second bindings))
-        [query-sql & query-args] (if query (compile-sql db query))]
-    (cons (str "WITH "
-               (join ", " (map (fn [alias sql]
-                                 (str (sql-name db alias) " AS (" sql")"))
-                               aliases
-                               (map first stmts)))
-               " " query-sql)
-          (concat (mapcat rest stmts) query-args))))
+  (concat-sql
+   "WITH "
+   (join-sql
+    ", " (map (fn [alias stmt]
+                (concat-sql (sql-name db alias) " AS (" (compile-sql db stmt) ")"))
+              (map first bindings)
+              (map second bindings)))
+   " " (compile-sql db query)))
 
 ;; DEFINE SQL FN ARITY
 
