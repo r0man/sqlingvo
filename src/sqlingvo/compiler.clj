@@ -432,25 +432,20 @@
   (compile-set-op db :union node))
 
 (defmethod compile-sql :update [db {:keys [where from exprs table row returning]}]
-  (let [returning (map #(compile-sql db %1) returning)
-        where (if where (compile-sql db where))
-        columns (map #(sql-quote db %1) (keys row))
-        exprs (map (comp unwrap-stmt #(compile-expr db %1)) exprs)
-        from (map #(compile-from db %1) from)]
-    (cons (str "UPDATE " (first (compile-sql db table))
-               " SET " (if row
-                         (apply str (concat (interpose " = ?, " columns) " = ?"))
-                         (join ", " (map first exprs)))
-               (if-not (empty? from)
-                 (str " FROM " (join " " (map first from))))
-               (if-not (empty? where)
-                 (str " WHERE " (first where)))
-               (if-not (empty? returning)
-                 (apply str " RETURNING " (join ", " (map first returning)))))
-          (concat (vals row)
-                  (mapcat rest (concat exprs from))
-                  (rest where)
-                  (mapcat rest returning)))))
+  (concat-sql
+   "UPDATE " (compile-sql db table)
+   " SET "
+   (join-sql
+    ", " (if row
+           (for [column (keys row)]
+             [(str (sql-quote db column) " = ?") (get row column)])
+           (map unwrap-stmt (compile-exprs db exprs))))
+   (if-not (empty? from)
+     (concat-sql " FROM " (join-sql " " (map #(compile-from db %1) from))))
+   (if-not (empty? where)
+     (concat-sql " WHERE " (compile-sql db where)))
+   (if-not (empty? returning)
+     (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning))))))
 
 (defmethod compile-sql :with [db {:keys [bindings query]}]
   (concat-sql
