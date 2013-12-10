@@ -42,9 +42,6 @@
 (defn keyword-sql [k]
   (replace (upper-case (name k)) #"-" " "))
 
-(defn compiled? [arg]
-  (and (sequential? arg) (string? (first arg))))
-
 (defn wrap-stmt [stmt]
   (let [[sql & args] stmt]
     (cons (str "(" sql ")") args)))
