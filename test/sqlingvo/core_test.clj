@@ -2,6 +2,7 @@
   (:import java.util.Date)
   (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.test :refer :all]
+            [clojure.java.io :refer [file]]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.core :refer :all]
             [sqlingvo.util :refer :all]
@@ -175,9 +176,9 @@
   (is (= ["/usr1/proj/bray/sql/country_data"] (:from stmt)))
   (is (= (map parse-column [:id :name]) (:columns stmt))))
 
-;; (deftest test-copy-from-expands-to-absolute-path
-;;   (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
-;;          (sql (copy :country [] (from "country_data"))))))
+(deftest test-copy-from-expands-to-absolute-path
+  (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
+         (sql (copy :country [] (from (file "country_data")))))))
 
 (deftest-stmt test-select-from
   ["SELECT * FROM \"continents\""]

@@ -114,9 +114,9 @@
                 (compile-alias db as))
            (concat a1 a2)))
    :else
-   (apply join-stmt db " AND "
-          (map #(compile-2-ary db (assoc node :args %1))
-               (partition 2 1 args)))))
+   (join-sql " AND "
+             (map #(compile-2-ary db (assoc node :args %1))
+                  (partition 2 1 args)))))
 
 (defn compile-infix
   "Compile a SQL infix function node into a SQL statement."
@@ -191,21 +191,24 @@
 ;; COMPILE SQL
 
 (defmethod compile-sql :copy [db {:keys [columns delimiter encoding from to table]}]
-  (let [from (first from)]
-    (cons (str "COPY " (first (compile-sql db table))
-               (if-not (empty? columns)
-                 (str " (" (first (apply join-stmt db ", " columns)) ")"))
-               " FROM "
-               (cond
-                (string? from) "?"
-                (= :stdin from) "STDIN")
-               (if encoding " ENCODING ?")
-               (if delimiter " DELIMITER ?"))
-          (cond
-           (= :stdin from)
-           (remove nil? [delimiter encoding])
-           (string? from)
-           (remove nil? [(.getAbsolutePath (file from)) delimiter encoding])))))
+  (concat-sql
+   "COPY "
+   (compile-sql db table)
+   (if-not (empty? columns)
+     (concat-sql " (" (join-sql ", " (map #(compile-sql db %1) columns)) ")"))
+   " FROM "
+   (let [from (first from)]
+     (cond
+      (instance? java.io.File from)
+      ["?" (.getAbsolutePath from)]
+      (string? from)
+      ["?" from]
+      (= :stdin from)
+      "STDIN"))
+   (if encoding
+     [" ENCODING ?" encoding])
+   (if delimiter
+     [" DELIMITER ?" delimiter])))
 
 (defn compile-column [db column]
   (concat-sql
