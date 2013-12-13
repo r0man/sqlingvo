@@ -1,4 +1,5 @@
 (ns sqlingvo.compiler
+  (:import java.io.File)
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
             [clojure.java.io :refer [file]]
@@ -231,10 +232,10 @@
    " FROM "
    (let [from (first from)]
      (cond
-      (instance? java.io.File from)
+      (instance? File from)
       ["?" (.getAbsolutePath from)]
       (string? from)
-      ["?" from]
+      ["?" (.getAbsolutePath (File. from))]
       (= :stdin from)
       "STDIN"))
    (if encoding
