@@ -90,6 +90,10 @@
 (deftest test-parse-from
   (are [from expected]
     (is (= expected (parse-from from)))
+    "continents"
+    {:op :table, :schema nil, :name :continents, :as nil}
+    :continents
+    {:op :table, :schema nil, :name :continents, :as nil}
     '(generate_series 0 10)
     {:op :fn, :name :generate_series, :args [{:op :constant, :form 0} {:op :constant, :form 10}]}))
 
