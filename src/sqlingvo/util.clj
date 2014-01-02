@@ -149,7 +149,8 @@
 
 (defn parse-from [forms]
   (cond
-   (keyword? forms)
+   (or (string? forms)
+       (keyword? forms))
    (parse-table forms)
    (and (map? forms) (= :fn (:op forms)))
    forms
