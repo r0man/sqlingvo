@@ -1401,6 +1401,6 @@
   (select [(as '(.-first (.-name (new-emp))) :x)]))
 
 (deftest-stmt test-select-as-alias
-  ["SELECT (SELECT count(*) FROM \"continents\"), (SELECT count(*) FROM \"countries\")"]
+  ["SELECT (SELECT count(*) FROM \"continents\") AS \"continents\", (SELECT count(*) FROM \"countries\") AS \"countries\""]
   (select [(as (select ['(count :*)] (from :continents)) :continents)
            (as (select ['(count :*)] (from :countries)) :countries)]))

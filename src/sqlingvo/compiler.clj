@@ -87,7 +87,8 @@
   (concat-sql "ARRAY[" (join-sql ", " (map #(compile-expr db %1) children)) "]"))
 
 (defmethod compile-expr :select [db {:keys [as] :as expr}]
-  (wrap-stmt (compile-sql db expr)))
+  (concat-sql (wrap-stmt (compile-sql db expr))
+              (if as (compile-alias db as))))
 
 (defmethod compile-expr :default [db node]
   (compile-sql db node))
