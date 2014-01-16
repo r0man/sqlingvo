@@ -294,6 +294,11 @@
   (concat-sql (join-sql " " (map #(compile-sql db %1) children))
               (compile-alias db as)))
 
+(defmethod compile-sql :attr [db node]
+  (concat-sql "(" (compile-sql db (:arg node)) ")." (sql-quote db (:name node))
+              (if-let [as (:as node)]
+                (compile-alias db as))))
+
 (defmethod compile-sql :fn [db node]
   (concat-sql (if-let [dir (:direction node)]
                 (join-sql " " [(compile-fn db node) (upper-case (name dir))])

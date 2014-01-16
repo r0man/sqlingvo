@@ -101,12 +101,23 @@
          :name (keyword (nth matches 3))
          :as (keyword (nth matches 5))})))
 
+(defn attribute?
+  "Returns true if `form` is an attribute for a composite type."
+  [form]
+  (and (symbol? form)
+       (.startsWith (str form) ".-")))
+
 (defmulti parse-expr class)
 
 (defn- parse-fn-expr [expr]
   {:op :fn
    :name (keyword (name (first expr)))
    :args (map parse-expr (rest expr))})
+
+(defn- parse-attr-expr [expr]
+  {:op :attr
+   :name (keyword (replace (name (first expr)) ".-" ""))
+   :arg (parse-expr (first (rest expr)))})
 
 (defmethod parse-expr nil [expr]
   {:op :nil})
@@ -116,6 +127,8 @@
 
 (defmethod parse-expr clojure.lang.ISeq [expr]
   (cond
+   (attribute? (first expr))
+   (parse-attr-expr expr)
    (or (keyword? (first expr))
        (symbol? (first expr)))
    (parse-fn-expr expr)

@@ -81,7 +81,11 @@
          {:op :constant :form order}
          {:op :constant :form by}
          {:op :column :schema nil :table nil :name :date :as nil}
-         {:op :constant :form desc}]}]}))
+         {:op :constant :form desc}]}]}
+    '(.-val :x)
+    {:op :attr :name :val :arg {:op :column, :schema nil, :table nil, :name :x, :as nil}}
+    '(.-val (new-emp))
+    {:op :attr :name :val :arg {:op :fn, :name :new-emp, :args []}}))
 
 (deftest test-parse-condition-backquote
   (is (= (parse-condition '(in 1 (1 2 3)))

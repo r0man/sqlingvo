@@ -1389,3 +1389,13 @@
   ["WITH t AS (DELETE FROM \"foo\") DELETE FROM \"bar\""]
   (with [:t (delete :foo)]
         (delete :bar)))
+
+;; ATTRIBUTES OF COMPOSITE TYPES
+
+(deftest-stmt test-attr-composite-type
+  ["SELECT (new_emp()).\"name\" AS \"x\""]
+  (select [(as '(.-name (new-emp)) :x)]))
+
+(deftest-stmt test-nested-attr-composite-type
+  ["SELECT ((new_emp()).\"name\").\"first\" AS \"x\""]
+  (select [(as '(.-first (.-name (new-emp))) :x)]))
