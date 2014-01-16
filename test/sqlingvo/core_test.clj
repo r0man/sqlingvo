@@ -1399,3 +1399,8 @@
 (deftest-stmt test-nested-attr-composite-type
   ["SELECT ((new_emp()).\"name\").\"first\" AS \"x\""]
   (select [(as '(.-first (.-name (new-emp))) :x)]))
+
+(deftest-stmt test-select-as-alias
+  ["SELECT (SELECT count(*) FROM \"continents\"), (SELECT count(*) FROM \"countries\")"]
+  (select [(as (select ['(count :*)] (from :continents)) :continents)
+           (as (select ['(count :*)] (from :countries)) :countries)]))
