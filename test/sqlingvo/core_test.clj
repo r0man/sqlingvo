@@ -1404,3 +1404,10 @@
   ["SELECT (SELECT count(*) FROM \"continents\") AS \"continents\", (SELECT count(*) FROM \"countries\") AS \"countries\""]
   (select [(as (select ['(count :*)] (from :continents)) :continents)
            (as (select ['(count :*)] (from :countries)) :countries)]))
+
+
+(deftest-stmt test-refresh-materialized-view
+  ["REFRESH MATERIALIZED VIEW \"continent_stats\""]
+  (refresh-materialized-view :continent-stats)
+  (is (= :refresh-materialized-view (:op stmt)))
+  (is (= (parse-table :continent-stats) (:view stmt))))

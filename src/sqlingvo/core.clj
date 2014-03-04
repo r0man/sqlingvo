@@ -237,6 +237,15 @@
     (assert :table (:op stmt))
     [nil (assoc stmt :primary-key keys)]))
 
+(defn refresh-materialized-view
+  "Returns a fn that builds a UPDATE statement."
+  [view & body]
+  (let [view (parse-table view)]
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              {:op :refresh-materialized-view
+               :view view})))))
+
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
   [condition]

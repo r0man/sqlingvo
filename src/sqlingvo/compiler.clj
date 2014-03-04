@@ -389,6 +389,9 @@
   [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name])))
         (compile-alias db as))])
 
+(defmethod compile-sql :refresh-materialized-view [db {:keys [view]}]
+  (concat-sql "REFRESH MATERIALIZED VIEW " (compile-sql db view)))
+
 (defmethod compile-sql :restrict [db {:keys [op]}]
   ["RESTRICT"])
 
