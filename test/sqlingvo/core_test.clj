@@ -298,8 +298,8 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-single-row-as-map
-  ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?)"
-   106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
+  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, ?, ?, ?)"
+   "1961-06-16" "Yojimbo" 106 "Drama" "T_601"]
   (insert :films []
     (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
   (is (= :insert (:op stmt)))
@@ -309,8 +309,8 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-single-row-as-seq
-  ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?)"
-   106 "1961-06-16" "Drama" "Yojimbo" "T_601"]
+  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, ?, ?, ?)"
+   "1961-06-16" "Yojimbo" 106 "Drama" "T_601"]
   (insert :films []
     (values [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
   (is (= :insert (:op stmt)))
@@ -320,8 +320,8 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-multi-row
-  ["INSERT INTO \"films\" (\"did\", \"date_prod\", \"kind\", \"title\", \"code\") VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
-   110 "1985-02-10" "Comedy" "Tampopo" "B6717" 140 "1985-02-10" "Comedy" "The Dinner Game" "HG120"]
+  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
+   "1985-02-10" "Tampopo" 110 "Comedy" "B6717" "1985-02-10" "The Dinner Game" 140 "Comedy" "HG120"]
   (insert :films []
     (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
              {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
@@ -333,7 +333,7 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-returning
-  ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (?, ?) RETURNING *" 106 "XYZ Widgets"]
+  ["INSERT INTO \"distributors\" (\"dname\", \"did\") VALUES (?, ?) RETURNING *" "XYZ Widgets" 106]
   (insert :distributors []
     (values [{:did 106 :dname "XYZ Widgets"}])
     (returning *))
