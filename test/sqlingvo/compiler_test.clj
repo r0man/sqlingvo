@@ -39,7 +39,7 @@
     {:op :constant :form 1}
     ["1"]
     {:op :keyword :form :continents.created-at}
-    ["\"continents.created_at\""]
+    ["\"continents\".\"created_at\""]
     {:op :fn :name 'max :args [{:op :keyword :form :created-at}]}
     ["max(\"created_at\")"]
     {:op :fn :name 'greatest :args [{:op :constant :form 1} {:op :constant :form 2}]}

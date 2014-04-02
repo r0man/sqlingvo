@@ -1,5 +1,5 @@
 (ns sqlingvo.util
-  (:require [clojure.string :refer [replace]])
+  (:require [clojure.string :refer [join replace split]])
   (:refer-clojure :exclude [replace]))
 
 (deftype Stmt [f]
@@ -61,21 +61,44 @@
     (assoc-op clause)
     (dissoc-op clause)))
 
+(defn- split-sql-name [x]
+  (if x (split (name x) #"\.")))
+
+(defn- map-sql-name [f x]
+  (->> (split-sql-name x)
+       (map f)
+       (join ".")))
+
 (defn sql-name-underscore [x]
-  (replace (name x) "-" "_"))
+  (map-sql-name #(replace %1 "-" "_") x))
 
 (defn sql-keyword-hyphenize [x]
-  (keyword (replace (name x) "_" "-")))
+  (keyword (map-sql-name #(replace (name %1) "_" "-") x)))
+
+(defn- sql-quote-char [x before after]
+  (if-not (= "*" x)
+    (str before x after) "*" ))
 
 (defn sql-quote-backtick [x]
-  (str "`" x "`"))
+  (map-sql-name #(sql-quote-char %1 "`" "`") x))
 
 (defn sql-quote-double-quote [x]
-  (str "\"" x "\""))
+  (map-sql-name #(sql-quote-char %1 "\"" "\"") x))
 
 (defn qualified-name
   "Returns the qualified name of `k`."
   [k] (replace (str k) #"^:" ""))
+
+(defn make-node [& {:as node}]
+  (assert (:op node) (str "Missing :op in make-node: " (pr-str node)))
+  (if-not (empty? (:children node))
+    (reduce (fn [node child]
+              (if (nil? (get node child))
+                (dissoc node child)
+                (update-in node [:children] conj child)))
+            (assoc node :children [])
+            (:children node))
+    node))
 
 (defn parse-column
   "Parse `s` as a column identifier and return a map
@@ -84,11 +107,13 @@
   (if (map? s)
     s (if-let [matches (re-matches *column-regex* (qualified-name s))]
         (let [[_ _ schema _ table name _ as] matches]
-          {:op :column
+          (make-node
+           :op :column
+           :children [:schema :table :name :as]
            :schema (if (and schema table) (keyword schema))
            :table (keyword (or table schema))
            :name (keyword name)
-           :as (keyword as)}))))
+           :as (keyword as))))))
 
 (defn parse-table
   "Parse `s` as a table identifier and return a map
@@ -96,10 +121,12 @@
   [s]
   (if (map? s)
     s (if-let [matches (re-matches *table-regex* (qualified-name s))]
-        {:op :table
+        (make-node
+         :op :table
+         :children [:schema :name :as]
          :schema (keyword (nth matches 2))
          :name (keyword (nth matches 3))
-         :as (keyword (nth matches 5))})))
+         :as (keyword (nth matches 5))))))
 
 (defn attribute?
   "Returns true if `form` is an attribute for a composite type."
@@ -110,14 +137,18 @@
 (defmulti parse-expr class)
 
 (defn- parse-fn-expr [expr]
-  {:op :fn
+  (make-node
+   :op :fn
+   :children [:args]
    :name (keyword (name (first expr)))
-   :args (map parse-expr (rest expr))})
+   :args (map parse-expr (rest expr))))
 
 (defn- parse-attr-expr [expr]
-  {:op :attr
+  (make-node
+   :op :attr
+   :children [:arg]
    :name (keyword (replace (name (first expr)) ".-" ""))
-   :arg (parse-expr (first (rest expr)))})
+   :arg (parse-expr (first (rest expr)))))
 
 (defmethod parse-expr nil [expr]
   {:op :nil})
@@ -148,11 +179,24 @@
 (defmethod parse-expr clojure.core$_STAR_ [expr]
   {:op :constant :form '*})
 
+(defn type-keyword
+  "Returns the type of `x` as a keyword."
+  [x]
+  (cond
+   (number? x) :number
+   (string? x) :string
+   :else :unknown))
+
 (defmethod parse-expr :default [expr]
   (if (or (fn? expr)
           (instance? Stmt expr))
     (first (expr {}))
-    {:op :constant :form expr}))
+    (make-node
+     :op :constant
+     :form expr
+     :literal? true
+     :type (type-keyword expr)
+     :val expr)))
 
 (defn parse-exprs [exprs]
   (map parse-expr (remove nil? exprs)))
@@ -172,10 +216,20 @@
    (and (map? forms) (= :table (:op forms)))
    forms
    (and (map? forms) (:as forms))
-   {:op :table
+   (make-node
+    :op :table
+    :children [:schema :name :as]
     :as (:as forms)
     :schema (:table forms)
-    :name (:name forms)}
+    :name (:name forms))
    (list? forms)
    (parse-expr forms)
    :else (throw (ex-info "Can't parse FROM form." {:forms forms}))))
+
+(comment
+  (parse-expr 1)
+  (require '[clojure.tools.analyzer.jvm :as analyzer])
+  (clojure.pprint/pprint (analyzer/analyze '(= 1 2) (analyzer/empty-env)))
+  (clojure.pprint/pprint (parse-expr '(= 1 2)))
+
+  )

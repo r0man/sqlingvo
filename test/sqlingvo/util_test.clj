@@ -7,15 +7,15 @@
     (do (is (= expected (parse-column table)))
         (is (= expected (parse-column table))))
     :id
-    {:op :column :schema nil :table nil :name :id :as nil}
+    {:op :column :children [:name] :name :id}
     :continents.id
-    {:op :column :schema nil :table :continents :name :id :as nil}
+    {:op :column :children [:table :name] :table :continents :name :id}
     :continents.id/i
-    {:op :column :schema nil :table :continents :name :id :as :i}
+    {:op :column :children [:table :name :as] :table :continents :name :id :as :i}
     :public.continents.id
-    {:op :column :schema :public :table :continents :name :id :as nil}
+    {:op :column :children [:schema :table :name] :schema :public :table :continents :name :id}
     :public.continents.id/i
-    {:op :column :schema :public :table :continents :name :id :as :i})
+    {:op :column :children [:schema :table :name :as] :schema :public :table :continents :name :id :as :i})
   (is (= (parse-column :continents.id)
          (parse-column (parse-column :continents.id)))))
 
@@ -24,13 +24,13 @@
     (do (is (= expected (parse-table table)))
         (is (= expected (parse-table (qualified-name table)))))
     :continents
-    {:op :table :schema nil :name :continents :as nil}
+    {:op :table :children [:name] :name :continents}
     :continents/c
-    {:op :table :schema nil :name :continents :as :c}
+    {:op :table :children [:name :as] :name :continents :as :c}
     :public.continents
-    {:op :table :schema :public :name :continents :as nil}
+    {:op :table :children [:schema :name] :schema :public :name :continents}
     :public.continents/c
-    {:op :table :schema :public :name :continents :as :c})
+    {:op :table :children [:schema :name :as] :schema :public :name :continents :as :c})
   (is (= (parse-table :public.continents/c)
          (parse-table (parse-table :public.continents/c)))))
 
@@ -40,52 +40,101 @@
     *
     {:op :constant :form '*}
     1
-    {:op :constant :form 1}
+    {:op :constant, :form 1, :literal? true, :type :number, :val 1}
     1.0
-    {:op :constant :form 1.0}
+    {:op :constant, :form 1.0, :literal? true, :type :number, :val 1.0}
     "x"
-    {:op :constant :form "x"}
+    {:op :constant, :form "x", :literal? true, :type :string, :val "x"}
     `(= 1 1)
-    {:op :fn :name := :args [{:op :constant :form 1} {:op :constant :form 1}]}
+    {:op :fn
+     :children [:args]
+     :name :=
+     :args [(parse-expr 1) (parse-expr 1)]}
     '(= :name "Europe")
-    {:op :fn :name := :args [{:op :column :schema nil :table nil :name :name :as nil} {:op :constant :form "Europe"}]}
+    {:op :fn
+     :children [:args]
+     :name :=
+     :args [(parse-expr :name) (parse-expr "Europe")]}
     '(max 1 2)
-    {:op :fn :name :max :args [{:op :constant :form 1} {:op :constant :form 2}]}
+    {:op :fn
+     :children [:args]
+     :name :max
+     :args [(parse-expr 1) (parse-expr 2)]}
     '(max 1 (max 2 3))
-    {:op :fn :name :max :args [{:op :constant :form 1}
-                               {:op :fn :name :max
-                                :args [{:op :constant :form 2}{:op :constant :form 3} ]}]}
+    {:op :fn
+     :children [:args]
+     :name :max
+     :args [(parse-expr 1)
+            {:op :fn
+             :children [:args]
+             :name :max
+             :args [(parse-expr 2) (parse-expr 3)]}]}
     '(now)
-    {:op :fn :name :now :args []}
+    {:op :fn
+     :children [:args]
+     :name :now
+     :args []}
     '(in 1 (1 2 3))
     {:op :fn
+     :children [:args]
      :name :in
-     :args [{:op :constant :form 1}
+     :args [(parse-expr 1)
             {:op :list
-             :children [{:op :constant :form 1}
-                        {:op :constant :form 2}
-                        {:op :constant :form 3}] :as nil}]}
-    '((lag :close) over (partition by :company-id order by :date desc))
-    '{:op :expr-list
-      :as nil
+             :children [(parse-expr 1)
+                        (parse-expr 2)
+                        (parse-expr 3)]
+             :as nil}]}
+    (parse-expr '((lag :close) over (partition by :company-id order by :date desc)))
+    '{:op :expr-list,
       :children
-      [{:op :fn
-        :name :lag
-        :args [{:op :column :schema nil :table nil :name :close :as nil}]}
-       {:op :constant :form over}
-       {:op :fn
-        :name :partition
+      ({:op :fn,
+        :children [:args],
+        :name :lag,
         :args
-        [{:op :constant :form by}
-         {:op :column :schema nil :table nil :name :company-id :as nil}
-         {:op :constant :form order}
-         {:op :constant :form by}
-         {:op :column :schema nil :table nil :name :date :as nil}
-         {:op :constant :form desc}]}]}
+        ({:op :column,
+          :children [:name],
+          :name :close})}
+       {:op :constant,
+        :form over,
+        :literal? true,
+        :type :unknown,
+        :val over}
+       {:op :fn,
+        :children [:args],
+        :name :partition,
+        :args
+        ({:op :constant, :form by, :literal? true, :type :unknown, :val by}
+         {:op :column,
+          :children [:name],
+          :name :company-id}
+         {:op :constant,
+          :form order,
+          :literal? true,
+          :type :unknown,
+          :val order}
+         {:op :constant, :form by, :literal? true, :type :unknown, :val by}
+         {:op :column,
+          :children [:name],
+          :name :date,}
+         {:op :constant,
+          :form desc,
+          :literal? true,
+          :type :unknown,
+          :val desc})}),
+      :as nil}
     '(.-val :x)
-    {:op :attr :name :val :arg {:op :column, :schema nil, :table nil, :name :x, :as nil}}
+    {:op :attr
+     :children [:arg]
+     :name :val
+     :arg (parse-expr :x)}
     '(.-val (new-emp))
-    {:op :attr :name :val :arg {:op :fn, :name :new-emp, :args []}}))
+    {:op :attr
+     :children [:arg]
+     :name :val
+     :arg {:op :fn,
+           :children [:args]
+           :name :new-emp
+           :args []}}))
 
 (deftest test-parse-condition-backquote
   (is (= (parse-condition '(in 1 (1 2 3)))
@@ -95,11 +144,18 @@
   (are [from expected]
     (is (= expected (parse-from from)))
     "continents"
-    {:op :table, :schema nil, :name :continents, :as nil}
+    {:op :table
+     :children [:name]
+     :name :continents}
     :continents
-    {:op :table, :schema nil, :name :continents, :as nil}
+    {:op :table
+     :children [:name]
+     :name :continents}
     '(generate_series 0 10)
-    {:op :fn, :name :generate_series, :args [{:op :constant, :form 0} {:op :constant, :form 10}]}))
+    {:op :fn
+     :children [:args]
+     :name :generate_series
+     :args [(parse-expr 0) (parse-expr 10)]}))
 
 (deftest test-qualified-name
   (are [arg expected]
@@ -109,3 +165,26 @@
     "continents" "continents"
     :continents "continents"
     :public.continents "public.continents"))
+
+(deftest test-sql-quote-backtick
+  (are [x expected]
+    (= expected (sql-quote-backtick x))
+    nil ""
+    :continents "`continents`"
+    :continents.name "`continents`.`name`"
+    :continents.* "`continents`.*"))
+
+(deftest test-sql-quote-double-quote
+  (are [x expected]
+    (= expected (sql-quote-double-quote x))
+    nil ""
+    :continents "\"continents\""
+    :continents.name "\"continents\".\"name\""
+    :continents.* "\"continents\".*"))
+
+(deftest test-type-keyword
+  (are [x expected]
+    (= expected (type-keyword x))
+    1 :number
+    "1" :string
+    ))

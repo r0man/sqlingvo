@@ -1,5 +1,6 @@
 (ns sqlingvo.core
   (:require [clojure.string :as str]
+            [clojure.pprint :as pprint]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]
             [sqlingvo.vendor :as vendor])
@@ -78,9 +79,11 @@
 (defn distinct
   "Parse `exprs` and return a DISTINCT clause."
   [exprs & {:keys [on]}]
-  {:op :distinct
+  (make-node
+   :op :distinct
+   :children [:exprs :on]
    :exprs (parse-exprs exprs)
-   :on (parse-exprs on)})
+   :on (parse-exprs on)))
 
 (defn delimiter
   "Returns a fn that adds a DELIMITER clause to an SQL statement."
@@ -99,7 +102,11 @@
         columns (map parse-column columns)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :copy :table table :columns columns})))))
+              (make-node
+               :op :copy
+               :children [:table :columns]
+               :table table
+               :columns columns))))))
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
@@ -107,7 +114,10 @@
   (let [table (parse-table table)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :create-table :table table})))))
+              (make-node
+               :op :create-table
+               :children [:table]
+               :table table))))))
 
 (defn delete
   "Returns a fn that builds a DELETE statement."
@@ -115,7 +125,10 @@
   (let [table (parse-table table)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :delete :table table})))))
+              (make-node
+               :op :delete
+               :children [:table]
+               :table table))))))
 
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
@@ -123,14 +136,23 @@
   (let [tables (map parse-table tables)]
     (Stmt. (fn [stmt]
              ((m-seq (remove nil? body))
-              {:op :drop-table :tables tables})))))
+              (make-node
+               :op :drop-table
+               :children [:tables]
+               :tables tables))))))
 
 (defn except
   "Returns a fn that adds a EXCEPT clause to an SQL statement."
   [stmt-2 & {:keys [all]}]
   (let [stmt-2 (ast stmt-2)]
     (fn [stmt-1]
-      [nil (update-in stmt-1 [:set] conj {:op :except :stmt stmt-2 :all all})])))
+      [nil (update-in
+            stmt-1 [:set] conj
+            (make-node
+             :op :except
+             :children [:stmt :all]
+             :stmt stmt-2
+             :all all))])))
 
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement."
@@ -170,24 +192,36 @@
         columns (map parse-column columns)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :insert :table table :columns columns})))))
+              (make-node
+               :op :insert
+               :children [:table :columns]
+               :table table
+               :columns columns))))))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
   [stmt-2 & {:keys [all]}]
   (let [stmt-2 (ast stmt-2)]
     (fn [stmt-1]
-      [nil (update-in stmt-1 [:set] conj {:op :intersect :stmt stmt-2 :all all})])))
+      [nil (update-in
+            stmt-1 [:set] conj
+            (make-node
+             :op :intersect
+             :children [:stmt :all]
+             :stmt stmt-2
+             :all all))])))
 
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from condition & {:keys [type outer pk]}]
   (concat-in
    [:joins]
-   [(let [join {:op :join
-                :from (parse-from from)
+   [(let [join (make-node
+                :op :join
+                :children [:outer :type :from]
+                :outer outer
                 :type type
-                :outer outer}]
+                :from (parse-from from))]
       (cond
        (and (sequential? condition)
             (= :on (keyword (name (first condition)))))
@@ -243,8 +277,10 @@
   (let [view (parse-table view)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :refresh-materialized-view
-               :view view})))))
+              (make-node
+               :op :refresh-materialized-view
+               :children [:view]
+               :view view))))))
 
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
@@ -266,11 +302,13 @@
   [exprs & body]
   (let [[_ select]
         ((m-seq (remove nil? body))
-         {:op :select
+         (make-node
+          :op :select
+          :children [:distinct :exprs]
           :distinct (if (= :distinct (:op exprs))
                       exprs)
           :exprs (if (sequential? exprs)
-                   (parse-exprs exprs))})]
+                   (parse-exprs exprs))))]
     (Stmt. (fn [stmt]
              (case (:op stmt)
                nil [select select]
@@ -287,14 +325,23 @@
   (let [tables (map parse-table tables)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :truncate :tables tables})))))
+              (make-node
+               :op :truncate
+               :children [:tables]
+               :tables tables))))))
 
 (defn union
   "Returns a fn that adds a UNION clause to an SQL statement."
   [stmt-2 & {:keys [all]}]
   (let [stmt-2 (ast stmt-2)]
     (fn [stmt-1]
-      [nil (update-in stmt-1 [:set] conj {:op :union :stmt stmt-2 :all all})])))
+      [nil (update-in
+            stmt-1 [:set] conj
+            (make-node
+             :op :union
+             :children [:stmt :all]
+             :stmt stmt-2
+             :all all))])))
 
 (defn update
   "Returns a fn that builds a UPDATE statement."
@@ -304,10 +351,12 @@
         row (if (map? row) row)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
-              {:op :update
+              (make-node
+               :op :update
+               :children [:table :exprs :row]
                :table table
                :exprs exprs
-               :row row})))))
+               :row row))))))
 
 (defn values
   "Returns a fn that adds a VALUES clause to an SQL statement."
@@ -326,12 +375,17 @@
            (nil? (:condition (:where stmt))))
        [nil (assoc stmt :where condition)]
        :else
-       [nil (assoc-in stmt [:where :condition]
-                      {:op :condition
-                       :condition {:op :fn
-                                   :name combine
-                                   :args [(:condition (:where stmt))
-                                          (:condition condition)]}})]))))
+       [nil (assoc-in
+             stmt [:where :condition]
+             (make-node
+              :op :condition
+              :children [:condition]
+              :condition (make-node
+                          :op :fn
+                          :children [:name :args]
+                          :name combine
+                          :args [(:condition (:where stmt))
+                                 (:condition condition)])))]))))
 
 (defn with
   "Returns a fn that builds a WITH (common table expressions) query."
@@ -343,10 +397,20 @@
                       (partition 2 bindings))
         query (ast query)]
     (Stmt. (fn [stmt]
-             [nil
-              {:op :with
-               :bindings bindings
-               :query query}]))))
+             [nil (make-node
+                   :op :with
+                   :children [:bindings :query]
+                   :bindings bindings
+                   :query query)]))))
+
+(defn pprint
+  "Pretty the print the AST of `stmt` to the optional output writer."
+  [stmt & [writer]]
+  (let [obj (if (instance? Stmt stmt)
+              (ast stmt) stmt)]
+    (if writer
+      (pprint/pprint obj writer)
+      (pprint/pprint obj))))
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."

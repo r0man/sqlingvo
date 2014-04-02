@@ -16,8 +16,8 @@
 
 (deftest test-from
   (let [[from stmt] ((from :continents) {})]
-    (is (= [{:op :table, :schema nil, :name :continents, :as nil}] from))
-    (is (= {:from [{:op :table, :schema nil, :name :continents, :as nil}]} stmt))))
+    (is (= [{:op :table :children [:name] :name :continents}] from))
+    (is (= {:from [{:op :table, :children [:name] :name :continents}]} stmt))))
 
 ;; COMPOSE
 
@@ -39,15 +39,15 @@
   (are [args expected]
     (is (= expected (apply as args)))
     [:id :other]
-    {:op :column :schema nil :table nil :name :id :as :other}
+    (assoc (parse-expr :id) :as :other)
     [:continents [:id :name]]
-    [{:op :column :schema nil :table :continents :name :id :as :continents-id}
-     {:op :column :schema nil :table :continents :name :name :as :continents-name}]
+    [(assoc (parse-expr :continents.id) :as :continents-id)
+     (assoc (parse-expr :continents.name) :as :continents-name)]
     [:public.continents [:id :name]]
-    [{:op :column :schema :public :table :continents :name :id :as :public-continents-id}
-     {:op :column :schema :public :table :continents :name :name :as :public-continents-name}]
+    [(assoc (parse-expr :public.continents.id) :as :public-continents-id)
+     (assoc (parse-expr :public.continents.name) :as :public-continents-name)]
     ['(count *) :count]
-    {:as :count :op :fn :name :count :args [{:op :constant :form '*}]}))
+    (assoc (parse-expr '(count *)) :as :count)))
 
 ;; CAST
 
@@ -258,13 +258,15 @@
   ["DROP TABLE \"continents\""]
   (drop-table [:continents])
   (is (= :drop-table (:op stmt)))
-  (is (= [(parse-table :continents)] (:tables stmt))))
+  (is (= [(parse-table :continents)] (:tables stmt)))
+  (is (= [:tables] (:children stmt))))
 
 (deftest-stmt test-drop-continents-and-countries
   ["DROP TABLE \"continents\", \"countries\""]
   (drop-table [:continents :countries])
   (is (= :drop-table (:op stmt)))
-  (is (= (map parse-table [:continents :countries]) (:tables stmt))))
+  (is (= (map parse-table [:continents :countries]) (:tables stmt)))
+  (is (= [:tables] (:children stmt))))
 
 (deftest-stmt test-drop-continents-countries-if-exists-restrict
   ["DROP TABLE IF EXISTS \"continents\", \"countries\" RESTRICT"]
@@ -274,17 +276,22 @@
   (is (= :drop-table (:op stmt)))
   (is (= {:op :if-exists} (:if-exists stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
-  (is (= {:op :restrict} (:restrict stmt))))
+  (is (= {:op :restrict} (:restrict stmt)))
+  (is (= [:tables] (:children stmt))))
 
 (deftest-stmt test-drop-continents-if-exists
   ["DROP TABLE IF EXISTS \"continents\""]
   (drop-table [:continents]
-    (if-exists true)))
+    (if-exists true))
+  (is (= (map parse-table [:continents]) (:tables stmt)))
+  (is (= [:tables] (:children stmt))))
 
 (deftest-stmt test-drop-continents-if-exists-false
   ["DROP TABLE \"continents\""]
   (drop-table [:continents]
-    (if-exists false)))
+    (if-exists false))
+  (is (= (map parse-table [:continents]) (:tables stmt)))
+  (is (= [:tables] (:children stmt))))
 
 ;; INSERT
 
@@ -1109,14 +1116,14 @@
   (truncate [:continents])
   (is (= :truncate (:op stmt)))
   (is (= [(parse-table :continents)] (:tables stmt)))
-  (is (nil? (:children stmt))))
+  (is (= [:tables] (:children stmt))))
 
 (deftest-stmt test-truncate-continents-and-countries
   ["TRUNCATE TABLE \"continents\", \"countries\""]
   (truncate [:continents :countries])
   (is (= :truncate (:op stmt)))
   (is (= (map parse-table [:continents :countries]) (:tables stmt)))
-  (is (nil? (:children stmt))))
+  (is (= [:tables] (:children stmt))))
 
 (deftest-stmt test-truncate-continents-restart-restrict
   ["TRUNCATE TABLE \"continents\" RESTART IDENTITY RESTRICT"]
