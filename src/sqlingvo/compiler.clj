@@ -35,8 +35,14 @@
 
 (defn compile-alias
   "Compile a SQL alias expression."
-  [db alias]
-  (if alias (str " AS " (sql-quote db alias))))
+  ([db alias]
+   (compile-alias db alias true))
+  ([db alias include-as?]
+   (when alias
+     (if include-as?
+       (str " AS " (sql-quote db alias))
+       (str " " (sql-quote db alias))))))
+
 
 (defmulti compile-sql (fn [db ast] (:op ast)))
 
@@ -387,7 +393,7 @@
 
 (defmethod compile-sql :table [db {:keys [as schema name]}]
   [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name])))
-        (compile-alias db as))])
+        (compile-alias db as false))])
 
 (defmethod compile-sql :refresh-materialized-view [db {:keys [view]}]
   (concat-sql "REFRESH MATERIALIZED VIEW " (compile-sql db view)))

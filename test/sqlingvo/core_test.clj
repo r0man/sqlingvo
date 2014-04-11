@@ -366,7 +366,7 @@
 (deftest-stmt test-insert-airports
   [(str "INSERT INTO \"airports\" (\"country_id\", \"name\", \"gps_code\", \"iata_code\", \"wikipedia_url\", \"location\") "
         "SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
-        "FROM \"natural_earth\".\"airports\" AS \"a\" JOIN \"countries\" AS \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
+        "FROM \"natural_earth\".\"airports\" \"a\" JOIN \"countries\" \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
         "LEFT JOIN \"airports\" ON (\"airports\".\"iata_code\" = \"a\".\"iata_code\") "
         "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NULL))")]
   (insert :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
@@ -892,7 +892,7 @@
     (is (= (parse-expr '(= :countries.continent-id :continents.id)) (:on join)))))
 
 (deftest-stmt test-select-join-on-columns-alias
-  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+  ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
   (select [*]
     (from (as :countries :c))
     (join :continents '(on (= :continents.id :c.continent-id))))
@@ -931,13 +931,13 @@
     (is (= (map parse-expr [:id :created-at]) (:using join)))))
 
 (deftest-stmt test-select-join-alias
-  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+  ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
   (select [*]
     (from (as :countries :c))
     (join :continents '(on (= :continents.id :c.continent-id)))))
 
 (deftest-stmt test-select-join-syntax-quote
-  ["SELECT * FROM \"countries\" AS \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+  ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
   (select [*]
     (from (as :countries :c))
     (join :continents `(on (= :continents.id :c.continent-id)))))
@@ -1231,7 +1231,7 @@
 (deftest-stmt test-update-airports
   [(str "UPDATE \"airports\" SET \"country_id\" = \"u\".\"id\", \"gps_code\" = \"u\".\"gps_code\", \"wikipedia_url\" = \"u\".\"wikipedia\", \"location\" = \"u\".\"geom\" "
         "FROM (SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
-        "FROM \"natural_earth\".\"airports\" AS \"a\" JOIN \"countries\" AS \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
+        "FROM \"natural_earth\".\"airports\" \"a\" JOIN \"countries\" \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
         "LEFT JOIN \"airports\" ON (lower(\"airports\".\"iata_code\") = lower(\"a\".\"iata_code\")) "
         "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NOT NULL))) AS \"u\" "
         "WHERE (\"airports\".\"iata_code\" = \"u\".\"iata_code\")")]
@@ -1288,7 +1288,7 @@
     (where '(= :mid 12))))
 
 (deftest-stmt test-cast-as-document-2
-  ["SELECT CAST((\"m\".\"title\" || ? || \"m\".\"author\" || ? || \"m\".\"abstract\" || ? || \"d\".\"body\") AS document) FROM \"messages\" AS \"m\", \"docs\" AS \"d\" WHERE ((\"mid\" = \"did\") and (\"mid\" = 12))" " " " " " "]
+  ["SELECT CAST((\"m\".\"title\" || ? || \"m\".\"author\" || ? || \"m\".\"abstract\" || ? || \"d\".\"body\") AS document) FROM \"messages\" \"m\", \"docs\" \"d\" WHERE ((\"mid\" = \"did\") and (\"mid\" = 12))" " " " " " "]
   (select ['(cast (:|| :m.title " " :m.author " " :m.abstract " " :d.body) :document)]
     (from (as :messages :m) (as :docs :d))
     (where '(and (= :mid :did)
