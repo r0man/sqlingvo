@@ -88,7 +88,7 @@
     {:op :table :schema :public :name :continents}
     ["\"public\".\"continents\""]
     {:op :table :schema :public :name :continents :as :c}
-    ["\"public\".\"continents\" AS \"c\""]))
+    ["\"public\".\"continents\" \"c\""]))
 
 (deftest test-wrap-stmt
   (are [stmt expected]
