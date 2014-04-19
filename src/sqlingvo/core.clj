@@ -96,7 +96,18 @@
   (set-val :encoding encoding))
 
 (defn copy
-  "Returns a fn that builds a COPY statement."
+  "Returns a fn that builds a COPY statement.
+
+Examples:
+
+  (copy :country []
+    (from :stdin))
+  ;=> [\"COPY \\\"country\\\" FROM STDIN\"]
+
+  (copy :country []
+    (from \"/usr1/proj/bray/sql/country_data\"))
+  ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]
+"
   [table columns & body]
   (let [table (parse-table table)
         columns (map parse-column columns)]
@@ -194,6 +205,14 @@ Examples:
   (select [*]
     (from (as (select [1 2 3]) :x)))
   ;=> [\"SELECT * FROM (SELECT 1, 2, 3) AS \\\"x\\\"\"]
+
+  (copy :country []
+    (from :stdin))
+  ;=> [\"COPY \\\"country\\\" FROM STDIN\"]
+
+  (copy :country []
+    (from \"/usr1/proj/bray/sql/country_data\"))
+  ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]
 "
   [& from]
   (fn [stmt]
