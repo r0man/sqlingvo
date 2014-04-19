@@ -141,7 +141,17 @@ Examples:
                :table table))))))
 
 (defn drop-table
-  "Returns a fn that builds a DROP TABLE statement."
+  "Returns a fn that builds a DROP TABLE statement.
+
+Examples:
+
+  (drop-table [:continents])
+  ;=> [\"DROP TABLE TABLE \\\"continents\\\"\"]
+
+  (drop-table [:continents :countries])
+  ;=> [\"DROP TABLE TABLE \\\"continents\\\", \\\"countries\\\"\"]
+
+"
   [tables & body]
   (let [tables (map parse-table tables)]
     (Stmt. (fn [stmt]
