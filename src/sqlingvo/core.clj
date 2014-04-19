@@ -449,7 +449,8 @@ Examples:
                    :query query)]))))
 
 (defn pprint
-  "Pretty the print the AST of `stmt` to the optional output writer."
+  "Pretty print the abstract syntax tree of `stmt` to standard output
+  or the optional output writer."
   [stmt & [writer]]
   (let [obj (if (instance? Stmt stmt)
               (ast stmt) stmt)]
