@@ -120,7 +120,17 @@
                :table table))))))
 
 (defn delete
-  "Returns a fn that builds a DELETE statement."
+  "Returns a fn that builds a DELETE statement.
+
+Examples:
+
+  (delete :continents)
+  ;=> [\"DELETE FROM \\\"continents\\\"\"]
+
+  (delete :continents
+    (where '(= :id 1)))
+  ;=> [\"DELETE FROM \\\"continents\\\" WHERE (\\\"id\\\" = 1)\"]
+"
   [table & body]
   (let [table (parse-table table)]
     (Stmt. (fn [_]
@@ -129,6 +139,9 @@
                :op :delete
                :children [:table]
                :table table))))))
+
+(delete :continents
+  (where '(= :id 1)))
 
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
