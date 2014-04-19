@@ -364,7 +364,6 @@ Examples:
 
   (truncate [:continents :countries])
   ;=> [\"TRUNCATE TABLE \\\"continents\\\", \\\"countries\\\"\"]
-
 "
   [tables & body]
   (let [tables (map parse-table tables)]
@@ -389,7 +388,15 @@ Examples:
              :all all))])))
 
 (defn update
-  "Returns a fn that builds a UPDATE statement."
+  "Returns a fn that builds a UPDATE statement.
+
+Examples:
+
+  (update :films {:kind \"Dramatic\"}
+    (where '(= :kind \"Drama\")))
+  ;=> [\"UPDATE \\\"films\\\" SET \\\"kind\\\" = ? WHERE (\\\"kind\\\" = ?)\"
+  ;=>  \"Dramatic\" \"Drama\"]
+"
   [table row & body]
   (let [table (parse-table table)
         exprs (if (sequential? row) (parse-exprs row))
