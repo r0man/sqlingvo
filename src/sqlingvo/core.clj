@@ -140,9 +140,6 @@ Examples:
                :children [:table]
                :table table))))))
 
-(delete :continents
-  (where '(= :id 1)))
-
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement."
   [tables & body]
