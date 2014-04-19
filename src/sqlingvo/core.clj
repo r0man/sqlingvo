@@ -298,7 +298,22 @@
   (concat-in [:returning] (parse-exprs exprs)))
 
 (defn select
-  "Returns a fn that builds a SELECT statement."
+  "Returns a fn that builds a SELECT statement.
+
+Examples:
+
+  (select [1])
+  ;=> [\"SELECT 1\"]
+
+  (select [:*]
+    (from :continents))
+  ;=> [\"SELECT * FROM \\\"continents\\\"\"]
+
+  (select [:id :name]
+    (from :continents))
+  ;=> [\"SELECT \\\"id\\\", \\\"name\\\" FROM \\\"continents\\\"\"]
+
+"
   [exprs & body]
   (let [[_ select]
         ((m-seq (remove nil? body))
