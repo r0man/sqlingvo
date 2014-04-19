@@ -335,7 +335,17 @@ Examples:
   (conditional-clause :temporary condition))
 
 (defn truncate
-  "Returns a fn that builds a TRUNCATE statement."
+  "Returns a fn that builds a TRUNCATE statement.
+
+Examples:
+
+  (truncate [:continents])
+  ;=> [\"TRUNCATE TABLE \\\"continents\\\"\"]
+
+  (truncate [:continents :countries])
+  ;=> [\"TRUNCATE TABLE \\\"continents\\\", \\\"countries\\\"\"]
+
+"
   [tables & body]
   (let [tables (map parse-table tables)]
     (Stmt. (fn [_]
