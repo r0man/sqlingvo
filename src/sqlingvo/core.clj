@@ -175,7 +175,26 @@ Examples:
              :all all))])))
 
 (defn from
-  "Returns a fn that adds a FROM clause to an SQL statement."
+  "Returns a fn that adds a FROM clause to an SQL statement. The
+  `from` forms can be one or more tables, :stdin, a filename or an
+  other sub query.
+
+Examples:
+
+  (select [:*]
+    (from :continents))
+  ;=> [\"SELECT * FROM \\\"continents\\\"\"]
+
+  (select [:*]
+    (from :continents :countries)
+    (where '(= :continents.id :continent-id)))
+  ;=> [\"SELECT * FROM \\\"continents\\\", \\\"countries\\\"
+  ;=>  WHERE (\\\"continents\\\".\\\"id\\\" = \\\"continent_id\\\")\"]
+
+  (select [*]
+    (from (as (select [1 2 3]) :x)))
+  ;=> [\"SELECT * FROM (SELECT 1, 2, 3) AS \\\"x\\\"\"]
+"
   [& from]
   (fn [stmt]
     (let [from (case (:op stmt)
