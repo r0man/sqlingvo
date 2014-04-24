@@ -10,6 +10,13 @@
 (defprotocol Quoteable
   (sql-quote [vendor x]))
 
+(defn vendor?
+  "Returns true if `x` satisfies as vendor, otherwise false."
+  [x]
+  (and (satisfies? Keywordable x)
+       (satisfies? Nameable x)
+       (satisfies? Quoteable x)))
+
 (defmacro defvendor [name doc & {:as opts}]
   `(defrecord ~name []
      Keywordable
