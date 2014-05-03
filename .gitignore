@@ -10,3 +10,5 @@ pom.xml
 .lein-plugins
 /pom.xml.asc
 /.nrepl-port
+/.cask/
+/dist/
