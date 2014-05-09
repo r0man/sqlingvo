@@ -1412,9 +1412,18 @@
   (select [(as (select ['(count :*)] (from :continents)) :continents)
            (as (select ['(count :*)] (from :countries)) :countries)]))
 
-
 (deftest-stmt test-refresh-materialized-view
   ["REFRESH MATERIALIZED VIEW \"continent_stats\""]
   (refresh-materialized-view :continent-stats)
   (is (= :refresh-materialized-view (:op stmt)))
   (is (= (parse-table :continent-stats) (:view stmt))))
+
+(deftest-stmt test-case
+  [(str "SELECT \"a\", CASE WHEN (\"a\" = 1) THEN ?"
+        " WHEN (\"a\" = 2) THEN ? "
+        "ELSE ? END FROM \"test\"")
+   "one" "two" "other"]
+  (select [:a '(case (= :a 1) "one"
+                     (= :a 2) "two"
+                     "other")]
+    (from :test)))

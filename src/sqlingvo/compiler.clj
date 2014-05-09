@@ -36,12 +36,12 @@
 (defn compile-alias
   "Compile a SQL alias expression."
   ([db alias]
-   (compile-alias db alias true))
+     (compile-alias db alias true))
   ([db alias include-as?]
-   (when alias
-     (if include-as?
-       (str " AS " (sql-quote db alias))
-       (str " " (sql-quote db alias))))))
+     (when alias
+       (if include-as?
+         (str " AS " (sql-quote db alias))
+         (str " " (sql-quote db alias))))))
 
 
 (defmulti compile-sql (fn [db ast] (:op ast)))
@@ -145,6 +145,17 @@
 (defmulti compile-fn
   "Compile a SQL function node into a SQL statement."
   (fn [db node] (keyword (:name node))))
+
+(defmethod compile-fn :case [db node]
+  (let [parts (partition 2 2 nil (:args node))]
+    (apply concat-sql "CASE"
+           (concat (for [[test then] (filter #(= 2 (count %1)) parts)]
+                     (concat-sql " WHEN "
+                                 (compile-sql db test) " THEN "
+                                 (compile-sql db then)))
+                   (for [[else] (filter #(= 1 (count %1)) parts)]
+                     (concat-sql " ELSE " (compile-sql db else)))
+                   [" END"]))))
 
 (defmethod compile-fn :cast [db {[expr type] :args}]
   (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"))
