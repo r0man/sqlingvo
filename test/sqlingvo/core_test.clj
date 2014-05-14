@@ -1426,4 +1426,14 @@
   (select [:a '(case (= :a 1) "one"
                      (= :a 2) "two"
                      "other")]
+          (from :test)))
+
+(deftest-stmt test-case-as-alias
+  [(str "SELECT \"a\", CASE WHEN (\"a\" = 1) THEN ?"
+        " WHEN (\"a\" = 2) THEN ? "
+        "ELSE ? END AS \"c\" FROM \"test\"")
+   "one" "two" "other"]
+  (select [:a (as '(case (= :a 1) "one"
+                         (= :a 2) "two"
+                         "other") :c)]
     (from :test)))

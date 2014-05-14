@@ -148,14 +148,15 @@
 
 (defmethod compile-fn :case [db node]
   (let [parts (partition 2 2 nil (:args node))]
-    (apply concat-sql "CASE"
-           (concat (for [[test then] (filter #(= 2 (count %1)) parts)]
-                     (concat-sql " WHEN "
-                                 (compile-sql db test) " THEN "
-                                 (compile-sql db then)))
-                   (for [[else] (filter #(= 1 (count %1)) parts)]
-                     (concat-sql " ELSE " (compile-sql db else)))
-                   [" END"]))))
+    (concat-sql (apply concat-sql "CASE"
+                    (concat (for [[test then] (filter #(= 2 (count %1)) parts)]
+                              (concat-sql " WHEN "
+                                          (compile-sql db test) " THEN "
+                                          (compile-sql db then)))
+                            (for [[else] (filter #(= 1 (count %1)) parts)]
+                              (concat-sql " ELSE " (compile-sql db else)))
+                            [" END"]))
+                (compile-alias db (:as node)))))
 
 (defmethod compile-fn :cast [db {[expr type] :args}]
   (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"))
