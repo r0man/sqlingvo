@@ -168,6 +168,10 @@
 (defmethod compile-fn :is-not-null [db {:keys [args]}]
   (concat-sql "(" (compile-expr db (first args)) " IS NOT NULL)"))
 
+(defmethod compile-fn :not-like [db {:keys [args]}]
+  (let [[string pattern] (compile-exprs db args)]
+    (concat-sql "(" string " NOT LIKE " pattern ")" )))
+
 (defmethod compile-fn :range [db {:keys [args]}]
   (concat-sql "(" (join-sql ", " (compile-exprs db args)) ")"))
 
