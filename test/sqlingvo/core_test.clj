@@ -1299,6 +1299,14 @@
   ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
   (select ['(|| [1 2] [3 4] [5 6])]))
 
+(deftest-stmt test-select-array-contains
+  ["SELECT (ARRAY[1, 2] @> ARRAY[3, 4])"]
+  (select [`(~(keyword "@>") [1 2] [3 4])]))
+
+(deftest-stmt test-select-array-contained
+  ["SELECT (ARRAY[1, 2] <@ ARRAY[3, 4])"]
+  (select [`(~(keyword "<@") [1 2] [3 4])]))
+
 ;; POSTGRESQL FULLTEXT
 
 (deftest-stmt test-cast-as-document-1
