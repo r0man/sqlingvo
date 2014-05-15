@@ -478,6 +478,26 @@
   (is (= [(parse-expr 1)] (:exprs stmt)))
   (is (= (parse-condition '(< 1 2 3)) (:where stmt))))
 
+(deftest-stmt test-select-like
+  ["SELECT * FROM \"films\" WHERE (\"title\" like ?)" "%Zombie%"]
+  (select [*]
+    (from :films)
+    (where '(like :title "%Zombie%")))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :films)] (:from stmt)))
+  (is (= (parse-condition '(like :title "%Zombie%")) (:where stmt))))
+
+(deftest-stmt test-select-not-like
+  ["SELECT * FROM \"films\" WHERE (\"title\" NOT LIKE ?)" "%Zombie%"]
+  (select [*]
+    (from :films)
+    (where '(not-like :title "%Zombie%")))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-from :films)] (:from stmt)))
+  (is (= (parse-condition '(not-like :title "%Zombie%")) (:where stmt))))
+
 (deftest-stmt test-select-continents
   ["SELECT * FROM \"continents\""]
   (select [*]
@@ -1278,6 +1298,14 @@
 (deftest-stmt test-array-concat
   ["SELECT (ARRAY[1, 2] || ARRAY[3, 4] || ARRAY[5, 6])"]
   (select ['(|| [1 2] [3 4] [5 6])]))
+
+(deftest-stmt test-select-array-contains
+  ["SELECT (ARRAY[1, 2] @> ARRAY[3, 4])"]
+  (select [`(~(keyword "@>") [1 2] [3 4])]))
+
+(deftest-stmt test-select-array-contained
+  ["SELECT (ARRAY[1, 2] <@ ARRAY[3, 4])"]
+  (select [`(~(keyword "<@") [1 2] [3 4])]))
 
 ;; POSTGRESQL FULLTEXT
 
