@@ -1436,4 +1436,13 @@
   (select [:a (as '(case (= :a 1) "one"
                          (= :a 2) "two"
                          "other") :c)]
-    (from :test)))
+          (from :test)))
+
+(deftest-stmt test-full-outer-join
+  [(str "SELECT \"a\" FROM \"test1\""
+        " FULL OUTER JOIN \"test2\" ON (\"test1\".\"b\" = \"test2\".\"b\")")]
+  (select [:a]
+          (from :test1)
+          (join :test2
+                '(on (= :test1.b :test2.b))
+                :type :full :outer true)))
