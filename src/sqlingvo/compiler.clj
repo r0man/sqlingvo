@@ -373,6 +373,7 @@
      :inner "INNER "
      :left "LEFT "
      :right "RIGHT "
+     :full "FULL "
      nil "")
    (if outer "OUTER ")
    "JOIN " (compile-from db from)
