@@ -1,4 +1,6 @@
-# SQLingvo [![Build Status](https://travis-ci.org/r0man/sqlingvo.png)](https://travis-ci.org/r0man/sqlingvo) [![Dependencies Status](http://jarkeeper.com/r0man/sqlingvo/status.png)](http://jarkeeper.com/r0man/sqlingvo)
+# SQLingvo
+  [![Build Status](https://travis-ci.org/r0man/sqlingvo.png)](https://travis-ci.org/r0man/sqlingvo)
+  [![Dependencies Status](http://jarkeeper.com/r0man/sqlingvo/status.png)](http://jarkeeper.com/r0man/sqlingvo)
 
 A SQL DSL in Clojure.
 
