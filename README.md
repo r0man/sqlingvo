@@ -56,7 +56,6 @@ Define a new database table.
 	   (column :code :char :length 5 :primary-key? true)
 	   (column :title :varchar :length 40 :not-null? true)
 	   (column :did :integer :not-null? true)
-
 	   (column :date-prod :date)
 	   (column :kind :varchar :length 10)
 	   (column :len :interval)
