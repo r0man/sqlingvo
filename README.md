@@ -19,9 +19,9 @@ Via Clojars: https://clojars.org/sqlingvo
 (use 'sqlingvo.core)
 ```
 
-## Compiling to SQL
+### Compiling to SQL
 
-### [Copy](http://www.postgresql.org/docs/9.3/static/sql-copy.html)
+#### [Copy](http://www.postgresql.org/docs/9.3/static/sql-copy.html)
 
 Copy from standard input.
 
@@ -47,7 +47,7 @@ Copy data from a file into the country table with columns in the given order.
 ;=> ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
 ```
 
-### [Create Table](http://www.postgresql.org/docs/9.3/static/sql-createtable.html)
+#### [Create Table](http://www.postgresql.org/docs/9.3/static/sql-createtable.html)
 
 Define a new database table.
 
@@ -74,7 +74,7 @@ Define a new database table.
 ;=>  "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())"]
 ```
 
-### [Delete](http://www.postgresql.org/docs/9.3/static/sql-delete.html)
+#### [Delete](http://www.postgresql.org/docs/9.3/static/sql-delete.html)
 
 Clear the table films.
 
@@ -99,7 +99,7 @@ Delete completed tasks, returning full details of the deleted rows.
 ;=> ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
 ```
 
-### [Insert](http://www.postgresql.org/docs/9.3/static/sql-insert.html)
+#### [Insert](http://www.postgresql.org/docs/9.3/static/sql-insert.html)
 
 Insert a single row into table films.
 
@@ -138,7 +138,7 @@ Insert some rows into table films from a table tmp_films with the same column la
 ;=> ["INSERT INTO \"films\" (SELECT * FROM \"tmp_films\" WHERE (\"date_prod\" < ?))" "2004-05-07"]
 ```
 
-### [Select](http://www.postgresql.org/docs/9.3/static/sql-select.html)
+#### [Select](http://www.postgresql.org/docs/9.3/static/sql-select.html)
 
 Select all films.
 
@@ -165,7 +165,7 @@ Retrieve the most recent weather report for each location.
 ;=> ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
 ```
 
-### [Update](http://www.postgresql.org/docs/9.3/static/sql-update.html)
+#### [Update](http://www.postgresql.org/docs/9.3/static/sql-update.html)
 
 Change the word Drama to Dramatic in the column kind of the table films.
 
@@ -175,7 +175,7 @@ Change the word Drama to Dramatic in the column kind of the table films.
 ;=> ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
 ```
 
-### [Sorting Rows](http://www.postgresql.org/docs/9.3/static/queries-order.html)
+#### [Sorting Rows](http://www.postgresql.org/docs/9.3/static/queries-order.html)
 
 The sort expression(s) can be any expression that would be valid in the query's select list.
 
@@ -205,7 +205,7 @@ or the number of an output column.
 ;=> ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
 ```
 
-### [With Queries (Common Table Expressions)](http://www.postgresql.org/docs/9.3/static/queries-with.html)
+#### [With Queries (Common Table Expressions)](http://www.postgresql.org/docs/9.3/static/queries-with.html)
 
 ``` clj
 (sql (with [:regional-sales
