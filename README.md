@@ -15,6 +15,10 @@ Via Clojars: https://clojars.org/sqlingvo
 
 ## Usage
 
+SQLingvo shadows some Clojure core functions. If you use/require all
+of `sqlingvo.core` you have to exclude the `distinct` and `group-by`
+functions.
+
 ``` clj
 (refer-clojure :exclude '[distinct group-by])
 (use 'sqlingvo.core)
