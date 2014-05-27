@@ -2,9 +2,7 @@
 #+author: Roman Scherer
 #+LANGUAGE: en
 #+STYLE: <link rel="stylesheet" type="text/css" href="http://thenybble.de/css/main.css"/>
-#+STYLE: <link rel="stylesheet" type="text/css" href="css/font-lock.css"/>
-
-* SQLingvo
+* DDL
 ** [[http://www.postgresql.org/docs/9.3/static/sql-copy.html][Copy]]
 
    Copy from standard input.
@@ -28,7 +26,6 @@
          (from "/usr1/proj/bray/sql/country_data")))
 #+END_SRC
 
-
 ** [[http://www.postgresql.org/docs/9.3/static/sql-createtable.html][Create table]]
 
    Define a new database table.
@@ -45,6 +42,7 @@
          (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
 #+END_SRC
 
+* SQL
 ** [[http://www.postgresql.org/docs/9.3/static/sql-delete.html][Delete]]
 
    Clear the table films.
@@ -101,3 +99,133 @@
            (from :tmp-films)
            (where '(< :date_prod "2004-05-07")))))
 #+END_SRC
+
+** [[http://www.postgresql.org/docs/9.3/static/sql-select.html][ Select]]
+
+   Select all films.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (select [*] (from :films)))
+#+END_SRC
+
+   Select all Comedy films.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (select [*]
+         (from :films)
+         (where '(= :kind "Comedy"))))
+#+END_SRC
+
+   Retrieve the most recent weather report for each location.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (select (distinct [:location :time :report] :on [:location])
+         (from :weather-reports)
+         (order-by :location (desc :time))))
+#+END_SRC
+
+** [[http://www.postgresql.org/docs/9.3/static/sql-update.html][Update]]
+
+   Change the word Drama to Dramatic in the column kind of the table films.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (update :films {:kind "Dramatic"}
+         (where '(= :kind "Drama"))))
+#+END_SRC
+
+** [[http://www.postgresql.org/docs/9.3/static/queries-order.html][Sorting Rows]]
+
+   The sort expression(s) can be any expression that would be valid in the query's select list.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (select [:a :b]
+         (from :table-1)
+         (order-by '(+ :a :b) :c)))
+#+END_SRC
+
+   A sort expression can also be the column label
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (select [(as '(+ :a :b) :sum) :c]
+         (from :table-1)
+         (order-by :sum)))
+#+END_SRC
+
+   or the number of an output column.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (select [:a '(max :b)]
+         (from :table-1)
+         (group-by :a)
+         (order-by 1)))
+#+END_SRC
+
+** [[http://www.postgresql.org/docs/9.3/static/queries-with.html][With Queries or Common Table Expressions)]]
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (with [:regional-sales
+              (select [:region (as '(sum :amount) :total-sales)]
+                (from :orders)
+                (group-by :region))
+              :top-regions
+              (select [:region]
+                (from :regional-sales)
+                (where `(> :total-sales
+                           ~(select ['(/ (sum :total-sales) 10)]
+                              (from :regional-sales)))))]
+             (select [:region :product
+                      (as '(sum :quantity) :product-units)
+                      (as '(sum :amount) :product-sales)]
+               (from :orders)
+               (where `(in :region ~(select [:region]
+                                      (from :top-regions))))
+               (group-by :region :product))))
+#+END_SRC
+
+* Database Vendors
+
+  Database vendors use different characters to quote identifiers in SQL
+  statements. The `sql` function uses the default PostgreSQL quoting
+  strategy if called with one argument.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (select [:continents.id] (from :continents)))
+#+END_SRC
+
+  The quoting strategy can be changed by passing a vendor specification
+  as the first, and the statement as the second argument. The following
+  example uses a quoting strategy for MySQL.
+
+#+BEGIN_SRC clojure cider :exports both
+  (require '[sqlingvo.vendor :as v])
+  (sql (v/->mysql) (select [:continents.id] (from :continents)))
+#+END_SRC
+
+* Tips & Tricks
+
+  For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
+
+* Emacs
+
+  For better indentation in clojure-mode add this to your Emacs config.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook
+   'clojure-mode-hook
+   (lambda ()
+     (define-clojure-indent
+       (copy 2)
+       (create-table 1)
+       (delete 1)
+       (drop-table 1)
+       (insert 2)
+       (select 1)
+       (truncate 1)
+       (update 2))))
+#+END_SRC
+
+* License
+
+  Copyright © 2012-2014 Roman Scherer
+
+  Distributed under the Eclipse Public License, the same as Clojure.
