@@ -160,7 +160,7 @@
          (order-by 1)))
 #+END_SRC
 
-** [[http://www.postgresql.org/docs/9.3/static/queries-with.html][With Queries or Common Table Expressions)]]
+** [[http://www.postgresql.org/docs/9.3/static/queries-with.html][With Queries or Common Table Expressions]]
 
 #+BEGIN_SRC clojure cider :exports both
   (sql (with [:regional-sales
@@ -180,8 +180,7 @@
                (where `(in :region ~(select [:region]
                                       (from :top-regions))))
                (group-by :region :product))))
-#+END_SRC
-
+#+END
 * Database Vendors
 
   Database vendors use different characters to quote identifiers in SQL
