@@ -52,3 +52,22 @@
 #+BEGIN_SRC clojure cider :exports both
   (sql (delete :films))
 #+END_SRC
+
+
+   Delete all films but musicals.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (delete :films
+         (where '(<> :kind "Musical"))))
+#+END_SRC
+
+   Delete completed tasks, returning full details of the deleted rows.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (delete :tasks
+         (where '(= :status "DONE"))
+         (returning *)))
+#+END_SRC
+
+# #+BEGIN_SRC clojure cider :exports both
+# #+END_SRC
