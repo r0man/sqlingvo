@@ -1,0 +1,54 @@
+#+title: SQLingvo
+#+author: Roman Scherer
+#+LANGUAGE: en
+#+STYLE: <link rel="stylesheet" type="text/css" href="http://thenybble.de/css/main.css"/>
+#+STYLE: <link rel="stylesheet" type="text/css" href="css/font-lock.css"/>
+
+* SQLingvo
+** [[http://www.postgresql.org/docs/9.3/static/sql-copy.html][Copy]]
+
+   Copy from standard input.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (copy :country []
+         (from :stdin)))
+#+END_SRC
+
+   Copy data from a file into the country table.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (copy :country [:id :name]
+         (from "/usr1/proj/bray/sql/country_data")))
+#+END_SRC
+
+   Copy data from a file into the country table with columns in the given order.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (copy :country [:id :name]
+         (from "/usr1/proj/bray/sql/country_data")))
+#+END_SRC
+
+
+** [[http://www.postgresql.org/docs/9.3/static/sql-createtable.html][Create table]]
+
+   Define a new database table.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (create-table :films
+         (column :code :char :length 5 :primary-key? true)
+         (column :title :varchar :length 40 :not-null? true)
+         (column :did :integer :not-null? true)
+         (column :date-prod :date)
+         (column :kind :varchar :length 10)
+         (column :len :interval)
+         (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
+         (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
+#+END_SRC
+
+** [[http://www.postgresql.org/docs/9.3/static/sql-delete.html][Delete]]
+
+   Clear the table films.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (delete :films))
+#+END_SRC
