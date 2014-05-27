@@ -69,5 +69,35 @@
          (returning *)))
 #+END_SRC
 
-# #+BEGIN_SRC clojure cider :exports both
-# #+END_SRC
+** [[http://www.postgresql.org/docs/9.3/static/sql-insert.html][Insert]]
+
+   Insert a single row into table films.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (insert :films []
+         (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})))
+#+END_SRC
+
+   Insert multiple rows into the table films using the multirow VALUES syntax.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (insert :films []
+         (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+                  {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])))
+#+END_SRC
+
+   Insert a row consisting entirely of default values.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (insert :films []
+         (values :default)))
+#+END_SRC
+
+   Insert some rows into table films from a table tmp_films with the same column layout as films.
+
+#+BEGIN_SRC clojure cider :exports both
+  (sql (insert :films []
+         (select [*]
+           (from :tmp-films)
+           (where '(< :date_prod "2004-05-07")))))
+#+END_SRC
