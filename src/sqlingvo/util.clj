@@ -72,7 +72,7 @@
 (defn sql-name-underscore [x]
   (map-sql-name #(replace %1 "-" "_") x))
 
-(defn sql-keyword-hyphenize [x]
+(defn sql-keyword-hyphenate [x]
   (keyword (map-sql-name #(replace (name %1) "_" "-") x)))
 
 (defn- sql-quote-char [x before after]

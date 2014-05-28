@@ -16,7 +16,7 @@
     ((or sql-keyword sql-name-underscore) x))
   Nameable
   (sql-name [db x]
-    ((or sql-name sql-keyword-hyphenize) x))
+    ((or sql-name sql-keyword-hyphenate) x))
   Quoteable
   (sql-quote [db x]
     ((or sql-quote sql-quote-backtick)
@@ -35,35 +35,35 @@
 (defdb mysql
   "The world's most popular open source database."
   :name sql-name-underscore
-  :keyword sql-keyword-hyphenize
+  :keyword sql-keyword-hyphenate
   :quote sql-quote-backtick)
 
 (defdb postgresql
   "The world's most advanced open source database."
   :name sql-name-underscore
-  :keyword sql-keyword-hyphenize
+  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
 
 (defdb oracle
   "Oracle Database."
   :name sql-name-underscore
-  :keyword sql-keyword-hyphenize
+  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
 
 (defdb sqlite
   "The in-process SQL database engine."
   :name sql-name-underscore
-  :keyword sql-keyword-hyphenize
+  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
 
 (defdb sqlserver
   "Microsoft SQL server."
   :name sql-name-underscore
-  :keyword sql-keyword-hyphenize
+  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
 
 (defdb vertica
   "The Real-Time Analytics Platform."
   :name sql-name-underscore
-  :keyword sql-keyword-hyphenize
+  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
