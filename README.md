@@ -246,7 +246,7 @@ or the number of an output column.
 
 For more complex examples, look at the [tests](https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj).
 
-## Database Vendors
+## Database vendors
 
 Database vendors use different characters to quote identifiers in SQL
 statements. The `sql` function uses the default PostgreSQL quoting
@@ -257,13 +257,13 @@ strategy if called with one argument.
 ;=> ["SELECT \"continents\".\"id\" FROM \"continents\""]
 ```
 
-The quoting strategy can be changed by passing a vendor specification
-as the first, and the statement as the second argument. The following
-example uses a quoting strategy for MySQL.
+The quoting strategy can be changed by passing a database
+specification as the first, and the statement as the second
+argument. The following example uses a quoting strategy for MySQL.
 
 ``` clj
-(require '[sqlingvo.vendor :as v])
-(sql (v/->mysql) (select [:continents.id] (from :continents)))
+(require '[sqlingvo.db :as db])
+(sql (db/mysql) (select [:continents.id] (from :continents)))
 ;=> ["SELECT `continents`.`id` FROM `continents`"]
 ```
 

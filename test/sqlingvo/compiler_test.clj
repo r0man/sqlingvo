@@ -1,9 +1,9 @@
 (ns sqlingvo.compiler-test
   (:require [clojure.test :refer :all]
             [sqlingvo.compiler :refer :all]
-            [sqlingvo.vendor :refer [->postgresql]]))
+            [sqlingvo.db :refer [postgresql]]))
 
-(def db (->postgresql))
+(def db (postgresql))
 
 (deftest test-compile-column
   (are [ast expected]

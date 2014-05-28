@@ -191,13 +191,13 @@
   (sql (select [:continents.id] (from :continents)))
 #+END_SRC
 
-  The quoting strategy can be changed by passing a vendor specification
-  as the first, and the statement as the second argument. The following
-  example uses a quoting strategy for MySQL.
+  The quoting strategy can be changed by passing a database
+  specification as the first, and the statement as the second
+  argument. The following example uses a quoting strategy for MySQL.
 
 #+BEGIN_SRC clojure cider :exports both
-  (require '[sqlingvo.vendor :as v])
-  (sql (v/->mysql) (select [:continents.id] (from :continents)))
+  (require '[sqlingvo.db :as db])
+  (sql (db/mysql) (select [:continents.id] (from :continents)))
 #+END_SRC
 
 * Tips & Tricks

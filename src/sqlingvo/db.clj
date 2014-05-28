@@ -1,66 +1,68 @@
-(ns sqlingvo.vendor
+(ns sqlingvo.db
   (:require [sqlingvo.util :refer :all]))
 
 (defprotocol Keywordable
-  (sql-keyword [vendor x]))
+  (sql-keyword [db x]))
 
 (defprotocol Nameable
-  (sql-name [vendor x]))
+  (sql-name [db x]))
 
 (defprotocol Quoteable
-  (sql-quote [vendor x]))
+  (sql-quote [db x]))
 
-(defn vendor?
-  "Returns true if `x` satisfies as vendor, otherwise false."
-  [x]
-  (and (satisfies? Keywordable x)
-       (satisfies? Nameable x)
-       (satisfies? Quoteable x)))
+(defrecord Database [doc name sql-keyword sql-name sql-quote]
+  Keywordable
+  (sql-keyword [db x]
+    ((or sql-keyword sql-name-underscore) x))
+  Nameable
+  (sql-name [db x]
+    ((or sql-name sql-keyword-hyphenize) x))
+  Quoteable
+  (sql-quote [db x]
+    ((or sql-quote sql-quote-backtick)
+     (sqlingvo.db/sql-name db x))))
 
-(defmacro defvendor [name doc & {:as opts}]
-  `(defrecord ~name []
-     Keywordable
-     (sql-keyword [~'vendor ~'x]
-       ((or ~(:keyword opts) sql-name-underscore) ~'x))
-     Nameable
-     (sql-name [~'vendor ~'x]
-       ((or ~(:name opts) sql-keyword-hyphenize) ~'x))
-     Quoteable
-     (sql-quote [~'vendor ~'x]
-       (~(or (:quote opts) sql-quote-backtick)
-        (sql-name ~'vendor ~'x)))))
+(defmacro defdb [name doc & {:as opts}]
+  `(defn ~name [& [~'opts]]
+     (map->Database
+      (merge ~'opts
+             {:doc ~doc
+              :name ~(keyword name)
+              :sql-keyword ~(:keyword opts)
+              :sql-name ~(:name opts)
+              :sql-quote ~(:quote opts)}))))
 
-(defvendor mysql
+(defdb mysql
   "The world's most popular open source database."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-backtick)
 
-(defvendor postgresql
+(defdb postgresql
   "The world's most advanced open source database."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
 
-(defvendor oracle
+(defdb oracle
   "Oracle Database."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
 
-(defvendor sqlite
+(defdb sqlite
   "The in-process SQL database engine."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
 
-(defvendor sqlserver
+(defdb sqlserver
   "Microsoft SQL server."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize
   :quote sql-quote-double-quote)
 
-(defvendor vertica
+(defdb vertica
   "The Real-Time Analytics Platform."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenize

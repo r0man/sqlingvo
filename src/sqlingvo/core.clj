@@ -3,18 +3,18 @@
             [clojure.pprint :as pprint]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.util :refer :all]
-            [sqlingvo.vendor :as vendor])
+            [sqlingvo.db :as db])
   (:import (sqlingvo.util Stmt))
   (:refer-clojure :exclude [distinct group-by replace]))
 
 (defn sql-name [db x]
-  (vendor/sql-name db x))
+  (db/sql-name db x))
 
 (defn sql-keyword [db x]
-  (vendor/sql-keyword db x))
+  (db/sql-keyword db x))
 
 (defn sql-quote [db x]
-  (vendor/sql-quote db x))
+  (db/sql-quote db x))
 
 (defn chain-state [body]
   (m-seq (remove nil? body)))
