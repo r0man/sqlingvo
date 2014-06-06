@@ -290,6 +290,6 @@ For better indentation in clojure-mode add this to your Emacs config.
 
 ## License
 
-Copyright © 2012-2014 Roman Scherer
+Copyright © 2012-2014 r0man
 
 Distributed under the Eclipse Public License, the same as Clojure.
