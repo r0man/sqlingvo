@@ -1425,6 +1425,12 @@
   (with [:t (delete :foo)]
         (delete :bar)))
 
+(deftest-stmt test-with-compose
+  ["WITH a AS (SELECT * FROM \"b\") SELECT * FROM \"a\" WHERE (1 = 1)"]
+  (compose (with [:a (select [:*] (from :b))]
+                 (select [:*] (from :a)))
+           (where '(= 1 1))))
+
 ;; ATTRIBUTES OF COMPOSITE TYPES
 
 (deftest-stmt test-attr-composite-type

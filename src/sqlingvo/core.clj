@@ -487,11 +487,11 @@ Examples:
                       (partition 2 bindings))
         query (ast query)]
     (Stmt. (fn [stmt]
-             [nil (make-node
-                   :op :with
-                   :children [:bindings :query]
-                   :bindings bindings
-                   :query query)]))))
+             [nil (assoc query
+                    :with (make-node
+                           :op :with
+                           :children [:bindings]
+                           :bindings bindings))]))))
 
 (defn pprint
   "Pretty print the abstract syntax tree of `stmt` to standard output
