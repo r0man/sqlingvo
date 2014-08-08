@@ -19,8 +19,10 @@
 (defn chain-state [body]
   (m-seq (remove nil? body)))
 
-(defn compose [stmt & body]
-  (chain-state (cons stmt body)))
+(defn compose
+  "Compose multiple SQL statements."
+  [stmt & body]
+  (Stmt. (chain-state (cons stmt body))))
 
 (defn ast
   "Returns the abstract syntax tree of `stmt`."
