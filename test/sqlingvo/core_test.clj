@@ -33,6 +33,10 @@
                            (where '(= :num_sides 3)))]
     (compose triangles (where '(= :color "green") :and))))
 
+(deftest-stmt test-compose-selects
+  ["SELECT 3, 2, 1"]
+  (compose (select [1 2 3]) (select [3 2 1])))
+
 ;; AS
 
 (deftest test-as

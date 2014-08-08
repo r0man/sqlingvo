@@ -385,9 +385,11 @@ Examples:
           :exprs (if (sequential? exprs)
                    (parse-exprs exprs))))]
     (Stmt. (fn [stmt]
-             (case (:op stmt)
-               nil [select select]
-               :insert (repeat 2 (assoc stmt :select select)))))))
+             (->> (case (:op stmt)
+                    :insert (assoc stmt :select select)
+                    :select (assoc stmt :exprs (:exprs select))
+                    nil select)
+                  (repeat 2))))))
 
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
