@@ -63,6 +63,10 @@
   ["SELECT CAST(? AS int)" "1"]
   (select [`(cast "1" :int)]))
 
+(deftest-stmt test-cast-with-alias
+  ["SELECT CAST(? AS int) AS \"numeric_id\"" "1"]
+  (select [(as `(cast "1" :int) :numeric_id)]))
+
 ;; CREATE TABLE
 
 (deftest-stmt test-create-table-tmp-if-not-exists-inherits
@@ -418,6 +422,11 @@
   (is (= :select (:op stmt)))
   (is (= (map parse-expr [(as 1 :a) (as 2 :b) (as 3 :c)])
          (:exprs stmt))))
+
+(deftest-stmt test-select-count-as
+  ["SELECT count(*) AS \"count\" FROM \"tweets\""]
+  (select [(as '(count :*) :count)]
+    (from :tweets)))
 
 (deftest-stmt test-select-count-distinct
   ["SELECT count(DISTINCT \"user_id\") FROM \"tweets\""]

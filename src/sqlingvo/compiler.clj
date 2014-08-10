@@ -158,14 +158,16 @@
                                [" END"]))
                 (compile-alias db (:as node)))))
 
-(defmethod compile-fn :cast [db {[expr type] :args}]
-  (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"))
+(defmethod compile-fn :cast [db {[expr type] :args as :as}]
+  (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"
+              (compile-alias db as)))
 
-(defmethod compile-fn :count [db {:keys [args]}]
+(defmethod compile-fn :count [db {:keys [args as]}]
   (concat-sql "count("
               (if (= 'distinct (:form (first args))) "DISTINCT ")
               (join-sql ", " (map #(compile-sql db %1)
-                                  (remove #(= 'distinct (:form %1)) args))) ")"))
+                                  (remove #(= 'distinct (:form %1)) args))) ")"
+              (compile-alias db as)))
 
 (defmethod compile-fn :in [db {[member expr] :args}]
   (concat-sql (compile-expr db member) " IN "
