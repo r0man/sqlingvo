@@ -408,7 +408,7 @@
   [(sql-quote db form)])
 
 (defmethod compile-sql :limit [db {:keys [count]}]
-  (concat-sql "LIMIT " (if (number? count) (str count) "ALL")))
+  (concat-sql (when (number? count) (str "LIMIT " count))))
 
 (defmethod compile-sql :like [db {:keys [excluding including table]}]
   (concat-sql
@@ -461,8 +461,8 @@
         (concat-sql " GROUP BY " (join-sql ", " (map #(compile-sql db %1) group-by))))
       (if-not (empty? order-by)
         (concat-sql " ORDER BY " (join-sql ", " (map #(compile-sql db %1) order-by))))
-      (if limit
-        (concat-sql " " (compile-sql db limit)))
+      (when-let [limit-sql (and limit (seq (compile-sql db limit)))]
+        (concat-sql " " limit-sql))
       (if offset
         (concat-sql " " (compile-sql db offset)))
       (if-not (empty? set)

@@ -629,6 +629,12 @@
   (is (= [(parse-table :continents)] (:from stmt)))
   (is (= {:op :limit :count 10} (:limit stmt))))
 
+(deftest-stmt test-select-limit-nil
+  ["SELECT * FROM \"continents\""]
+  (select [*]
+    (from :continents)
+    (limit nil)))
+
 (deftest-stmt test-select-offset
   ["SELECT * FROM \"continents\" OFFSET 15"]
   (select [*]
