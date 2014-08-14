@@ -70,7 +70,7 @@
     {:op :limit :count 1}
     ["LIMIT 1"]
     {:op :limit :count nil}
-    ["LIMIT ALL"]))
+    []))
 
 (deftest test-compile-offset
   (are [ast expected]
