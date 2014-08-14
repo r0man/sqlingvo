@@ -307,8 +307,10 @@ Examples:
 
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
-  [count]
-  (assoc-op :limit :count count))
+  ([count]
+   (assoc-op :limit :count count))
+  ([offset count]
+   (assoc-op :limit :offset offset :count count)))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."

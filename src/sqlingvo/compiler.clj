@@ -407,8 +407,10 @@
 (defmethod compile-sql :keyword [db {:keys [form]}]
   [(sql-quote db form)])
 
-(defmethod compile-sql :limit [db {:keys [count]}]
-  (concat-sql "LIMIT " (if (number? count) (str count) "ALL")))
+(defmethod compile-sql :limit [db {:keys [offset count]}]
+  (if-let [args (->> [offset count] (filter number?) (map str) seq)]
+    (concat-sql "LIMIT " (join-sql ", " args))
+    (concat-sql "LIMIT ALL")))
 
 (defmethod compile-sql :like [db {:keys [excluding including table]}]
   (concat-sql

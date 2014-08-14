@@ -629,6 +629,16 @@
   (is (= [(parse-table :continents)] (:from stmt)))
   (is (= {:op :limit :count 10} (:limit stmt))))
 
+(deftest-stmt test-select-limit-with-mysql-offset
+  ["SELECT * FROM \"continents\" LIMIT 20, 10"]
+  (select [*]
+    (from :continents)
+    (limit 20 10))
+  (is (= :select (:op stmt)))
+  (is (= [(parse-expr *)] (:exprs stmt)))
+  (is (= [(parse-table :continents)] (:from stmt)))
+  (is (= {:op :limit :count 10 :offset 20} (:limit stmt))))
+
 (deftest-stmt test-select-offset
   ["SELECT * FROM \"continents\" OFFSET 15"]
   (select [*]
