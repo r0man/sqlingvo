@@ -48,7 +48,7 @@
   "Oracle Database."
   :name sql-name-underscore
   :keyword sql-keyword-hyphenate
-  :quote sql-quote-double-quote)
+  :quote identity)
 
 (defdb sqlite
   "The in-process SQL database engine."

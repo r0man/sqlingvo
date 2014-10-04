@@ -1306,6 +1306,7 @@
     (is (= expected (sql db (select [:continents.id] (from :continents)))))
     (db/mysql) ["SELECT `continents`.`id` FROM `continents`"]
     (db/postgresql) ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    (db/oracle) ["SELECT continents.id FROM continents"]
     (db/vertica) ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
 ;; POSTGRESQL ARRAYS
