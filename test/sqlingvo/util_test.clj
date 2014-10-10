@@ -38,7 +38,7 @@
   (are [expr expected]
     (is (= expected (parse-expr expr)))
     *
-    {:op :constant :form '*}
+    {:children [:name] :name :* :op :column}
     1
     {:op :constant, :form 1, :literal? true, :type :number, :val 1}
     1.0
@@ -85,42 +85,16 @@
                         (parse-expr 3)]
              :as nil}]}
     (parse-expr '((lag :close) over (partition by :company-id order by :date desc)))
-    '{:op :expr-list,
-      :children
-      ({:op :fn,
-        :children [:args],
-        :name :lag,
-        :args
-        ({:op :column,
-          :children [:name],
-          :name :close})}
-       {:op :constant,
-        :form over,
-        :literal? true,
-        :type :unknown,
-        :val over}
-       {:op :fn,
-        :children [:args],
-        :name :partition,
-        :args
-        ({:op :constant, :form by, :literal? true, :type :unknown, :val by}
-         {:op :column,
-          :children [:name],
-          :name :company-id}
-         {:op :constant,
-          :form order,
-          :literal? true,
-          :type :unknown,
-          :val order}
-         {:op :constant, :form by, :literal? true, :type :unknown, :val by}
-         {:op :column,
-          :children [:name],
-          :name :date,}
-         {:op :constant,
-          :form desc,
-          :literal? true,
-          :type :unknown,
-          :val desc})}),
+    '{:op :expr-list
+      :children [{:args [{:children [:name], :name :close, :op :column}], :children [:args], :name :lag, :op :fn}
+                 {:val over, :type :symbol, :op :constant, :literal? true, :form over}
+                 {:args [{:val by, :type :symbol, :op :constant, :literal? true, :form by}
+                         {:children [:name], :name :company-id, :op :column}
+                         {:val order, :type :symbol, :op :constant, :literal? true, :form order}
+                         {:val by, :type :symbol, :op :constant, :literal? true, :form by}
+                         {:children [:name], :name :date, :op :column}
+                         {:val desc, :type :symbol, :op :constant, :literal? true, :form desc}]
+                  :children [:args], :name :partition, :op :fn}]
       :as nil}
     '(.-val :x)
     {:op :attr

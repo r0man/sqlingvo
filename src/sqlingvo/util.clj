@@ -177,7 +177,7 @@
   (parse-column expr))
 
 (defmethod parse-expr clojure.core$_STAR_ [expr]
-  {:op :constant :form '*})
+  (parse-column :*))
 
 (defn type-keyword
   "Returns the type of `x` as a keyword."
@@ -185,6 +185,7 @@
   (cond
    (number? x) :number
    (string? x) :string
+   (symbol? x) :symbol
    :else :unknown))
 
 (defmethod parse-expr :default [expr]
@@ -200,6 +201,9 @@
 
 (defn parse-exprs [exprs]
   (map parse-expr (remove nil? exprs)))
+
+(defn parse-map-expr [m]
+  (into {} (for [[k v] m] [k (parse-expr v) ])))
 
 (defn parse-condition [condition]
   {:op :condition :condition (parse-expr condition)})

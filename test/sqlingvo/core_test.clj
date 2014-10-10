@@ -313,42 +313,43 @@
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-single-row-as-map
-  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, ?, ?, ?)"
-   "1961-06-16" "Yojimbo" 106 "Drama" "T_601"]
+  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, 106, ?, ?)"
+   "1961-06-16" "Yojimbo" "Drama" "T_601"]
   (insert :films []
     (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
   (is (= :insert (:op stmt)))
   (is (= [] (:columns stmt)))
-  (is (= [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]
+  (is (= [(parse-map-expr {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})]
          (:values stmt)))
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-single-row-as-seq
-  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, ?, ?, ?)"
-   "1961-06-16" "Yojimbo" 106 "Drama" "T_601"]
+  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, 106, ?, ?)"
+   "1961-06-16" "Yojimbo" "Drama" "T_601"]
   (insert :films []
     (values [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
   (is (= :insert (:op stmt)))
   (is (= [] (:columns stmt)))
-  (is (= [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]
+  (is (= [(parse-map-expr {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})]
          (:values stmt)))
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-multi-row
-  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)"
-   "1985-02-10" "Tampopo" 110 "Comedy" "B6717" "1985-02-10" "The Dinner Game" 140 "Comedy" "HG120"]
+  ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)"
+   "1985-02-10" "Tampopo" "Comedy" "B6717" "1985-02-10" "The Dinner Game" "Comedy" "HG120"]
   (insert :films []
     (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
              {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
   (is (= :insert (:op stmt)))
   (is (= [] (:columns stmt)))
-  (is (= [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-          {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]
+  (is (= (map parse-map-expr
+              [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+               {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])
          (:values stmt)))
   (is (= (parse-table :films) (:table stmt))))
 
 (deftest-stmt test-insert-returning
-  ["INSERT INTO \"distributors\" (\"dname\", \"did\") VALUES (?, ?) RETURNING *" "XYZ Widgets" 106]
+  ["INSERT INTO \"distributors\" (\"dname\", \"did\") VALUES (?, 106) RETURNING *" "XYZ Widgets"]
   (insert :distributors []
     (values [{:did 106 :dname "XYZ Widgets"}])
     (returning *))
@@ -387,8 +388,14 @@
                    (is-null :airports.iata-code))))))
 
 (deftest-stmt test-insert-only-columns
-  ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (?, ?)" 1 2]
+  ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, 2)"]
   (insert :x [:a :b] (values [{:a 1 :b 2 :c 3}])))
+
+(deftest-stmt test-insert-values-with-fn-call
+  ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, lower(?)), (2, ?)" "B" "b"]
+  (insert :x [:a :b]
+    (values [{:a 1 :b '(lower "B")}
+             {:a 2 :b "b"}])))
 
 ;; SELECT
 
@@ -1233,7 +1240,8 @@
   (is (= :update (:op stmt)))
   (is (= (parse-table :films) (:table stmt)))
   (is (= (parse-condition '(= :kind "Drama")) (:where stmt)))
-  (is (= {:kind "Dramatic"} (:row stmt))))
+  (is (= (parse-map-expr {:kind "Dramatic"})
+         (:row stmt))))
 
 (deftest-stmt test-update-drama-to-dramatic-returning
   ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?) RETURNING *" "Dramatic" "Drama"]
@@ -1243,7 +1251,8 @@
   (is (= :update (:op stmt)))
   (is (= (parse-table :films) (:table stmt)))
   (is (= (parse-condition '(= :kind "Drama")) (:where stmt)))
-  (is (= {:kind "Dramatic"} (:row stmt)))
+  (is (= (parse-map-expr {:kind "Dramatic"})
+         (:row stmt)))
   (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-update-daily-return
@@ -1298,6 +1307,11 @@
                 (from :natural-earth.countries)) :u))
     (where '(or (= (lower :countries.iso-3166-1-alpha-2) (lower :u.iso-a2))
                 (= (lower :countries.iso-3166-1-alpha-3) (lower :u.iso-a3))))))
+
+(deftest-stmt test-update-with-fn-call
+  ["UPDATE \"films\" SET \"name\" = lower(\"name\") WHERE (\"id\" = 1)"]
+  (update :films {:name '(lower :name)}
+    (where `(= :id 1))))
 
 ;; QUOTING
 
@@ -1480,7 +1494,7 @@
   (select [:a '(case (= :a 1) "one"
                      (= :a 2) "two"
                      "other")]
-          (from :test)))
+    (from :test)))
 
 (deftest-stmt test-case-as-alias
   [(str "SELECT \"a\", CASE WHEN (\"a\" = 1) THEN ?"
@@ -1490,13 +1504,13 @@
   (select [:a (as '(case (= :a 1) "one"
                          (= :a 2) "two"
                          "other") :c)]
-          (from :test)))
+    (from :test)))
 
 (deftest-stmt test-full-outer-join
   [(str "SELECT \"a\" FROM \"test1\""
         " FULL OUTER JOIN \"test2\" ON (\"test1\".\"b\" = \"test2\".\"b\")")]
   (select [:a]
-          (from :test1)
-          (join :test2
-                '(on (= :test1.b :test2.b))
-                :type :full :outer true)))
+    (from :test1)
+    (join :test2
+          '(on (= :test1.b :test2.b))
+          :type :full :outer true)))

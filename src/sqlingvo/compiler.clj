@@ -64,24 +64,24 @@
 
 ;; COMPILE CONSTANTS
 
-(defn compile-inline [db {:keys [form as]}]
-  [(str form (compile-alias db as))])
+(defn compile-inline [db node]
+  [(str (:val node) (compile-alias db (:as node)))])
 
 (defmulti compile-const
   "Compile a SQL constant into a SQL statement."
-  (fn [db node] (class (:form node))))
+  (fn [db node] (:type node)))
 
-(defmethod compile-const clojure.lang.Symbol [db node]
+(defmethod compile-const :number [db node]
   (compile-inline db node))
 
-(defmethod compile-const Double [db node]
+(defmethod compile-const :string [db node]
+  [(str "?" (compile-alias db (:as node))) (:val node)])
+
+(defmethod compile-const :symbol [db node]
   (compile-inline db node))
 
-(defmethod compile-const Long [db node]
-  (compile-inline db node))
-
-(defmethod compile-const :default [db {:keys [form as]}]
-  [(str "?" (compile-alias db as)) (sql-type form)])
+(defmethod compile-const :default [db node]
+  [(str "?" (compile-alias db (:as node))) (sql-type (:form node))])
 
 ;; COMPILE EXPRESSIONS
 
@@ -167,7 +167,7 @@
               (if (= 'distinct (:form (first args))) "DISTINCT ")
               (join-sql ", " (map #(compile-sql db %1)
                                   (remove #(= 'distinct (:form %1)) args))) ")"
-              (compile-alias db as)))
+                                  (compile-alias db as)))
 
 (defmethod compile-fn :in [db {[member expr] :args}]
   (concat-sql (compile-expr db member) " IN "
@@ -357,6 +357,14 @@
 (defmethod compile-sql :if-exists [db {:keys [op]}]
   ["IF EXISTS"])
 
+(defn- compile-value [db columns value]
+  (let [values (map value (map :name columns))]
+    (concat-sql "(" (join-sql ", " (map #(compile-sql db %) values)) ")")))
+
+(defn- compile-values [db columns values]
+  (let [values (map #(compile-value db columns %) values)]
+    (concat-sql ["VALUES "] (join-sql ", " values))))
+
 (defmethod compile-sql :insert [db node]
   (let [{:keys [table columns rows default-values values returning select]} node
         columns (if (and (empty? columns)
@@ -371,13 +379,7 @@
       (if-not (empty? columns)
         (concat-sql " (" (join-sql ", " (map #(compile-sql db %1) columns)) ")"))
       (if-not (empty? values)
-        (let [template (str "(" (join ", " (repeat (count columns) "?")) ")")]
-          (concat-sql
-           " VALUES "
-           (join-sql
-            ", "
-            (for [value values]
-              (cons template (map value (map :name columns))))))))
+        (concat-sql " " (compile-values db columns values)))
       (if select
         (concat-sql " " (compile-sql db select)))
       (if default-values
@@ -489,7 +491,10 @@
       (join-sql
        ", " (if row
               (for [column (keys row)]
-                [(str (sql-quote db column) " = ?") (get row column)])
+                ;; [(str (sql-quote db column) " = ?") (get row column)]
+                (concat-sql
+                 (str (sql-quote db column) " = ")
+                 (compile-sql db (get row column))))
               (map unwrap-stmt (compile-exprs db exprs))))
       (if-not (empty? from)
         (concat-sql " FROM " (join-sql " " (map #(compile-from db %1) from))))

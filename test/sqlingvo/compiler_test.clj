@@ -24,11 +24,23 @@
 (deftest test-compile-constant
   (are [ast expected]
     (is (= expected (compile-stmt db ast)))
-    {:op :constant :form 1}
+    {:op :constant
+     :form 1
+     :literal? true
+     :type :number
+     :val 1}
     ["1"]
-    {:op :constant :form 3.14}
+    {:op :constant
+     :form 3.14
+     :literal? true
+     :type :number
+     :val 3.14}
     ["3.14"]
-    {:op :constant :form "x"}
+    {:op :constant
+     :form "x"
+     :literal? true
+     :type :string
+     :val "x"}
     ["?" "x"]))
 
 (deftest test-compile-sql
@@ -36,13 +48,28 @@
     (is (= expected (compile-sql db ast)))
     {:op :nil}
     ["NULL"]
-    {:op :constant :form 1}
+    {:op :constant
+     :form 1
+     :literal? true
+     :type :number
+     :val 1}
     ["1"]
     {:op :keyword :form :continents.created-at}
     ["\"continents\".\"created_at\""]
     {:op :fn :name 'max :args [{:op :keyword :form :created-at}]}
     ["max(\"created_at\")"]
-    {:op :fn :name 'greatest :args [{:op :constant :form 1} {:op :constant :form 2}]}
+    {:op :fn
+     :name 'greatest
+     :args [{:op :constant
+             :form 1
+             :literal? true
+             :type :number
+             :val 1}
+            {:op :constant
+             :form 2
+             :literal? true
+             :type :number
+             :val 2}]}
     ["greatest(1, 2)"]
     {:op :fn :name 'ST_AsText :args [{:op :fn :name 'ST_Centroid :args [{:op :constant :form "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"}]}]}
     ["ST_AsText(ST_Centroid(?))" "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"]))

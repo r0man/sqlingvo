@@ -442,7 +442,7 @@ Examples:
   [table row & body]
   (let [table (parse-table table)
         exprs (if (sequential? row) (parse-exprs row))
-        row (if (map? row) row)]
+        row (if (map? row) (parse-map-expr row))]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
               (make-node
@@ -457,7 +457,7 @@ Examples:
   [values]
   (if (= :default values)
     (set-val :default-values true)
-    (concat-in [:values] (sequential values))))
+    (concat-in [:values] (map parse-map-expr (sequential values)))))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
@@ -517,3 +517,26 @@ Examples:
 (defmethod print-method Stmt
   [stmt writer]
   (print-method (sql stmt) writer))
+
+(comment
+
+  (insert :x [:a :b]
+    (values [{:a 1 :b '(lower "B")}
+             {:a 2 :b "b"}]))
+
+  (select ["a"])
+
+  (pprint (ast (values [{:a 1 :b '(lower "B")}
+                        {:a 2 :b "b"}])))
+
+  (insert :films [:name]
+    (values {:name '(lower "X")}))
+
+  (update :films {:name '(lower "X")}
+    (where `(= :id 1)))
+
+  (prn (parse-column :a))
+
+  (pprint (insert :x [:a :b]
+     (values [{:a 1 :b '(lower "x")}])))
+  )
