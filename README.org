@@ -10,8 +10,8 @@ A SQL DSL in Clojure.
 [[http://imgs.xkcd.com/comics/exploits_of_a_mom.png]]
 
 * Installation
-[[https://clojars.org/sqlingvo][
-https://clojars.org/sqlingvo/latest-version.svg]]
+
+[[https://clojars.org/sqlingvo][https://clojars.org/sqlingvo/latest-version.svg]]
 
 * Usage
 
