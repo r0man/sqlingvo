@@ -102,33 +102,35 @@
 
 Examples:
 
-  (copy :country []
+  (copy db :country []
     (from :stdin))
   ;=> [\"COPY \\\"country\\\" FROM STDIN\"]
 
-  (copy :country []
+  (copy db :country []
     (from \"/usr1/proj/bray/sql/country_data\"))
   ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]
 "
-  [table columns & body]
+  [db table columns & body]
   (let [table (parse-table table)
         columns (map parse-column columns)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
               (make-node
                :op :copy
+               :db db
                :children [:table :columns]
                :table table
                :columns columns))))))
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
-  [table & body]
+  [db table & body]
   (let [table (parse-table table)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
               (make-node
                :op :create-table
+               :db db
                :children [:table]
                :table table))))))
 
@@ -137,19 +139,20 @@ Examples:
 
 Examples:
 
-  (delete :continents)
+  (delete db :continents)
   ;=> [\"DELETE FROM \\\"continents\\\"\"]
 
-  (delete :continents
+  (delete db :continents
     (where '(= :id 1)))
   ;=> [\"DELETE FROM \\\"continents\\\" WHERE (\\\"id\\\" = 1)\"]
 "
-  [table & body]
+  [db table & body]
   (let [table (parse-table table)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
               (make-node
                :op :delete
+               :db db
                :children [:table]
                :table table))))))
 
@@ -158,19 +161,20 @@ Examples:
 
 Examples:
 
-  (drop-table [:continents])
+  (drop-table db [:continents])
   ;=> [\"DROP TABLE TABLE \\\"continents\\\"\"]
 
-  (drop-table [:continents :countries])
+  (drop-table db [:continents :countries])
   ;=> [\"DROP TABLE TABLE \\\"continents\\\", \\\"countries\\\"\"]
 
 "
-  [tables & body]
+  [db tables & body]
   (let [tables (map parse-table tables)]
     (Stmt. (fn [stmt]
              ((m-seq (remove nil? body))
               (make-node
                :op :drop-table
+               :db db
                :children [:tables]
                :tables tables))))))
 
@@ -247,16 +251,17 @@ Examples:
 
 (defn insert
   "Returns a fn that builds a INSERT statement."
-  [table columns & body]
+  [db table columns & body]
   (let [table (parse-table table)
         columns (map parse-column columns)]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
-              (make-node
-               :op :insert
-               :children [:table :columns]
-               :table table
-               :columns columns))))))
+                ((m-seq (remove nil? body))
+                 (make-node
+                  :op :insert
+                  :db db
+                  :children [:table :columns]
+                  :table table
+                  :columns columns))))))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
@@ -333,12 +338,13 @@ Examples:
 
 (defn refresh-materialized-view
   "Returns a fn that builds a UPDATE statement."
-  [view & body]
+  [db view & body]
   (let [view (parse-table view)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
               (make-node
                :op :refresh-materialized-view
+               :db db
                :children [:view]
                :view view))))))
 
@@ -362,23 +368,24 @@ Examples:
 
 Examples:
 
-  (select [1])
+  (select db [1])
   ;=> [\"SELECT 1\"]
 
-  (select [:*]
+  (select db [:*]
     (from :continents))
   ;=> [\"SELECT * FROM \\\"continents\\\"\"]
 
-  (select [:id :name]
+  (select db [:id :name]
     (from :continents))
   ;=> [\"SELECT \\\"id\\\", \\\"name\\\" FROM \\\"continents\\\"\"]
 
 "
-  [exprs & body]
+  [db exprs & body]
   (let [[_ select]
         ((m-seq (remove nil? body))
          (make-node
           :op :select
+          :db db
           :children [:distinct :exprs]
           :distinct (if (= :distinct (:op exprs))
                       exprs)
@@ -401,18 +408,19 @@ Examples:
 
 Examples:
 
-  (truncate [:continents])
+  (truncate db [:continents])
   ;=> [\"TRUNCATE TABLE \\\"continents\\\"\"]
 
-  (truncate [:continents :countries])
+  (truncate db [:continents :countries])
   ;=> [\"TRUNCATE TABLE \\\"continents\\\", \\\"countries\\\"\"]
 "
-  [tables & body]
+  [db tables & body]
   (let [tables (map parse-table tables)]
     (Stmt. (fn [_]
              ((m-seq (remove nil? body))
               (make-node
                :op :truncate
+               :db db
                :children [:tables]
                :tables tables))))))
 
@@ -434,12 +442,12 @@ Examples:
 
 Examples:
 
-  (update :films {:kind \"Dramatic\"}
+  (update db :films {:kind \"Dramatic\"}
     (where '(= :kind \"Drama\")))
   ;=> [\"UPDATE \\\"films\\\" SET \\\"kind\\\" = ? WHERE (\\\"kind\\\" = ?)\"
   ;=>  \"Dramatic\" \"Drama\"]
 "
-  [table row & body]
+  [db table row & body]
   (let [table (parse-table table)
         exprs (if (sequential? row) (parse-exprs row))
         row (if (map? row) (parse-map-expr row))]
@@ -447,6 +455,7 @@ Examples:
              ((m-seq (remove nil? body))
               (make-node
                :op :update
+               :db db
                :children [:table :exprs :row]
                :table table
                :exprs exprs
@@ -483,7 +492,7 @@ Examples:
 
 (defn with
   "Returns a fn that builds a WITH (common table expressions) query."
-  [bindings query]
+  [db bindings query]
   (assert (even? (count bindings)) "The WITH bindings must be even.")
   (let [bindings (map (fn [[name stmt]]
                         (vector (keyword name)
@@ -494,25 +503,15 @@ Examples:
              [nil (assoc query
                     :with (make-node
                            :op :with
+                           :db db
                            :children [:bindings]
                            :bindings bindings))]))))
 
-(defn pprint
-  "Pretty print the abstract syntax tree of `stmt` to standard output
-  or the optional output writer."
-  [stmt & [writer]]
-  (let [obj (if (instance? Stmt stmt)
-              (ast stmt) stmt)]
-    (if writer
-      (pprint/pprint obj writer)
-      (pprint/pprint obj))))
-
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
-  ([stmt]
-     (compile-stmt (ast stmt)))
-  ([db stmt]
-     (compile-stmt db (ast stmt))))
+  [stmt]
+  (let [ast (ast stmt)]
+    (compile-stmt (:db ast) ast)))
 
 (defmethod print-method Stmt
   [stmt writer]
@@ -538,5 +537,10 @@ Examples:
   (prn (parse-column :a))
 
   (pprint (insert :x [:a :b]
-     (values [{:a 1 :b '(lower "x")}])))
+            (values [{:a 1 :b '(lower "x")}])))
+
+  (def db (db/postgresql))
+
+  (ast (select db [1 2 3]))
+
   )

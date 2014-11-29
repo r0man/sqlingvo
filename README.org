@@ -1,204 +1,276 @@
 #+title: SQLingvo
-#+author: Roman Scherer
+#+author: roman
 #+LANGUAGE: en
-#+STYLE: <link rel="stylesheet" type="text/css" href="http://thenybble.de/css/main.css"/>
-* DDL
+
+[[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.png]]
+[[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.png]]
+
+A SQL DSL in Clojure.
+
+[[http://imgs.xkcd.com/comics/exploits_of_a_mom.png]]
+
+* Installation
+
+  [[https://clojars.org/sqlingvo/latest-version.svg]]
+
+* Usage
+
+  SQLingvo shadows some Clojure core functions. If you use/require all
+  of `sqlingvo.core` you have to exclude the `distinct` and `group-by`
+  functions.
+
+  #+BEGIN_SRC clojure :exports code :results silent
+  (refer-clojure :exclude '[distinct group-by])
+  (require '[sqlingvo.core :refer :all])
+  #+END_SRC
+
+** SQL dialect
+
+  Database vendors use different characters to quote identifiers in
+  SQL statements. All functions that produce SQL statement take a
+  database as first argument. A database defines the quoting strategy
+  used when generating SQL and can be created like this:
+
+  #+BEGIN_SRC clojure :exports code :results silent
+  (require '[sqlingvo.db :as db])
+  (def db (db/postgresql))
+  #+END_SRC
+
+** DDL
 ** [[http://www.postgresql.org/docs/9.3/static/sql-copy.html][Copy]]
 
    Copy from standard input.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (copy :country []
-         (from :stdin)))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (copy db :country []
+          (from :stdin)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["COPY \"country\" FROM STDIN"]
 
    Copy data from a file into the country table.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (copy :country [:id :name]
-         (from "/usr1/proj/bray/sql/country_data")))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (copy db :country [:id :name]
+          (from "/usr1/proj/bray/sql/country_data")))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
 
    Copy data from a file into the country table with columns in the given order.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (copy :country [:id :name]
-         (from "/usr1/proj/bray/sql/country_data")))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (copy db :country [:id :name]
+          (from "/usr1/proj/bray/sql/country_data")))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
 
 ** [[http://www.postgresql.org/docs/9.3/static/sql-createtable.html][Create table]]
 
    Define a new database table.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (create-table :films
-         (column :code :char :length 5 :primary-key? true)
-         (column :title :varchar :length 40 :not-null? true)
-         (column :did :integer :not-null? true)
-         (column :date-prod :date)
-         (column :kind :varchar :length 10)
-         (column :len :interval)
-         (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
-         (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (create-table db :films
+          (column :code :char :length 5 :primary-key? true)
+          (column :title :varchar :length 40 :not-null? true)
+          (column :did :integer :not-null? true)
+          (column :date-prod :date)
+          (column :kind :varchar :length 10)
+          (column :len :interval)
+          (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
+          (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
+   #+END_SRC
 
-* SQL
+   #+RESULTS:
+   : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date_prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), \"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())"]
+
+** SQL
 ** [[http://www.postgresql.org/docs/9.3/static/sql-delete.html][Delete]]
 
    Clear the table films.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (delete :films))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (delete db :films))
+   #+END_SRC
 
+   #+RESULTS:
+   : ["DELETE FROM \"films\""]
 
    Delete all films but musicals.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (delete :films
-         (where '(<> :kind "Musical"))))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (delete db :films
+          (where '(<> :kind "Musical"))))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["DELETE FROM \"films\" WHERE (\"kind\" <> ?)" "Musical"]
 
    Delete completed tasks, returning full details of the deleted rows.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (delete :tasks
-         (where '(= :status "DONE"))
-         (returning *)))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (delete db :tasks
+          (where '(= :status "DONE"))
+          (returning *)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
 
 ** [[http://www.postgresql.org/docs/9.3/static/sql-insert.html][Insert]]
 
    Insert a single row into table films.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (insert :films []
-         (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (insert db :films []
+          (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, 106, ?, ?)" "1961-06-16" "Yojimbo" "Drama" "T_601"]
 
    Insert multiple rows into the table films using the multirow VALUES syntax.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (insert :films []
-         (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-                  {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (insert db :films []
+          (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+                   {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "1985-02-10" "Tampopo" "Comedy" "B6717" "1985-02-10" "The Dinner Game" "Comedy" "HG120"]
 
    Insert a row consisting entirely of default values.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (insert :films []
-         (values :default)))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (insert db :films []
+          (values :default)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["INSERT INTO \"films\" DEFAULT VALUES"]
 
    Insert some rows into table films from a table tmp_films with the same column layout as films.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (insert :films []
-         (select [*]
-           (from :tmp-films)
-           (where '(< :date_prod "2004-05-07")))))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (insert db :films []
+          (select [*]
+              (from :tmp-films)
+            (where '(< :date_prod "2004-05-07")))))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["INSERT INTO \"films\" SELECT  WHERE (\"date_prod\" < ?)" "2004-05-07"]
 
 ** [[http://www.postgresql.org/docs/9.3/static/sql-select.html][ Select]]
 
    Select all films.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (select [*] (from :films)))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (select db [*] (from :films)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["SELECT * FROM \"films\""]
 
    Select all Comedy films.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (select [*]
-         (from :films)
-         (where '(= :kind "Comedy"))))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (select db [*]
+          (from :films)
+          (where '(= :kind "Comedy"))))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["SELECT * FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
 
    Retrieve the most recent weather report for each location.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (select (distinct [:location :time :report] :on [:location])
-         (from :weather-reports)
-         (order-by :location (desc :time))))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (select db (distinct [:location :time :report] :on [:location])
+          (from :weather-reports)
+          (order-by :location (desc :time))))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
 
 ** [[http://www.postgresql.org/docs/9.3/static/sql-update.html][Update]]
 
    Change the word Drama to Dramatic in the column kind of the table films.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (update :films {:kind "Dramatic"}
-         (where '(= :kind "Drama"))))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (update db :films {:kind "Dramatic"}
+          (where '(= :kind "Drama"))))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
 
 ** [[http://www.postgresql.org/docs/9.3/static/queries-order.html][Sorting Rows]]
 
    The sort expression(s) can be any expression that would be valid in the query's select list.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (select [:a :b]
-         (from :table-1)
-         (order-by '(+ :a :b) :c)))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (select db [:a :b]
+          (from :table-1)
+          (order-by '(+ :a :b) :c)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["SELECT \"a\", \"b\" FROM \"table_1\" ORDER BY (\"a\" + \"b\"), \"c\""]
 
    A sort expression can also be the column label
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (select [(as '(+ :a :b) :sum) :c]
-         (from :table-1)
-         (order-by :sum)))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (select db [(as '(+ :a :b) :sum) :c]
+          (from :table-1)
+          (order-by :sum)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table_1\" ORDER BY \"sum\""]
 
    or the number of an output column.
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (select [:a '(max :b)]
-         (from :table-1)
-         (group-by :a)
-         (order-by 1)))
-#+END_SRC
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (select db [:a '(max :b)]
+          (from :table-1)
+          (group-by :a)
+          (order-by 1)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
 
 ** [[http://www.postgresql.org/docs/9.3/static/queries-with.html][With Queries or Common Table Expressions]]
 
-#+BEGIN_SRC clojure cider :exports both
-  (sql (with [:regional-sales
-              (select [:region (as '(sum :amount) :total-sales)]
-                (from :orders)
-                (group-by :region))
-              :top-regions
-              (select [:region]
-                (from :regional-sales)
-                (where `(> :total-sales
-                           ~(select ['(/ (sum :total-sales) 10)]
-                              (from :regional-sales)))))]
-             (select [:region :product
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (with db [:regional-sales
+                  (select db [:region (as '(sum :amount) :total-sales)]
+                    (from :orders)
+                    (group-by :region))
+                  :top-regions
+                  (select db [:region]
+                    (from :regional-sales)
+                    (where `(> :total-sales
+                               ~(select ['(/ (sum :total-sales) 10)]
+                                    (from :regional-sales)))))]
+          (select db [:region :product
                       (as '(sum :quantity) :product-units)
                       (as '(sum :amount) :product-sales)]
-               (from :orders)
-               (where `(in :region ~(select [:region]
-                                      (from :top-regions))))
-               (group-by :region :product))))
-#+END
-* Database Vendors
+            (from :orders)
+            (where `(in :region ~(select [:region]
+                                     (from :top-regions))))
+            (group-by :region :product))))
+   #+END_SRC
 
-  Database vendors use different characters to quote identifiers in SQL
-  statements. The `sql` function uses the default PostgreSQL quoting
-  strategy if called with one argument.
-
-#+BEGIN_SRC clojure cider :exports both
-  (sql (select [:continents.id] (from :continents)))
-#+END_SRC
-
-  The quoting strategy can be changed by passing a database
-  specification as the first, and the statement as the second
-  argument. The following example uses a quoting strategy for MySQL.
-
-#+BEGIN_SRC clojure cider :exports both
-  (require '[sqlingvo.db :as db])
-  (sql (db/mysql) (select [:continents.id] (from :continents)))
-#+END_SRC
+   #+RESULTS:
+   : ["WITH regional_sales AS (SELECT \"region\", sum(\"amount\") AS \"total_sales\" FROM \"orders\" GROUP BY \"region\"), top_regions AS (SELECT \"region\" FROM \"regional_sales\" WHERE (\"total_sales\" > (SELECT ))) SELECT \"region\", \"product\", sum(\"quantity\") AS \"product_units\", sum(\"amount\") AS \"product_sales\" FROM \"orders\" WHERE \"region\" IN (SELECT ) GROUP BY \"region\", \"product\""]
 
 * Tips & Tricks
 
@@ -208,7 +280,7 @@
 
   For better indentation in clojure-mode add this to your Emacs config.
 
-#+BEGIN_SRC emacs-lisp
+  #+BEGIN_SRC emacs-lisp
   (add-hook
    'clojure-mode-hook
    (lambda ()
@@ -221,10 +293,10 @@
        (select 1)
        (truncate 1)
        (update 2))))
-#+END_SRC
+  #+END_SRC
 
 * License
 
-  Copyright © 2012-2014 Roman Scherer
+  Copyright © 2012-2014 roman
 
   Distributed under the Eclipse Public License, the same as Clojure.
