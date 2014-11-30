@@ -1,12 +1,14 @@
 (ns sqlingvo.core-test
   (:import java.util.Date)
   (:refer-clojure :exclude [distinct group-by])
-  (:require [clojure.test :refer :all]
-            [clojure.java.io :refer [file]]
+  (:require [clojure.java.io :refer [file]]
+            [clojure.test :refer :all]
+            ;; [sqlingvo.ast :refer [ast]]
+            [sqlingvo.expr :refer :all]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.core :refer :all]
-            [sqlingvo.util :refer :all]
-            [sqlingvo.db :as db]))
+            [sqlingvo.db :as db]
+            [sqlingvo.util :refer :all]))
 
 (def db (db/postgresql))
 

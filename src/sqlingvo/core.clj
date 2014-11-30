@@ -2,9 +2,10 @@
   (:require [clojure.string :as str]
             [clojure.pprint :as pprint]
             [sqlingvo.compiler :refer [compile-stmt]]
+            [sqlingvo.expr :refer :all]
             [sqlingvo.util :refer :all]
             [sqlingvo.db :as db])
-  (:import (sqlingvo.util Stmt))
+  (:import (sqlingvo.expr Stmt))
   (:refer-clojure :exclude [distinct group-by replace]))
 
 (defn sql-name [db x]
@@ -100,16 +101,16 @@
 (defn copy
   "Returns a fn that builds a COPY statement.
 
-Examples:
+  Examples:
 
   (copy db :country []
-    (from :stdin))
+  (from :stdin))
   ;=> [\"COPY \\\"country\\\" FROM STDIN\"]
 
   (copy db :country []
-    (from \"/usr1/proj/bray/sql/country_data\"))
+  (from \"/usr1/proj/bray/sql/country_data\"))
   ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]
-"
+  "
   [db table columns & body]
   (let [table (parse-table table)
         columns (map parse-column columns)]
@@ -255,13 +256,13 @@ Examples:
   (let [table (parse-table table)
         columns (map parse-column columns)]
     (Stmt. (fn [_]
-                ((m-seq (remove nil? body))
-                 (make-node
-                  :op :insert
-                  :db db
-                  :children [:table :columns]
-                  :table table
-                  :columns columns))))))
+             ((m-seq (remove nil? body))
+              (make-node
+               :op :insert
+               :db db
+               :children [:table :columns]
+               :table table
+               :columns columns))))))
 
 (defn intersect
   "Returns a fn that adds a INTERSECT clause to an SQL statement."
@@ -520,8 +521,8 @@ Examples:
 (comment
 
   (insert :x [:a :b]
-    (values [{:a 1 :b '(lower "B")}
-             {:a 2 :b "b"}]))
+          (values [{:a 1 :b '(lower "B")}
+                   {:a 2 :b "b"}]))
 
   (select ["a"])
 
@@ -529,15 +530,15 @@ Examples:
                         {:a 2 :b "b"}])))
 
   (insert :films [:name]
-    (values {:name '(lower "X")}))
+          (values {:name '(lower "X")}))
 
   (update :films {:name '(lower "X")}
-    (where `(= :id 1)))
+          (where `(= :id 1)))
 
   (prn (parse-column :a))
 
   (pprint (insert :x [:a :b]
-            (values [{:a 1 :b '(lower "x")}])))
+                  (values [{:a 1 :b '(lower "x")}])))
 
   (def db (db/postgresql))
 

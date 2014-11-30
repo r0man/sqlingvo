@@ -12,3 +12,4 @@ pom.xml
 /.nrepl-port
 /.cask/
 /dist/
+/README.html
