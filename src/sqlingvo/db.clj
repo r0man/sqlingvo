@@ -10,15 +10,18 @@
 (defprotocol Quoteable
   (sql-quote [obj x]))
 
+(defrecord Database [])
+
 (defmacro defdb [name doc & {:as opts}]
   `(defn ~name [& [~'opts]]
-     (merge {:doc ~doc
-             :classname ~(:classname opts)
-             :subprotocol ~(clojure.core/name name)
-             :sql-keyword ~(:keyword opts)
-             :sql-name ~(:name opts)
-             :sql-quote ~(:quote opts)}
-            ~'opts)))
+     (map->Database
+      (merge {:doc ~doc
+              :classname ~(:classname opts)
+              :subprotocol ~(clojure.core/name name)
+              :sql-keyword ~(:keyword opts)
+              :sql-name ~(:name opts)
+              :sql-quote ~(:quote opts)}
+             ~'opts))))
 
 (defdb mysql
   "The world's most popular open source database."
