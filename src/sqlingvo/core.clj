@@ -544,4 +544,7 @@ Examples:
 
   (ast (select db [1 2 3]))
 
+  (class (select db [1 2 3]))
+  (deref (select db [1 2 3]))
+
   )

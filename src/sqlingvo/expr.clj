@@ -1,6 +1,7 @@
 (ns sqlingvo.expr
   (:refer-clojure :exclude [replace])
-  (:require [clojure.string :refer [replace]]))
+  (:require [clojure.string :refer [replace]]
+            [sqlingvo.compiler :refer [compile-stmt]]))
 
 (def ^:dynamic *column-regex*
   #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?")
@@ -8,21 +9,24 @@
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
 
+(defn stmt-ast
+  "Return the abstract syntax tree of `stmt`."
+  [stmt]
+  (second ((.f stmt) nil)))
+
+(defn eval-stmt
+  "Eval the SQL `stmt`. Redefine this fn to do interesting things."
+  [stmt]
+  (let [tree (stmt-ast stmt)]
+    (compile-stmt (:db tree) tree)))
+
 (deftype Stmt [f]
+  clojure.lang.IDeref
+  (deref [stmt]
+    (eval-stmt stmt))
   clojure.lang.IFn
   (invoke [this n]
     (f n)))
-
-(defn make-node [& {:as node}]
-  (assert (:op node) (str "Missing :op in make-node: " (pr-str node)))
-  (if-not (empty? (:children node))
-    (reduce (fn [node child]
-              (if (nil? (get node child))
-                (dissoc node child)
-                (update-in node [:children] conj child)))
-            (assoc node :children [])
-            (:children node))
-    node))
 
 (defn qualified-name
   "Returns the qualified name of `k`."
