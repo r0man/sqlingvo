@@ -2,36 +2,23 @@
   (:require [sqlingvo.util :refer :all]))
 
 (defprotocol Keywordable
-  (sql-keyword [db x]))
+  (sql-keyword [obj x]))
 
 (defprotocol Nameable
-  (sql-name [db x]))
+  (sql-name [obj x]))
 
 (defprotocol Quoteable
-  (sql-quote [db x]))
-
-(defrecord Database [doc name sql-keyword sql-name sql-quote]
-  Keywordable
-  (sql-keyword [db x]
-    ((or sql-keyword sql-name-underscore) x))
-  Nameable
-  (sql-name [db x]
-    ((or sql-name sql-keyword-hyphenate) x))
-  Quoteable
-  (sql-quote [db x]
-    ((or sql-quote sql-quote-backtick)
-     (sqlingvo.db/sql-name db x))))
+  (sql-quote [obj x]))
 
 (defmacro defdb [name doc & {:as opts}]
   `(defn ~name [& [~'opts]]
-     (map->Database
-      (merge {:doc ~doc
-              :classname ~(:classname opts)
-              :subprotocol ~(clojure.core/name name)
-              :sql-keyword ~(:keyword opts)
-              :sql-name ~(:name opts)
-              :sql-quote ~(:quote opts)}
-             ~'opts))))
+     (merge {:doc ~doc
+             :classname ~(:classname opts)
+             :subprotocol ~(clojure.core/name name)
+             :sql-keyword ~(:keyword opts)
+             :sql-name ~(:name opts)
+             :sql-quote ~(:quote opts)}
+            ~'opts)))
 
 (defdb mysql
   "The world's most popular open source database."
@@ -74,3 +61,19 @@
   :name sql-name-underscore
   :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
+
+(extend-protocol Keywordable
+  clojure.lang.PersistentArrayMap
+  (sql-keyword [m x]
+    ((or (:sql-keyword m) sql-name-underscore) x)))
+
+(extend-protocol Nameable
+  clojure.lang.PersistentArrayMap
+  (sql-name [m x]
+    ((or (:sql-name m) sql-keyword-hyphenate) x)))
+
+(extend-protocol Quoteable
+  clojure.lang.PersistentArrayMap
+  (sql-quote [m x]
+    ((or (:sql-quote m) sql-quote-backtick)
+     (sqlingvo.db/sql-name m x))))
