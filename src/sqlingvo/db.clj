@@ -10,7 +10,17 @@
 (defprotocol Quoteable
   (sql-quote [obj x]))
 
-(defrecord Database [])
+(defrecord Database []
+  Keywordable
+  (sql-keyword [m x]
+    ((or (:sql-keyword m) sql-name-underscore) x))
+  Nameable
+  (sql-name [m x]
+    ((or (:sql-name m) sql-keyword-hyphenate) x))
+  Quoteable
+  (sql-quote [m x]
+    ((or (:sql-quote m) sql-quote-backtick)
+     (sqlingvo.db/sql-name m x))))
 
 (defmacro defdb [name doc & {:as opts}]
   `(defn ~name [& [~'opts]]
@@ -64,19 +74,3 @@
   :name sql-name-underscore
   :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
-
-(extend-protocol Keywordable
-  clojure.lang.PersistentArrayMap
-  (sql-keyword [m x]
-    ((or (:sql-keyword m) sql-name-underscore) x)))
-
-(extend-protocol Nameable
-  clojure.lang.PersistentArrayMap
-  (sql-name [m x]
-    ((or (:sql-name m) sql-keyword-hyphenate) x)))
-
-(extend-protocol Quoteable
-  clojure.lang.PersistentArrayMap
-  (sql-quote [m x]
-    ((or (:sql-quote m) sql-quote-backtick)
-     (sqlingvo.db/sql-name m x))))
