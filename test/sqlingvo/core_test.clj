@@ -409,6 +409,30 @@
          [(str "INSERT INTO \"table\" (\"a\", \"b\") VALUES (1, 2), "
                "(NULL, 3), (NULL, NULL)")])))
 
+(deftest test-insert-fixed-columns-mixed-values-2
+  (is (= (sql (insert db :quotes [:id :exchange-id :company-id
+                                  :symbol :created-at :updated-at]
+                (values [{:updated-at #inst "2012-11-02T18:22:59.688-00:00"
+                          :created-at #inst "2012-11-02T18:22:59.688-00:00"
+                          :symbol "MSFT"
+                          :exchange-id 2
+                          :company-id 5
+                          :id 5}
+                         {:updated-at #inst "2012-11-02T18:22:59.688-00:00"
+                          :created-at #inst "2012-11-02T18:22:59.688-00:00"
+                          :symbol "SPY"
+                          :exchange-id 2
+                          :id 6}])))
+         [(str "INSERT INTO \"quotes\" (\"id\", \"exchange_id\", "
+               "\"company_id\", \"symbol\", \"created_at\", \"updated_at\") "
+               "VALUES (5, 2, 5, ?, ?, ?), (6, 2, NULL, ?, ?, ?)")
+          "MSFT"
+          #inst "2012-11-02T18:22:59.688-00:00"
+          #inst "2012-11-02T18:22:59.688-00:00"
+          "SPY"
+          #inst "2012-11-02T18:22:59.688-00:00"
+          #inst "2012-11-02T18:22:59.688-00:00"])))
+
 ;; SELECT
 
 (deftest-stmt test-select-1
