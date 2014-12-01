@@ -36,12 +36,12 @@
 (defn compile-alias
   "Compile a SQL alias expression."
   ([db alias]
-     (compile-alias db alias true))
+   (compile-alias db alias true))
   ([db alias include-as?]
-     (when alias
-       (if include-as?
-         (str " AS " (sql-quote db alias))
-         (str " " (sql-quote db alias))))))
+   (when alias
+     (if include-as?
+       (str " AS " (sql-quote db alias))
+       (str " " (sql-quote db alias))))))
 
 
 (defmulti compile-sql (fn [db ast] (:op ast)))
@@ -358,8 +358,11 @@
   ["IF EXISTS"])
 
 (defn- compile-value [db columns value]
-  (let [values (map value (map :name columns))]
-    (concat-sql "(" (join-sql ", " (map #(compile-sql db %) values)) ")")))
+  (let [columns (map :name columns)
+        values (map #(or (get value %) {:op :nil}) columns)
+        values (map #(compile-sql db %) values)]
+    (println)
+    (concat-sql "(" (join-sql ", " values ) ")")))
 
 (defn- compile-values [db columns values]
   (let [values (map #(compile-value db columns %) values)]
@@ -532,7 +535,7 @@
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
   ([stmt]
-     (compile-stmt (postgresql) stmt))
+   (compile-stmt (postgresql) stmt))
   ([db stmt]
-     (assert db "No db given!")
-     (apply vector (compile-sql db stmt))))
+   (assert db "No db given!")
+   (apply vector (compile-sql db stmt))))

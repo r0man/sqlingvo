@@ -403,6 +403,12 @@
     (values [{:a 1 :b '(lower "B")}
              {:a 2 :b "b"}])))
 
+(deftest test-insert-fixed-columns-mixed-values
+  (is (= (sql (insert db :table [:a :b]
+                (values [{:a 1 :b 2} {:b 3} {:c 3}])))
+         [(str "INSERT INTO \"table\" (\"a\", \"b\") VALUES (1, 2), "
+               "(NULL, 3), (NULL, NULL)")])))
+
 ;; SELECT
 
 (deftest-stmt test-select-1
