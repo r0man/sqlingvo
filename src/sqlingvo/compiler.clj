@@ -361,7 +361,6 @@
   (let [columns (map :name columns)
         values (map #(or (get value %) {:op :nil}) columns)
         values (map #(compile-sql db %) values)]
-    (println)
     (concat-sql "(" (join-sql ", " values ) ")")))
 
 (defn- compile-values [db columns values]
