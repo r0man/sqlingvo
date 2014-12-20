@@ -29,11 +29,11 @@
   "Returns the abstract syntax tree of `stmt`."
   [stmt]
   (cond
-   (map? stmt)
-   stmt
-   (instance? Stmt stmt)
-   (second ((.f stmt) nil))
-   :else (second (stmt nil))))
+    (map? stmt)
+    stmt
+    (instance? Stmt stmt)
+    (second ((.f stmt) nil))
+    :else (second (stmt nil))))
 
 (defn as
   "Parse `expr` and return an expr with and AS clause using `alias`."
@@ -42,11 +42,11 @@
     (for [alias alias]
       (let [column (parse-column (str expr "." (name alias)))]
         (assoc column
-          :as (->> (map column [:schema :table :name])
-                   (remove nil?)
-                   (map name)
-                   (str/join "-")
-                   (keyword)))))
+               :as (->> (map column [:schema :table :name])
+                        (remove nil?)
+                        (map name)
+                        (str/join "-")
+                        (keyword)))))
     (assoc (parse-expr expr) :as alias)))
 
 (defn asc
@@ -67,8 +67,8 @@
       [nil (-> (update-in stmt [:columns] #(concat %1 [(:name column)]))
                (assoc-in [:column (:name column)]
                          (assoc column
-                           :schema (:schema stmt)
-                           :table (:name stmt))))])))
+                                :schema (:schema stmt)
+                                :table (:name stmt))))])))
 
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
@@ -289,20 +289,20 @@ Examples:
                 :type type
                 :from (parse-from from))]
       (cond
-       (and (sequential? condition)
-            (= :on (keyword (name (first condition)))))
-       (assoc join
-         :on (parse-expr (first (rest condition))))
-       (and (sequential? condition)
-            (= :using (keyword (name (first condition)))))
-       (assoc join
-         :using (parse-exprs (rest condition)))
-       (and (keyword? from)
-            (keyword? condition))
-       (assoc join
-         :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
-         :on (parse-expr `(= ~from ~condition)))
-       :else (throw (ex-info "Invalid JOIN condition." {:condition condition}))))]))
+        (and (sequential? condition)
+             (= :on (keyword (name (first condition)))))
+        (assoc join
+               :on (parse-expr (first (rest condition))))
+        (and (sequential? condition)
+             (= :using (keyword (name (first condition)))))
+        (assoc join
+               :using (parse-exprs (rest condition)))
+        (and (keyword? from)
+             (keyword? condition))
+        (assoc join
+               :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
+               :on (parse-expr `(= ~from ~condition)))
+        :else (throw (ex-info "Invalid JOIN condition." {:condition condition}))))]))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
@@ -475,21 +475,21 @@ Examples:
   (let [condition (parse-condition condition)]
     (fn [stmt]
       (cond
-       (or (nil? combine)
-           (nil? (:condition (:where stmt))))
-       [nil (assoc stmt :where condition)]
-       :else
-       [nil (assoc-in
-             stmt [:where :condition]
-             (make-node
-              :op :condition
-              :children [:condition]
-              :condition (make-node
-                          :op :fn
-                          :children [:name :args]
-                          :name combine
-                          :args [(:condition (:where stmt))
-                                 (:condition condition)])))]))))
+        (or (nil? combine)
+            (nil? (:condition (:where stmt))))
+        [nil (assoc stmt :where condition)]
+        :else
+        [nil (assoc-in
+              stmt [:where :condition]
+              (make-node
+               :op :condition
+               :children [:condition]
+               :condition (make-node
+                           :op :fn
+                           :children [:name :args]
+                           :name combine
+                           :args [(:condition (:where stmt))
+                                  (:condition condition)])))]))))
 
 (defn with
   "Returns a fn that builds a WITH (common table expressions) query."
@@ -502,11 +502,11 @@ Examples:
         query (ast query)]
     (Stmt. (fn [stmt]
              [nil (assoc query
-                    :with (make-node
-                           :op :with
-                           :db db
-                           :children [:bindings]
-                           :bindings bindings))]))))
+                         :with (make-node
+                                :op :with
+                                :db db
+                                :children [:bindings]
+                                :bindings bindings))]))))
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."

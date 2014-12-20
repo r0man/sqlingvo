@@ -101,14 +101,14 @@
 
 (defmethod parse-expr clojure.lang.ISeq [expr]
   (cond
-   (attribute? (first expr))
-   (parse-attr-expr expr)
-   (or (keyword? (first expr))
-       (symbol? (first expr)))
-   (parse-fn-expr expr)
-   (list? (first expr))
-   {:op :expr-list :children (map parse-expr expr) :as (:as expr)}
-   :else {:op :list :children (map parse-expr expr) :as (:as expr)}))
+    (attribute? (first expr))
+    (parse-attr-expr expr)
+    (or (keyword? (first expr))
+        (symbol? (first expr)))
+    (parse-fn-expr expr)
+    (list? (first expr))
+    {:op :expr-list :children (map parse-expr expr) :as (:as expr)}
+    :else {:op :list :children (map parse-expr expr) :as (:as expr)}))
 
 (defmethod parse-expr clojure.lang.IPersistentMap [expr]
   expr)
@@ -126,10 +126,10 @@
   "Returns the type of `x` as a keyword."
   [x]
   (cond
-   (number? x) :number
-   (string? x) :string
-   (symbol? x) :symbol
-   :else :unknown))
+    (number? x) :number
+    (string? x) :string
+    (symbol? x) :symbol
+    :else :unknown))
 
 (defmethod parse-expr :default [expr]
   (if (or (fn? expr)
@@ -153,22 +153,22 @@
 
 (defn parse-from [forms]
   (cond
-   (or (string? forms)
-       (keyword? forms))
-   (parse-table forms)
-   (and (map? forms) (= :fn (:op forms)))
-   forms
-   (and (map? forms) (= :select (:op forms)))
-   forms
-   (and (map? forms) (= :table (:op forms)))
-   forms
-   (and (map? forms) (:as forms))
-   (make-node
-    :op :table
-    :children [:schema :name :as]
-    :as (:as forms)
-    :schema (:table forms)
-    :name (:name forms))
-   (list? forms)
-   (parse-expr forms)
-   :else (throw (ex-info "Can't parse FROM form." {:forms forms}))))
+    (or (string? forms)
+        (keyword? forms))
+    (parse-table forms)
+    (and (map? forms) (= :fn (:op forms)))
+    forms
+    (and (map? forms) (= :select (:op forms)))
+    forms
+    (and (map? forms) (= :table (:op forms)))
+    forms
+    (and (map? forms) (:as forms))
+    (make-node
+     :op :table
+     :children [:schema :name :as]
+     :as (:as forms)
+     :schema (:table forms)
+     :name (:name forms))
+    (list? forms)
+    (parse-expr forms)
+    :else (throw (ex-info "Can't parse FROM form." {:forms forms}))))
