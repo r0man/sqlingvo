@@ -3,8 +3,16 @@
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
             [clojure.java.io :refer [file]]
-            [clojure.string :refer [blank? join replace upper-case]]
-            [sqlingvo.db :refer [postgresql sql-quote sql-name]]))
+            [clojure.string :refer [blank? join replace upper-case]]))
+
+(defprotocol Keywordable
+  (sql-keyword [obj x]))
+
+(defprotocol Nameable
+  (sql-name [obj x]))
+
+(defprotocol Quoteable
+  (sql-quote [obj x]))
 
 (defn to-sql [arg]
   (cond
@@ -526,8 +534,6 @@
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
-  ([stmt]
-   (compile-stmt (postgresql) stmt))
-  ([db stmt]
-   (assert db "No db given!")
-   (apply vector (compile-sql db stmt))))
+  [db stmt]
+  (assert db "No db given!")
+  (apply vector (compile-sql db stmt)))

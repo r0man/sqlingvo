@@ -1,21 +1,21 @@
 (ns sqlingvo.core
-  (:require [clojure.string :as str]
-            [clojure.pprint :as pprint]
-            [sqlingvo.compiler :refer [compile-stmt]]
+  (:require [clojure.pprint :as pprint]
+            [clojure.string :as str]
+            [sqlingvo.compiler :as compiler]
+            [sqlingvo.db :as db]
             [sqlingvo.expr :refer :all]
-            [sqlingvo.util :refer :all]
-            [sqlingvo.db :as db])
+            [sqlingvo.util :refer :all])
   (:import (sqlingvo.expr Stmt))
   (:refer-clojure :exclude [distinct group-by replace]))
 
 (defn sql-name [db x]
-  (db/sql-name db x))
+  (compiler/sql-name db x))
 
 (defn sql-keyword [db x]
-  (db/sql-keyword db x))
+  (compiler/sql-keyword db x))
 
 (defn sql-quote [db x]
-  (db/sql-quote db x))
+  (compiler/sql-quote db x))
 
 (defn chain-state [body]
   (m-seq (remove nil? body)))
@@ -512,7 +512,7 @@ Examples:
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
   [stmt]
   (let [ast (ast stmt)]
-    (compile-stmt (:db ast) ast)))
+    (compiler/compile-stmt (:db ast) ast)))
 
 (defmethod print-method Stmt
   [stmt writer]
@@ -543,6 +543,8 @@ Examples:
   (def db (db/postgresql))
 
   (ast (select db [1 2 3]))
+
+  @(select db [1 2 3])
 
   (class (select db [1 2 3]))
   (deref (select db [1 2 3]))

@@ -1,5 +1,6 @@
 (ns sqlingvo.db-test
   (:require [clojure.test :refer :all]
+            [sqlingvo.compiler :refer :all]
             [sqlingvo.db :refer :all]))
 
 (deftest test-sql-name

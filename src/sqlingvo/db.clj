@@ -1,37 +1,30 @@
 (ns sqlingvo.db
-  (:require [sqlingvo.util :refer :all]))
-
-(defprotocol Keywordable
-  (sql-keyword [obj x]))
-
-(defprotocol Nameable
-  (sql-name [obj x]))
-
-(defprotocol Quoteable
-  (sql-quote [obj x]))
+  (:require [sqlingvo.compiler :as compiler]
+            [sqlingvo.util :refer :all]))
 
 (defrecord Database []
-  Keywordable
+  compiler/Keywordable
   (sql-keyword [m x]
     ((or (:sql-keyword m) sql-name-underscore) x))
-  Nameable
+  compiler/Nameable
   (sql-name [m x]
     ((or (:sql-name m) sql-keyword-hyphenate) x))
-  Quoteable
+  compiler/Quoteable
   (sql-quote [m x]
     ((or (:sql-quote m) sql-quote-backtick)
-     (sqlingvo.db/sql-name m x))))
+     (compiler/sql-name m x))))
 
 (defmacro defdb [name doc & {:as opts}]
   `(defn ~name [& [~'opts]]
-     (map->Database
-      (merge {:doc ~doc
-              :classname ~(:classname opts)
-              :subprotocol ~(clojure.core/name name)
-              :sql-keyword ~(:keyword opts)
-              :sql-name ~(:name opts)
-              :sql-quote ~(:quote opts)}
-             ~'opts))))
+     (let [db# (map->Database
+                (merge {:doc ~doc
+                        :classname ~(:classname opts)
+                        :subprotocol ~(clojure.core/name name)
+                        :sql-keyword ~(:keyword opts)
+                        :sql-name ~(:name opts)
+                        :sql-quote ~(:quote opts)}
+                       ~'opts))]
+       (assoc db# :eval-fn #(compiler/compile-stmt db# %)))))
 
 (defdb mysql
   "The world's most popular open source database."

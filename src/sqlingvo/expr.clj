@@ -9,21 +9,16 @@
 (def ^:dynamic *table-regex*
   #"(([^./]+)\.)?([^./]+)(/(.+))?")
 
-(defn stmt-ast
+(defn- ast
   "Return the abstract syntax tree of `stmt`."
   [stmt]
   (second ((.f stmt) nil)))
 
-(defn eval-stmt
-  "Eval the SQL `stmt`. Redefine this fn to do interesting things."
-  [stmt]
-  (let [tree (stmt-ast stmt)]
-    (compile-stmt (:db tree) tree)))
-
 (deftype Stmt [f]
   clojure.lang.IDeref
   (deref [stmt]
-    (eval-stmt stmt))
+    (let [ast (ast stmt)]
+      ((:eval-fn (:db ast)) ast)))
   clojure.lang.IFn
   (invoke [this n]
     (f n)))

@@ -15,7 +15,7 @@
 (defmacro deftest-stmt [name sql forms & body]
   `(deftest ~name
      (let [[result# ~'stmt] (~forms {})]
-       (is (= ~sql (compile-stmt ~'stmt)))
+       (is (= ~sql (sqlingvo.core/sql ~'stmt)))
        ~@body)))
 
 (deftest test-from
