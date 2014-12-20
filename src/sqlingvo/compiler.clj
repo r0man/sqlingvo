@@ -6,19 +6,12 @@
             [clojure.string :refer [blank? join replace upper-case]]
             [sqlingvo.db :refer [postgresql sql-quote sql-name]]))
 
-(defprotocol SQLType
-  (sql-type [arg] "Convert `arg` into an SQL type."))
-
-(extend-type Object
-  SQLType
-  (sql-type [obj] obj))
-
 (defn to-sql [arg]
   (cond
-   (string? arg)
-   [arg]
-   (sequential? arg)
-   arg))
+    (string? arg)
+    [arg]
+    (sequential? arg)
+    arg))
 
 (defn concat-sql [& args]
   (->> (remove nil? args)
@@ -81,7 +74,7 @@
   (compile-inline db node))
 
 (defmethod compile-const :default [db node]
-  [(str "?" (compile-alias db (:as node))) (sql-type (:form node))])
+  [(str "?" (compile-alias db (:as node))) (:form node)])
 
 ;; COMPILE EXPRESSIONS
 
@@ -108,29 +101,29 @@
   "Compile a 2-arity SQL function node into a SQL statement."
   [db {:keys [as args name] :as node}]
   (cond
-   (> 2 (count args))
-   (throw (ex-info "More than 1 arg needed." node))
-   (= 2 (count args))
-   (let [[[s1 & a1] [s2 & a2]] (compile-exprs db args)]
-     (cons (str "(" s1 " " (core/name name) " " s2 ")"
-                (compile-alias db as))
-           (concat a1 a2)))
-   :else
-   (join-sql " AND "
-             (map #(compile-2-ary db (assoc node :args %1))
-                  (partition 2 1 args)))))
+    (> 2 (count args))
+    (throw (ex-info "More than 1 arg needed." node))
+    (= 2 (count args))
+    (let [[[s1 & a1] [s2 & a2]] (compile-exprs db args)]
+      (cons (str "(" s1 " " (core/name name) " " s2 ")"
+                 (compile-alias db as))
+            (concat a1 a2)))
+    :else
+    (join-sql " AND "
+              (map #(compile-2-ary db (assoc node :args %1))
+                   (partition 2 1 args)))))
 
 (defn compile-infix
   "Compile a SQL infix function node into a SQL statement."
   [db {:keys [as args name]}]
   (cond
-   (= 1 (count args))
-   (compile-expr db (first args))
-   :else
-   (let [args (compile-exprs db args)]
-     (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
-                (compile-alias db as))
-           (apply concat (map rest args))))))
+    (= 1 (count args))
+    (compile-expr db (first args))
+    :else
+    (let [args (compile-exprs db args)]
+      (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
+                 (compile-alias db as))
+            (apply concat (map rest args))))))
 
 (defn compile-complex-args [db {:keys [as args name] :as node}]
   (concat-sql "(" (core/name name) " "
@@ -271,12 +264,12 @@
    " FROM "
    (let [from (first from)]
      (cond
-      (instance? File from)
-      ["?" (.getAbsolutePath from)]
-      (string? from)
-      ["?" (.getAbsolutePath (File. from))]
-      (= :stdin from)
-      "STDIN"))
+       (instance? File from)
+       ["?" (.getAbsolutePath from)]
+       (string? from)
+       ["?" (.getAbsolutePath (File. from))]
+       (= :stdin from)
+       "STDIN"))
    (if encoding
      [" ENCODING ?" encoding])
    (if delimiter
@@ -294,10 +287,10 @@
      (concat-sql " " (compile-sql db table))
      " ("
      (cond
-      (not (empty? columns))
-      (join-sql ", " (map #(compile-column db %1) columns))
-      like
-      (compile-sql db like))
+       (not (empty? columns))
+       (join-sql ", " (map #(compile-column db %1) columns))
+       like
+       (compile-sql db like))
      (if-not (empty? primary-key)
        (concat-sql ", PRIMARY KEY(" (join ", " (map #(sql-name db %1) primary-key)) ")"))
      ")"
