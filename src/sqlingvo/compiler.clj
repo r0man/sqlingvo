@@ -439,6 +439,17 @@
   [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name])))
         (compile-alias db as false))])
 
+(defmethod compile-sql :drop-materialized-view [db node]
+  (let [{:keys [cascade if-exists restrict view]} node]
+    (concat-sql "DROP MATERIALIZED VIEW "
+                (if if-exists
+                  (concat-sql (compile-sql db if-exists) " "))
+                (compile-sql db view)
+                (if cascade
+                  (concat-sql " " (compile-sql db cascade)))
+                (if restrict
+                  (concat-sql " " (compile-sql db restrict))))))
+
 (defmethod compile-sql :refresh-materialized-view [db {:keys [view]}]
   (concat-sql "REFRESH MATERIALIZED VIEW " (compile-sql db view)))
 

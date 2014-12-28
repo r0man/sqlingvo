@@ -287,6 +287,7 @@ A SQL DSL in Clojure.
      (define-clojure-indent
        (copy 2)
        (create-table 1)
+       (drop-materialized-view 2)
        (delete 1)
        (drop-table 1)
        (insert 2)

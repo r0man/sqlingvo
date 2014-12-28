@@ -337,8 +337,20 @@ Examples:
     (assert :table (:op stmt))
     [nil (assoc stmt :primary-key keys)]))
 
+(defn drop-materialized-view
+  "Drop a materialized view."
+  [db view & body]
+  (let [view (parse-table view)]
+    (Stmt. (fn [_]
+             ((m-seq (remove nil? body))
+              (make-node
+               :op :drop-materialized-view
+               :db db
+               :children [:view]
+               :view view))))))
+
 (defn refresh-materialized-view
-  "Returns a fn that builds a UPDATE statement."
+  "Refresh a materialized view."
   [db view & body]
   (let [view (parse-table view)]
     (Stmt. (fn [_]
@@ -367,20 +379,20 @@ Examples:
 (defn select
   "Returns a fn that builds a SELECT statement.
 
-Examples:
+  Examples:
 
   (select db [1])
   ;=> [\"SELECT 1\"]
 
   (select db [:*]
-    (from :continents))
+  (from :continents))
   ;=> [\"SELECT * FROM \\\"continents\\\"\"]
 
   (select db [:id :name]
-    (from :continents))
+  (from :continents))
   ;=> [\"SELECT \\\"id\\\", \\\"name\\\" FROM \\\"continents\\\"\"]
 
-"
+  "
   [db exprs & body]
   (let [[_ select]
         ((m-seq (remove nil? body))
