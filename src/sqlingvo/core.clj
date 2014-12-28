@@ -75,6 +75,11 @@
   [condition]
   (conditional-clause :continue-identity condition))
 
+(defn concurrently
+  "Add a CONCURRENTLY clause to a SQL statement."
+  [condition]
+  (conditional-clause :concurrently condition))
+
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
   [expr] (assoc (parse-expr expr) :direction :desc))
@@ -533,8 +538,8 @@ Examples:
 (comment
 
   (insert :x [:a :b]
-          (values [{:a 1 :b '(lower "B")}
-                   {:a 2 :b "b"}]))
+    (values [{:a 1 :b '(lower "B")}
+             {:a 2 :b "b"}]))
 
   (select ["a"])
 
@@ -542,15 +547,15 @@ Examples:
                         {:a 2 :b "b"}])))
 
   (insert :films [:name]
-          (values {:name '(lower "X")}))
+    (values {:name '(lower "X")}))
 
   (update :films {:name '(lower "X")}
-          (where `(= :id 1)))
+    (where `(= :id 1)))
 
   (prn (parse-column :a))
 
   (pprint (insert :x [:a :b]
-                  (values [{:a 1 :b '(lower "x")}])))
+            (values [{:a 1 :b '(lower "x")}])))
 
   (def db (db/postgresql))
 

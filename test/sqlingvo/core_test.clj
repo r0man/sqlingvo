@@ -1516,11 +1516,12 @@
   (select db [(as (select db ['(count :*)] (from :continents)) :continents)
               (as (select db ['(count :*)] (from :countries)) :countries)]))
 
-(deftest-stmt test-refresh-materialized-view
-  ["REFRESH MATERIALIZED VIEW \"continent_stats\""]
-  (refresh-materialized-view db :continent-stats)
-  (is (= :refresh-materialized-view (:op stmt)))
-  (is (= (parse-table :continent-stats) (:view stmt))))
+(deftest test-refresh-materialized-view
+  (is (= (sql (refresh-materialized-view db :order-summary))
+         ["REFRESH MATERIALIZED VIEW \"order_summary\""]))
+  (is (= (sql (refresh-materialized-view db :order-summary
+                (concurrently true)))
+         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order_summary\""])))
 
 (deftest test-drop-materialized-view
   (is (= (sql (drop-materialized-view db :order-summary))

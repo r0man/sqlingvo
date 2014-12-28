@@ -243,6 +243,9 @@
 (defmethod compile-sql :cascade [db {:keys [op]}]
   ["CASCADE"])
 
+(defmethod compile-sql :concurrently [db {:keys [op]}]
+  ["CONCURRENTLY"])
+
 (defmethod compile-sql :condition [db {:keys [condition]}]
   (compile-sql db condition))
 
@@ -450,8 +453,12 @@
                 (if restrict
                   (concat-sql " " (compile-sql db restrict))))))
 
-(defmethod compile-sql :refresh-materialized-view [db {:keys [view]}]
-  (concat-sql "REFRESH MATERIALIZED VIEW " (compile-sql db view)))
+(defmethod compile-sql :refresh-materialized-view [db node]
+  (let [{:keys [concurrently view]} node]
+    (concat-sql "REFRESH MATERIALIZED VIEW "
+                (if concurrently
+                  (concat-sql (compile-sql db concurrently) " "))
+                (compile-sql db view))))
 
 (defmethod compile-sql :restrict [db {:keys [op]}]
   ["RESTRICT"])
