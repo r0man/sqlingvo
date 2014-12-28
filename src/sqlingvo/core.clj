@@ -80,6 +80,11 @@
   [condition]
   (conditional-clause :concurrently condition))
 
+(defn with-data
+  "Add a WITH [NO] DATA clause to a SQL statement."
+  [data?]
+  (assoc-op :with-data :data data?))
+
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
   [expr] (assoc (parse-expr expr) :direction :desc))

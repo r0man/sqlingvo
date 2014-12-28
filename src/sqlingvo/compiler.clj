@@ -240,10 +240,10 @@
 
 ;; COMPILE SQL
 
-(defmethod compile-sql :cascade [db {:keys [op]}]
+(defmethod compile-sql :cascade [db node]
   ["CASCADE"])
 
-(defmethod compile-sql :concurrently [db {:keys [op]}]
+(defmethod compile-sql :concurrently [db node]
   ["CONCURRENTLY"])
 
 (defmethod compile-sql :condition [db {:keys [condition]}]
@@ -454,11 +454,13 @@
                   (concat-sql " " (compile-sql db restrict))))))
 
 (defmethod compile-sql :refresh-materialized-view [db node]
-  (let [{:keys [concurrently view]} node]
+  (let [{:keys [concurrently view with-data]} node]
     (concat-sql "REFRESH MATERIALIZED VIEW "
                 (if concurrently
                   (concat-sql (compile-sql db concurrently) " "))
-                (compile-sql db view))))
+                (compile-sql db view)
+                (if with-data
+                  (concat-sql " " (compile-sql db with-data))))))
 
 (defmethod compile-sql :restrict [db {:keys [op]}]
   ["RESTRICT"])
@@ -523,6 +525,11 @@
         (concat-sql " WHERE " (compile-sql db where)))
       (if-not (empty? returning)
         (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning))))))))
+
+(defmethod compile-sql :with-data [db node]
+  (if (:data node)
+    ["WITH DATA"]
+    ["WITH NO DATA"]))
 
 (defmethod compile-sql nil [db {:keys [op]}]
   [])

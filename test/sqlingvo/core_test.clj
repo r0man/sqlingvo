@@ -3,11 +3,10 @@
   (:refer-clojure :exclude [distinct group-by])
   (:require [clojure.java.io :refer [file]]
             [clojure.test :refer :all]
-            ;; [sqlingvo.ast :refer [ast]]
-            [sqlingvo.expr :refer :all]
             [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.core :refer :all]
             [sqlingvo.db :as db]
+            [sqlingvo.expr :refer :all]
             [sqlingvo.util :refer :all]))
 
 (def db (db/postgresql))
@@ -1521,7 +1520,17 @@
          ["REFRESH MATERIALIZED VIEW \"order_summary\""]))
   (is (= (sql (refresh-materialized-view db :order-summary
                 (concurrently true)))
-         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order_summary\""])))
+         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order_summary\""]))
+  (is (= (sql (refresh-materialized-view db :order-summary
+                (with-data true)))
+         ["REFRESH MATERIALIZED VIEW \"order_summary\" WITH DATA"]))
+  (is (= (sql (refresh-materialized-view db :order-summary
+                (with-data false)))
+         ["REFRESH MATERIALIZED VIEW \"order_summary\" WITH NO DATA"]))
+  (is (= (sql (refresh-materialized-view db :order-summary
+                (concurrently true)
+                (with-data false)))
+         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order_summary\" WITH NO DATA"])))
 
 (deftest test-drop-materialized-view
   (is (= (sql (drop-materialized-view db :order-summary))
