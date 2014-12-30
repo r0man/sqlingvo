@@ -1497,12 +1497,12 @@
         "SELECT ?, 1 "
         "WHERE (NOT EXISTS (SELECT * FROM \"upsert\"))")
    "counter-name" "counter-name"]
-  (with [:upsert (update :counter_table '((= counter counter+1))
-                         (where '(= :id "counter-name"))
-                         (returning *))]
-        (insert :counter_table [:id :counter]
-                (select ["counter-name" 1])
-                (where `(not-exists ~(select [*] (from :upsert)))))))
+  (with db [:upsert (update db :counter_table '((= counter counter+1))
+                      (where '(= :id "counter-name"))
+                      (returning *))]
+    (insert db :counter_table [:id :counter]
+      (select db ["counter-name" 1])
+      (where `(not-exists ~(select db [*] (from :upsert)))))))
 
 (deftest-stmt test-with-delete
   ["WITH t AS (DELETE FROM \"foo\") DELETE FROM \"bar\""]
