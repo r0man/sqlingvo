@@ -1489,6 +1489,21 @@
     (insert db :product-logs []
             (select db [:*] (from :moved-rows)))))
 
+(deftest-stmt test-with-counter-update
+  [(str "WITH upsert AS ("
+        "UPDATE \"counter_table\" SET counter = counter+1 "
+        "WHERE (\"id\" = ?) RETURNING *) "
+        "INSERT INTO \"counter_table\" (\"id\", \"counter\") "
+        "SELECT ?, 1 "
+        "WHERE (NOT EXISTS (SELECT * FROM \"upsert\"))")
+   "counter-name" "counter-name"]
+  (with [:upsert (update :counter_table '((= counter counter+1))
+                         (where '(= :id "counter-name"))
+                         (returning *))]
+        (insert :counter_table [:id :counter]
+                (select ["counter-name" 1])
+                (where `(not-exists ~(select [*] (from :upsert)))))))
+
 (deftest-stmt test-with-delete
   ["WITH t AS (DELETE FROM \"foo\") DELETE FROM \"bar\""]
   (with db [:t (delete db :foo)]

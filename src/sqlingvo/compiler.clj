@@ -177,6 +177,12 @@
                 "(NULL)"
                 (compile-expr db expr))))
 
+(defmethod compile-fn :exists [db {:keys [args]}]
+  (concat-sql "(EXISTS " (compile-expr db (first args)) ")"))
+
+(defmethod compile-fn :not-exists [db {:keys [args]}]
+  (concat-sql "(NOT EXISTS " (compile-expr db (first args)) ")"))
+
 (defmethod compile-fn :is-null [db {:keys [args]}]
   (concat-sql "(" (compile-expr db (first args)) " IS NULL)"))
 
@@ -372,7 +378,7 @@
     (concat-sql ["VALUES "] (join-sql ", " values))))
 
 (defmethod compile-sql :insert [db node]
-  (let [{:keys [table columns rows default-values values returning select]} node
+  (let [{:keys [table columns rows default-values values returning select where]} node
         columns (if (and (empty? columns)
                          (not (empty? values)))
                   (map (fn [k] {:op :column :name k})
@@ -391,7 +397,9 @@
       (if default-values
         " DEFAULT VALUES")
       (if-not (empty? returning)
-        (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning))))))))
+        (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning))))
+      (if-not (empty? where)
+        (concat-sql " WHERE " (compile-sql db where)))))))
 
 (defmethod compile-sql :intersect [db node]
   (compile-set-op db :intersect node))
