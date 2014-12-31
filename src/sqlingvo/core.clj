@@ -344,7 +344,6 @@ Examples:
   "Returns a fn that adds the primary key to a table."
   [& keys]
   (fn [stmt]
-    (assert (= (:op stmt) :create-table))
     [nil (assoc stmt :primary-key keys)]))
 
 (defn drop-materialized-view
