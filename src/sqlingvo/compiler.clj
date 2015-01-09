@@ -521,6 +521,8 @@
         (concat-sql " GROUP BY " (join-sql ", " (map #(compile-sql db %1) group-by))))
       (if-not (empty? order-by)
         (concat-sql " ORDER BY " (join-sql ", " (map #(compile-sql db %1) order-by))))
+      (when-let [window (:window node)]
+        (concat-sql " " (compile-sql db window)))
       (when-let [limit-sql (and limit (seq (compile-sql db limit)))]
         (concat-sql " " limit-sql))
       (if offset
@@ -560,6 +562,14 @@
         (concat-sql " WHERE " (compile-sql db where)))
       (if-not (empty? returning)
         (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning))))))))
+
+(defmethod compile-sql :window [db node]
+  (->> (for [definition (:definitions node)]
+         (concat-sql
+          (sql-quote db (:as definition))
+          " AS (" (compile-sql db definition) ")"))
+       (join-sql ", ")
+       (concat-sql "WINDOW " )))
 
 (defmethod compile-sql :with-data [db node]
   (if (:data node)

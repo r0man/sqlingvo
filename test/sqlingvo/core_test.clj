@@ -1627,6 +1627,13 @@
                "rank() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC, \"empno\") AS \"pos\" "
                "FROM \"empsalary\") AS \"ss\" WHERE (pos < 3)")])))
 
-;; SELECT sum(salary) OVER w, avg(salary) OVER w
-;;   FROM empsalary
-;;   WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);
+(deftest test-window-alias
+  (is (= (sql (select db ['(over (sum :salary) :w)
+                          '(over (avg :salary) :w)]
+                (from :empsalary)
+                (window (as '(partition-by
+                              :depname (order-by (desc salary))) :w))))
+         [(str "SELECT sum(\"salary\") OVER (\"w\"), "
+               "avg(\"salary\") OVER (\"w\") "
+               "FROM \"empsalary\" "
+               "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC)")])))

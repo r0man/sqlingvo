@@ -340,6 +340,11 @@ Examples:
   [& exprs]
   (concat-in [:order-by] (parse-exprs exprs)))
 
+(defn window
+  "Returns a fn that adds a WINDOW clause to an SQL statement."
+  [& exprs]
+  (assoc-op :window :definitions (parse-exprs exprs)))
+
 (defn primary-key
   "Returns a fn that adds the primary key to a table."
   [& keys]
@@ -538,36 +543,3 @@ Examples:
 (defmethod print-method Stmt
   [stmt writer]
   (print-method (sql stmt) writer))
-
-(comment
-
-  (insert :x [:a :b]
-    (values [{:a 1 :b '(lower "B")}
-             {:a 2 :b "b"}]))
-
-  (select ["a"])
-
-  (pprint (ast (values [{:a 1 :b '(lower "B")}
-                        {:a 2 :b "b"}])))
-
-  (insert :films [:name]
-    (values {:name '(lower "X")}))
-
-  (update :films {:name '(lower "X")}
-    (where `(= :id 1)))
-
-  (prn (parse-column :a))
-
-  (pprint (insert :x [:a :b]
-            (values [{:a 1 :b '(lower "x")}])))
-
-  (def db (db/postgresql))
-
-  (ast (select db [1 2 3]))
-
-  @(select db [1 2 3])
-
-  (class (select db [1 2 3]))
-  (deref (select db [1 2 3]))
-
-  )
