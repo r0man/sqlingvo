@@ -1595,15 +1595,20 @@
 
 ;; Window functions: http://www.postgresql.org/docs/9.4/static/tutorial-window.html
 
-(deftest test-compare-salaries
+(deftest test-window-compare-salaries
   (is (= (sql (select db [:depname :empno :salary '(over (avg :salary) (partiton-by :depname))]
                 (from :empsalary)))
          ["SELECT \"depname\", \"empno\", \"salary\", (avg(\"salary\") over (PARTITION BY \"depname\")) FROM \"empsalary\""])))
 
-(deftest test-rank-over-order-by
+(deftest test-window-rank-over-order-by
   (is (= (sql (select db [:depname :empno :salary '(over (rank) (partiton-by :depname (order-by (desc :salary))))]
                 (from :empsalary)))
          ["SELECT \"depname\", \"empno\", \"salary\", (rank() over (PARTITION BY \"depname\" ORDER BY \"salary\" DESC)) FROM \"empsalary\""])))
+
+(deftest test-window-over-empty
+  (is (= (sql (select db [:salary '(over (sum :salary))]
+                (from :empsalary)))
+         ["SELECT \"salary\", sum(\"salary\") OVER () FROM \"empsalary\""])))
 
 ;; SELECT salary, sum(salary) OVER () FROM empsalary;
 

@@ -201,7 +201,9 @@
   (concat-sql "(" (join-sql ", " (compile-exprs db args)) ")"))
 
 (defmethod compile-fn :over [db node]
-  (compile-infix db node))
+  (if (= (count (:args node)) 1)
+    (concat-sql (compile-sql db (-> node :args first)) " OVER ()")
+    (compile-infix db node)))
 
 (defmethod compile-fn :partiton-by [db node]
   (concat-sql "(PARTITION BY "
