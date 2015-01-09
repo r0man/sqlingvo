@@ -38,7 +38,7 @@
     (cons (join separator (remove blank? (map first args)))
           (apply concat (map rest args)))))
 
-(defn compile-join-sql [db separator args]
+(defn compile-sql-join [db separator args]
   (join-sql separator (map #(compile-sql db %) args)))
 
 (defn compile-alias
@@ -95,7 +95,7 @@
   (fn [db ast] (:op ast)))
 
 (defmethod compile-expr :array [db {:keys [children]}]
-  (concat-sql "ARRAY[" (join-sql ", " (map #(compile-expr db %1) children)) "]"))
+  (concat-sql "ARRAY[" (compile-sql-join db ", " children) "]"))
 
 (defmethod compile-expr :select [db {:keys [as] :as expr}]
   (concat-sql (wrap-stmt (compile-sql db expr))
@@ -137,15 +137,15 @@
                  (compile-alias db as))
             (apply concat (map rest args))))))
 
-(defn compile-complex-args [db {:keys [as args name] :as node}]
-  (concat-sql "(" (core/name name) " "
-              (join-sql " " (map #(compile-sql db %1) args)) ")"
-              (compile-alias db as)))
+(defn compile-complex-args [db node]
+  (concat-sql "(" (name (:name node)) " "
+              (compile-sql-join db " " (:args node))
+              ")" (compile-alias db (:as node))))
 
-(defn compile-whitespace-args [db {:keys [as args name] :as node}]
-  (concat-sql (core/name name)
-              "(" (join-sql " " (map #(compile-sql db %1) args)) ")"
-              (compile-alias db as)))
+(defn compile-whitespace-args [db node]
+  (concat-sql (name (:name node)) "("
+              (compile-sql-join db " " (:args node))
+              ")" (compile-alias db (:as node))))
 
 (defmulti compile-fn
   "Compile a SQL function node into a SQL statement."
@@ -198,7 +198,7 @@
     (concat-sql "(" string " NOT LIKE " pattern ")" )))
 
 (defmethod compile-fn :range [db {:keys [args]}]
-  (concat-sql "(" (join-sql ", " (compile-exprs db args)) ")"))
+  (concat-sql "(" (compile-sql-join db ", " args) ")"))
 
 (defmethod compile-fn :over [db node]
   (let [args (map #(compile-sql db %) (:args node))]
@@ -208,10 +208,10 @@
 
 (defmethod compile-fn :partition-by [db node]
   (concat-sql "PARTITION BY "
-              (compile-join-sql db " " (:args node))))
+              (compile-sql-join db " " (:args node))))
 
 (defmethod compile-fn :order-by [db node]
-  (concat-sql "ORDER BY " (compile-join-sql db ", " (:args node))))
+  (concat-sql "ORDER BY " (compile-sql-join db ", " (:args node))))
 
 (defn- compile-direction [db node]
   (concat-sql (compile-sql db (first (:args node))) " "
@@ -224,9 +224,9 @@
   (compile-direction db node))
 
 (defmethod compile-fn :default [db {:keys [as args name]}]
-  (concat-sql (sql-name db name)
-              "(" (join-sql ", " (compile-exprs db args)) ")"
-              (compile-alias db as)))
+  (concat-sql (sql-name db name) "("
+              (join-sql ", " (compile-exprs db args))
+              ")" (compile-alias db as)))
 
 ;;  WITH Queries (Common Table Expressions)
 
@@ -304,7 +304,7 @@
    "COPY "
    (compile-sql db table)
    (if-not (empty? columns)
-     (concat-sql " (" (join-sql ", " (map #(compile-sql db %1) columns)) ")"))
+     (concat-sql " (" (compile-sql-join db ", " columns) ")"))
    " FROM "
    (let [from (first from)]
      (cond
@@ -339,7 +339,7 @@
        (concat-sql ", PRIMARY KEY(" (join ", " (map #(sql-name db %1) primary-key)) ")"))
      ")"
      (if inherits
-       (concat-sql " INHERITS (" (join-sql ", " (map #(compile-sql db %1) inherits)) ")")))))
+       (concat-sql " INHERITS (" (compile-sql-join db ", " inherits) ")")))))
 
 (defmethod compile-sql :delete [db node]
   (let [{:keys [where table returning]} node]
@@ -350,19 +350,19 @@
       (if-not (empty? where)
         (concat-sql " WHERE " (compile-sql db where)))
       (if-not (empty? returning)
-        (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning)))) ))))
+        (concat-sql " RETURNING " (compile-sql-join db ", " returning))) ))))
 
 (defmethod compile-sql :distinct [db {:keys [exprs on]}]
   (concat-sql
    "DISTINCT "
    (if-not (empty? on)
-     (concat-sql "ON (" (join-sql ", " (map #(compile-sql db %1) on)) ") "))
-   (join-sql ", " (map #(compile-sql db %1) exprs))))
+     (concat-sql "ON (" (compile-sql-join db ", " on) ") "))
+   (compile-sql-join db ", " exprs)))
 
 (defmethod compile-sql :drop-table [db {:keys [cascade if-exists restrict tables]}]
   (join-sql " " ["DROP TABLE"
                  (compile-sql db if-exists)
-                 (join-sql ", " (map #(compile-sql db %1) tables))
+                 (compile-sql-join db ", " tables)
                  (compile-sql db cascade)
                  (compile-sql db restrict)]))
 
@@ -370,7 +370,7 @@
   (compile-set-op db :except node))
 
 (defmethod compile-sql :expr-list [db {:keys [as children]}]
-  (concat-sql (join-sql " " (map #(compile-sql db %1) children))
+  (concat-sql (compile-sql-join db " " children)
               (compile-alias db as)))
 
 (defmethod compile-sql :attr [db node]
@@ -386,7 +386,7 @@
 (defmethod compile-sql :from [db {:keys [clause joins]}]
   (concat-sql "FROM " (join-sql ", " (map #(compile-from db %1) clause))
               (if-not (empty? joins)
-                (join-sql " " (map #(compile-sql db %1) joins)))))
+                (compile-sql-join db " " joins))))
 
 (defmethod compile-sql :group-by [db {:keys [exprs]}]
   (concat-sql "GROUP BY" (compile-sql db exprs)))
@@ -416,7 +416,7 @@
      (concat-sql
       "INSERT INTO " (compile-sql db table)
       (if-not (empty? columns)
-        (concat-sql " (" (join-sql ", " (map #(compile-sql db %1) columns)) ")"))
+        (concat-sql " (" (compile-sql-join db ", " columns) ")"))
       (if-not (empty? values)
         (concat-sql " " (compile-values db columns values)))
       (if select
@@ -424,7 +424,7 @@
       (if default-values
         " DEFAULT VALUES")
       (if-not (empty? returning)
-        (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning))))
+        (concat-sql " RETURNING " (compile-sql-join db ", " returning)))
       (if-not (empty? where)
         (concat-sql " WHERE " (compile-sql db where)))))))
 
@@ -445,7 +445,7 @@
    (if on
      (concat-sql " ON " (compile-sql db on)))
    (if-not (empty? using)
-     (concat-sql " USING (" (join-sql ", " (map #(compile-sql db %1) using)) ")"))))
+     (concat-sql " USING (" (compile-sql-join db ", " using) ")"))))
 
 (defmethod compile-sql :keyword [db {:keys [form]}]
   [(sql-quote db form)])
@@ -463,7 +463,7 @@
      (str " EXCLUDING " (join " " (map keyword-sql excluding))))))
 
 (defmethod compile-sql :list [db {:keys [children]}]
-  (concat-sql "(" (join-sql ", " (map #(compile-sql db %1) children)) ")"))
+  (concat-sql "(" (compile-sql-join db ", " children) ")"))
 
 (defmethod compile-sql :nil [db _] ["NULL"])
 
@@ -514,13 +514,13 @@
       (if-not (empty? from)
         (concat-sql " FROM " (join-sql ", " (map #(compile-from db %1) from))))
       (if-not (empty? joins)
-        (concat-sql " " (join-sql " " (map #(compile-sql db %1) joins))))
+        (concat-sql " " (compile-sql-join db " " joins)))
       (if-not (empty? where)
         (concat-sql " WHERE " (compile-sql db where)))
       (if-not (empty? group-by)
-        (concat-sql " GROUP BY " (join-sql ", " (map #(compile-sql db %1) group-by))))
+        (concat-sql " GROUP BY " (compile-sql-join db ", " group-by)))
       (if-not (empty? order-by)
-        (concat-sql " ORDER BY " (join-sql ", " (map #(compile-sql db %1) order-by))))
+        (concat-sql " ORDER BY " (compile-sql-join db ", " order-by)))
       (when-let [window (:window node)]
         (concat-sql " " (compile-sql db window)))
       (when-let [limit-sql (and limit (seq (compile-sql db limit)))]
@@ -528,11 +528,11 @@
       (if offset
         (concat-sql " " (compile-sql db offset)))
       (if-not (empty? set)
-        (concat-sql " " (join-sql ", " (map #(compile-sql db %1) set))))))))
+        (concat-sql " " (compile-sql-join db ", " set)))))))
 
 (defmethod compile-sql :truncate [db {:keys [tables continue-identity restart-identity cascade restrict]}]
   (join-sql " " ["TRUNCATE TABLE"
-                 (join-sql ", " (map #(compile-sql db %1) tables))
+                 (compile-sql-join db ", " tables)
                  (compile-sql db continue-identity)
                  (compile-sql db restart-identity)
                  (compile-sql db cascade)
@@ -561,7 +561,7 @@
       (if-not (empty? where)
         (concat-sql " WHERE " (compile-sql db where)))
       (if-not (empty? returning)
-        (concat-sql " RETURNING " (join-sql ", " (map #(compile-sql db %1) returning))))))))
+        (concat-sql " RETURNING " (compile-sql-join db ", " returning)))))))
 
 (defmethod compile-sql :window [db node]
   (->> (for [definition (:definitions node)]
