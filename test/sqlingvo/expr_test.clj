@@ -84,18 +84,6 @@
                         (parse-expr 2)
                         (parse-expr 3)]
              :as nil}]}
-    (parse-expr '((lag :close) over (partition by :company-id order by :date desc)))
-    '{:op :expr-list
-      :children [{:args [{:children [:name], :name :close, :op :column}], :children [:args], :name :lag, :op :fn}
-                 {:val over, :type :symbol, :op :constant, :literal? true, :form over}
-                 {:args [{:val by, :type :symbol, :op :constant, :literal? true, :form by}
-                         {:children [:name], :name :company-id, :op :column}
-                         {:val order, :type :symbol, :op :constant, :literal? true, :form order}
-                         {:val by, :type :symbol, :op :constant, :literal? true, :form by}
-                         {:children [:name], :name :date, :op :column}
-                         {:val desc, :type :symbol, :op :constant, :literal? true, :form desc}]
-                  :children [:args], :name :partition, :op :fn}]
-      :as nil}
     '(.-val :x)
     {:op :attr
      :children [:arg]
@@ -109,6 +97,37 @@
            :children [:args]
            :name :new-emp
            :args []}}))
+
+(deftest test-parse-expr-list
+  (is (= (parse-expr '((lag :close) over (partition by :company-id order by :date desc)))
+         '{:op :expr-list
+           :children
+           [{:args [{:children [:name] :name :close :op :column}]
+             :children [:args]
+             :name :lag
+             :op :fn}
+            {:val over
+             :type :symbol
+             :op :constant
+             :literal? true
+             :form over}
+            {:args
+             [{:val by :type :symbol :op :constant :literal? true :form by}
+              {:children [:name] :name :company-id :op :column}
+              {:val order :type :symbol :op :constant :literal? true :form order}
+              {:val by :type :symbol :op :constant :literal? true :form by}
+              {:children [:name] :name :date :op :column}
+              {:val desc :type :symbol :op :constant :literal? true :form desc}]
+             :children [:args] :name :partition :op :fn}]
+           :as nil})))
+
+(deftest test-parse-expr-backquote
+  (is (= (parse-expr `(count :*))
+         (parse-expr '(count :*))))
+  (is (= (parse-expr `((~'lag (~'count :*) 1)))
+         (parse-expr '((lag (count :*) 1)))))
+  (is (= (parse-expr `((~'lag (~'count :*) 1) ~'over (~'partition ~'by :quote-id ~'order ~'by (~'date :tweets.created-at))))
+         (parse-expr '((lag (count :*) 1) over (partition by :quote-id order by (date :tweets.created-at)))))))
 
 (deftest test-parse-condition-backquote
   (is (= (parse-condition '(in 1 (1 2 3)))

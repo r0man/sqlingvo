@@ -101,7 +101,8 @@
     (or (keyword? (first expr))
         (symbol? (first expr)))
     (parse-fn-expr expr)
-    (list? (first expr))
+    (or (list? (first expr))
+        (instance? clojure.lang.Cons (first expr)))
     {:op :expr-list :children (map parse-expr expr) :as (:as expr)}
     :else {:op :list :children (map parse-expr expr) :as (:as expr)}))
 
