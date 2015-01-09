@@ -1596,12 +1596,12 @@
 ;; Window functions: http://www.postgresql.org/docs/9.4/static/tutorial-window.html
 
 (deftest test-window-compare-salaries
-  (is (= (sql (select db [:depname :empno :salary '(over (avg :salary) (partiton-by :depname))]
+  (is (= (sql (select db [:depname :empno :salary '(over (avg :salary) (partition-by :depname))]
                 (from :empsalary)))
          ["SELECT \"depname\", \"empno\", \"salary\", avg(\"salary\") OVER (PARTITION BY \"depname\") FROM \"empsalary\""])))
 
 (deftest test-window-rank-over-order-by
-  (is (= (sql (select db [:depname :empno :salary '(over (rank) (partiton-by :depname (order-by (desc :salary))))]
+  (is (= (sql (select db [:depname :empno :salary '(over (rank) (partition-by :depname (order-by (desc :salary))))]
                 (from :empsalary)))
          ["SELECT \"depname\", \"empno\", \"salary\", rank() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""])))
 
@@ -1615,14 +1615,17 @@
                 (from :empsalary)))
          ["SELECT \"salary\", sum(\"salary\") OVER (ORDER BY \"salary\") FROM \"empsalary\""])))
 
-;; SELECT depname, empno, salary, enroll_date
-;; FROM
-;;   (SELECT depname, empno, salary, enroll_date,
-;;           rank() OVER (PARTITION BY depname ORDER BY salary DESC, empno) AS pos
-;;      FROM empsalary
-;;   ) AS ss
-;; WHERE pos < 3;
-
+(deftest test-window-rank-over-partition-by
+  (is (= (sql (select db [:depname :empno :salary :enroll-date]
+                (from (as (select db [:depname :empno :salary :enroll-date
+                                      (as '(over (rank) (partition-by :depname (order-by (desc :salary) :empno))) :pos)]
+                            (from :empsalary))
+                          :ss))
+                (where '(< pos 3))))
+         [(str "SELECT \"depname\", \"empno\", \"salary\", \"enroll_date\" "
+               "FROM (SELECT \"depname\", \"empno\", \"salary\", \"enroll_date\", "
+               "rank() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC, \"empno\") AS \"pos\" "
+               "FROM \"empsalary\") AS \"ss\" WHERE (pos < 3)")])))
 
 ;; SELECT sum(salary) OVER w, avg(salary) OVER w
 ;;   FROM empsalary
