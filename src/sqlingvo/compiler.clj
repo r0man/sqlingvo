@@ -39,7 +39,7 @@
           (apply concat (map rest args)))))
 
 (defn compile-join-sql [db separator args]
-  (join-sql db (map #(compile-sql db %) args)))
+  (join-sql separator (map #(compile-sql db %) args)))
 
 (defn compile-alias
   "Compile a SQL alias expression."
@@ -207,6 +207,19 @@
   (concat-sql "(PARTITION BY "
               (compile-join-sql db " " (:args node))
               ")"))
+
+(defmethod compile-fn :order-by [db node]
+  (concat-sql "ORDER BY " (compile-join-sql db " " (:args node))))
+
+(defn- compile-direction [db node]
+  (concat-sql (compile-sql db (first (:args node))) " "
+              (upper-case (name (:name node)))))
+
+(defmethod compile-fn :asc [db node]
+  (compile-direction db node))
+
+(defmethod compile-fn :desc [db node]
+  (compile-direction db node))
 
 (defmethod compile-fn :default [db {:keys [as args name]}]
   (concat-sql (sql-name db name)

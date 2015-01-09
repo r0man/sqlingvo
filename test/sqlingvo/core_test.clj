@@ -1600,17 +1600,10 @@
                 (from :empsalary)))
          ["SELECT \"depname\", \"empno\", \"salary\", (avg(\"salary\") over (PARTITION BY \"depname\")) FROM \"empsalary\""])))
 
-;; (sql (select db [:depname :empno :salary `(over (avg :salary) (partiton-by :depname))]
-;;        (from :empsalary)))
-
-;; (clojure.pprint/pprint
-;;  (ast (select db [:id `((~'lag :close) ~'over (~'partition ~'by :company-id ~'order ~'by :date ~'desc))]
-;;         (from :quotes))))
-
-;; (select db [:id '(+ 1 2)]
-;;   (from :quotes))
-
-;; SELECT depname, empno, salary, rank() OVER (PARTITION BY depname ORDER BY salary DESC) FROM empsalary;
+(deftest test-rank-over-order-by
+  (is (= (sql (select db [:depname :empno :salary '(over (rank) (partiton-by :depname (order-by (desc :salary))))]
+                (from :empsalary)))
+         ["SELECT \"depname\", \"empno\", \"salary\", (rank() over (PARTITION BY \"depname\" ORDER BY \"salary\" DESC)) FROM \"empsalary\""])))
 
 ;; SELECT salary, sum(salary) OVER () FROM empsalary;
 
