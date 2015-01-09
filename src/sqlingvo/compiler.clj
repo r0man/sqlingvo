@@ -201,14 +201,14 @@
   (concat-sql "(" (join-sql ", " (compile-exprs db args)) ")"))
 
 (defmethod compile-fn :over [db node]
-  (if (= (count (:args node)) 1)
-    (concat-sql (compile-sql db (-> node :args first)) " OVER ()")
-    (compile-infix db node)))
+  (let [args (map #(compile-sql db %) (:args node))]
+    (concat-sql (first args) " OVER ("
+                (join-sql " " (rest args))
+                ")")))
 
 (defmethod compile-fn :partiton-by [db node]
-  (concat-sql "(PARTITION BY "
-              (compile-join-sql db " " (:args node))
-              ")"))
+  (concat-sql "PARTITION BY "
+              (compile-join-sql db " " (:args node))))
 
 (defmethod compile-fn :order-by [db node]
   (concat-sql "ORDER BY " (compile-join-sql db " " (:args node))))
