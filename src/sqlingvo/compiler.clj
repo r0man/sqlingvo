@@ -14,6 +14,10 @@
 (defprotocol Quoteable
   (sql-quote [obj x]))
 
+(defmulti compile-sql
+  "Compile the `ast` into SQL."
+  (fn [db ast] (:op ast)))
+
 (defn to-sql [arg]
   (cond
     (string? arg)
@@ -34,6 +38,9 @@
     (cons (join separator (remove blank? (map first args)))
           (apply concat (map rest args)))))
 
+(defn compile-join-sql [db separator args]
+  (join-sql db (map #(compile-sql db %) args)))
+
 (defn compile-alias
   "Compile a SQL alias expression."
   ([db alias]
@@ -43,9 +50,6 @@
      (if include-as?
        (str " AS " (sql-quote db alias))
        (str " " (sql-quote db alias))))))
-
-
-(defmulti compile-sql (fn [db ast] (:op ast)))
 
 (defn keyword-sql [k]
   (replace (upper-case (name k)) #"-" " "))
@@ -195,6 +199,14 @@
 
 (defmethod compile-fn :range [db {:keys [args]}]
   (concat-sql "(" (join-sql ", " (compile-exprs db args)) ")"))
+
+(defmethod compile-fn :over [db node]
+  (compile-infix db node))
+
+(defmethod compile-fn :partiton-by [db node]
+  (concat-sql "(PARTITION BY "
+              (compile-join-sql db " " (:args node))
+              ")"))
 
 (defmethod compile-fn :default [db {:keys [as args name]}]
   (concat-sql (sql-name db name)
