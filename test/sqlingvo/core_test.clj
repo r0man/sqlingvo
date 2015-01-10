@@ -1637,3 +1637,14 @@
                "avg(\"salary\") OVER (\"w\") "
                "FROM \"empsalary\" "
                "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC)")])))
+
+(deftest test-window-alias-order-by
+  (is (= (sql (select db [(as '(over (sum :salary) :w) :sum)]
+                (from :empsalary)
+                (order-by :sum)
+                (window (as '(partition-by
+                              :depname (order-by (desc salary))) :w))))
+         [(str "SELECT sum(\"salary\") OVER (\"w\") AS \"sum\" "
+               "FROM \"empsalary\" "
+               "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC) "
+               "ORDER BY \"sum\"")])))

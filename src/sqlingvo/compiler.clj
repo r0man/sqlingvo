@@ -519,10 +519,10 @@
         (concat-sql " WHERE " (compile-sql db where)))
       (if-not (empty? group-by)
         (concat-sql " GROUP BY " (compile-sql-join db ", " group-by)))
-      (if-not (empty? order-by)
-        (concat-sql " ORDER BY " (compile-sql-join db ", " order-by)))
       (when-let [window (:window node)]
         (concat-sql " " (compile-sql db window)))
+      (if-not (empty? order-by)
+        (concat-sql " ORDER BY " (compile-sql-join db ", " order-by)))
       (when-let [limit-sql (and limit (seq (compile-sql db limit)))]
         (concat-sql " " limit-sql))
       (if offset
