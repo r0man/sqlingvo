@@ -184,6 +184,9 @@
 (defmethod compile-fn :exists [db {:keys [args]}]
   (concat-sql "(EXISTS " (compile-expr db (first args)) ")"))
 
+(defmethod compile-fn :not [db {:keys [args]}]
+  (concat-sql "(NOT " (compile-expr db (first args)) ")"))
+
 (defmethod compile-fn :not-exists [db {:keys [args]}]
   (concat-sql "(NOT EXISTS " (compile-expr db (first args)) ")"))
 
@@ -199,6 +202,9 @@
 
 (defmethod compile-fn :range [db {:keys [args]}]
   (concat-sql "(" (compile-sql-join db ", " args) ")"))
+
+(defmethod compile-fn :row [db {:keys [args]}]
+  (concat-sql "ROW(" (join-sql ", " (compile-exprs db args)) ")"))
 
 (defmethod compile-fn :over [db node]
   (let [args (map #(compile-sql db %) (:args node))]
@@ -224,7 +230,7 @@
   (compile-direction db node))
 
 (defmethod compile-fn :default [db {:keys [as args name]}]
-  (concat-sql (sql-name db name) "("
+  (concat-sql (sql-quote db name) "("
               (join-sql ", " (compile-exprs db args))
               ")" (compile-alias db as)))
 

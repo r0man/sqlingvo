@@ -120,8 +120,8 @@
         "\"date_prod\" DATE, "
         "\"kind\" VARCHAR(10), "
         "\"len\" INTERVAL, "
-        "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
-        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())")]
+        "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
+        "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"())")]
   (create-table db :films
     (column :code :char :length 5 :primary-key? true)
     (column :title :varchar :length 40 :not-null? true)
@@ -138,9 +138,9 @@
         "\"user_id\" INTEGER NOT NULL, "
         "\"spot_id\" INTEGER NOT NULL, "
         "\"rating\" INTEGER NOT NULL, "
-        "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
+        "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
         "\"updated_at\" TIMESTAMP WITH "
-        "TIME ZONE NOT NULL DEFAULT now(), "
+        "TIME ZONE NOT NULL DEFAULT \"now\"(), "
         "PRIMARY KEY(user_id, spot_id, created_at))")]
   (create-table db :ratings
     (column :id :serial)
@@ -252,8 +252,8 @@
          (:where stmt))))
 
 (deftest-stmt test-delete-quotes
-  [(str "DELETE FROM \"quotes\" WHERE ((\"company_id\" = 1) and (\"date\" > (SELECT min(\"date\") FROM \"import\")) and "
-        "(\"date\" > (SELECT max(\"date\") FROM \"import\")))")]
+  [(str "DELETE FROM \"quotes\" WHERE ((\"company_id\" = 1) and (\"date\" > (SELECT \"min\"(\"date\") FROM \"import\")) and "
+        "(\"date\" > (SELECT \"max\"(\"date\") FROM \"import\")))")]
   (delete db :quotes
     (where `(and (= :company-id 1)
                  (> :date ~(select db ['(min :date)] (from :import)))
@@ -397,7 +397,7 @@
   (insert db :x [:a :b] (values [{:a 1 :b 2 :c 3}])))
 
 (deftest-stmt test-insert-values-with-fn-call
-  ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, lower(?)), (2, ?)" "B" "b"]
+  ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, \"lower\"(?)), (2, ?)" "B" "b"]
   (insert db :x [:a :b]
     (values [{:a 1 :b '(lower "B")}
              {:a 2 :b "b"}])))
@@ -642,19 +642,19 @@
   (is (= [(parse-expr (as :created-at :c))] (:exprs stmt))))
 
 (deftest-stmt test-select-multiple-fns
-  ["SELECT greatest(1, 2), lower(?)" "X"]
+  ["SELECT \"greatest\"(1, 2), \"lower\"(?)" "X"]
   (select db ['(greatest 1 2) '(lower "X")])
   (is (= :select (:op stmt)))
   (is (= (map parse-expr ['(greatest 1 2) '(lower "X")]) (:exprs stmt))))
 
 (deftest-stmt test-select-nested-fns
-  ["SELECT (1 + greatest(2, 3))"]
+  ["SELECT (1 + \"greatest\"(2, 3))"]
   (select db ['(+ 1 (greatest 2 3))])
   (is (= :select (:op stmt)))
   (is (= [(parse-expr '(+ 1 (greatest 2 3)))] (:exprs stmt))))
 
 (deftest-stmt test-select-fn-alias
-  ["SELECT max(\"created_at\") AS \"m\" FROM \"continents\""]
+  ["SELECT \"max\"(\"created_at\") AS \"m\" FROM \"continents\""]
   (select db [(as '(max :created-at) :m)]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -700,7 +700,7 @@
   (is (= {:op :offset :start 20} (:offset stmt))))
 
 (deftest-stmt test-select-column-max
-  ["SELECT max(\"created_at\") FROM \"continents\""]
+  ["SELECT \"max\"(\"created_at\") FROM \"continents\""]
   (select db ['(max :created-at)]
     (from :continents))
   (is (= :select (:op stmt)))
@@ -759,10 +759,10 @@
   (is (= [(parse-expr (asc :created-at))] (:order-by stmt))))
 
 (deftest-stmt test-select-order-by-asc-expr
-  ["SELECT * FROM \"weather\".\"datasets\" ORDER BY abs((ST_ScaleX(\"rast\") * ST_ScaleY(\"rast\"))) DESC"]
+  ["SELECT * FROM \"weather\".\"datasets\" ORDER BY \"abs\"((\"st_scalex\"(\"rast\") * \"st_scaley\"(\"rast\"))) DESC"]
   (select db [*]
     (from :weather.datasets)
-    (order-by (desc '(abs (* (ST_ScaleX :rast) (ST_ScaleY :rast)))))))
+    (order-by (desc '(abs (* (st_scalex :rast) (st_scaley :rast)))))))
 
 (deftest-stmt test-select-order-by-desc
   ["SELECT * FROM \"continents\" ORDER BY \"created_at\" DESC"]
@@ -872,7 +872,7 @@
     (is (= [(parse-expr 2)] (:exprs from)))))
 
 (deftest-stmt test-select-parition-by
-  ["SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) FROM \"quotes\""]
+  ["SELECT \"id\", \"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) FROM \"quotes\""]
   (select db [:id '((lag :close) over (partition by :company-id order by :date desc))]
     (from :quotes))
   (is (= :select (:op stmt)))
@@ -881,7 +881,7 @@
   (is (= [(parse-from :quotes)] (:from stmt))))
 
 (deftest-stmt test-select-total-return
-  ["SELECT \"id\", (\"close\" / (lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) FROM \"quotes\""]
+  ["SELECT \"id\", (\"close\" / (\"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) FROM \"quotes\""]
   (select db [:id '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))]
     (from :quotes))
   (is (= :select (:op stmt)))
@@ -890,7 +890,7 @@
   (is (= [(parse-from :quotes)] (:from stmt))))
 
 (deftest-stmt test-select-total-return-alias
-  ["SELECT \"id\", (\"close\" / (lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) AS \"daily_return\" FROM \"quotes\""]
+  ["SELECT \"id\", (\"close\" / (\"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) AS \"daily_return\" FROM \"quotes\""]
   (select db [:id (as '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)]
     (from :quotes))
   (is (= :select (:op stmt)))
@@ -899,7 +899,7 @@
   (is (= [(parse-from :quotes)] (:from stmt))))
 
 (deftest-stmt test-select-group-by-a-order-by-1
-  ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
+  ["SELECT \"a\", \"max\"(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
   (select db [:a '(max :b)]
     (from :table-1)
     (group-by :a)
@@ -930,14 +930,14 @@
   (is (= [(parse-expr :sum)] (:order-by stmt))))
 
 (deftest-stmt test-select-setval
-  ["SELECT setval(\"continent_id_seq\", (SELECT max(\"id\") FROM \"continents\"))"]
+  ["SELECT \"setval\"(\"continent_id_seq\", (SELECT \"max\"(\"id\") FROM \"continents\"))"]
   (select db [`(setval :continent-id-seq ~(select db [`(max :id)] (from :continents)))])
   (is (= :select (:op stmt)))
   (is (= (map parse-expr [`(setval :continent-id-seq ~(select db [`(max :id)] (from :continents)))])
          (:exprs stmt))))
 
 (deftest-stmt test-select-regex-match
-  ["SELECT \"id\", \"symbol\", \"quote\" FROM \"quotes\" WHERE (? ~ concat(?, \"symbol\", ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
+  ["SELECT \"id\", \"symbol\", \"quote\" FROM \"quotes\" WHERE (? ~ \"concat\"(?, \"symbol\", ?))" "$AAPL" "(^|\\s)\\$" "($|\\s)"]
   (select db [:id :symbol :quote]
     (from :quotes)
     (where `(~(symbol "~") "$AAPL" (concat "(^|\\s)\\$" :symbol "($|\\s)"))))
@@ -1024,7 +1024,7 @@
     (join :continents `(on (= :continents.id :c.continent-id)))))
 
 (deftest-stmt test-select-join-subselect-alias
-  [(str "SELECT \"quotes\".*, \"start_date\" FROM \"quotes\" JOIN (SELECT \"company_id\", min(\"date\") AS \"start_date\" "
+  [(str "SELECT \"quotes\".*, \"start_date\" FROM \"quotes\" JOIN (SELECT \"company_id\", \"min\"(\"date\") AS \"start_date\" "
         "FROM \"quotes\" GROUP BY \"company_id\") AS \"start_dates\" ON ((\"quotes\".\"company_id\" = \"start_dates\".\"company_id\") and (\"quotes\".\"date\" = \"start_dates\".\"start_date\"))")]
   (select db [:quotes.* :start-date]
     (from :quotes)
@@ -1158,7 +1158,7 @@
   (select db ['(substring "Thomas" from 2 for 3)]))
 
 (deftest-stmt test-substring-from-to-lower
-  ["SELECT lower(substring(? from 2 for 3))" "Thomas"]
+  ["SELECT \"lower\"(substring(? from 2 for 3))" "Thomas"]
   (select db ['(lower (substring "Thomas" from 2 for 3))]))
 
 (deftest-stmt test-substring-from-pattern
@@ -1174,11 +1174,11 @@
   (select db ['(trim both "x" from "xTomxx")]))
 
 (deftest-stmt test-select-from-fn
-  ["SELECT * FROM generate_series(0, 10)"]
+  ["SELECT * FROM \"generate_series\"(0, 10)"]
   (select db [*] (from '(generate_series 0 10))))
 
 (deftest-stmt test-select-from-fn-alias
-  ["SELECT \"n\" FROM generate_series(0, 200) AS \"n\""]
+  ["SELECT \"n\" FROM \"generate_series\"(0, 200) AS \"n\""]
   (select db [:n] (from (as '(generate_series 0 200) :n))))
 
 (deftest-stmt test-select-qualified-column
@@ -1291,7 +1291,7 @@
   (is (= [(parse-expr *)] (:returning stmt))))
 
 (deftest-stmt test-update-daily-return
-  ["UPDATE \"quotes\" SET \"daily_return\" = \"u\".\"daily_return\" FROM (SELECT \"id\", lag(\"close\") over (partition by \"company_id\" order by \"date\" desc) AS \"daily_return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
+  ["UPDATE \"quotes\" SET \"daily_return\" = \"u\".\"daily_return\" FROM (SELECT \"id\", \"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) AS \"daily_return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
   (update db :quotes '((= :daily-return :u.daily-return))
     (where '(= :quotes.id :u.id))
     (from (as (select db [:id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return)]
@@ -1300,7 +1300,7 @@
 
 (deftest-stmt test-update-prices
   [(str "UPDATE \"prices\" SET \"daily_return\" = \"u\".\"daily_return\" "
-        "FROM (SELECT \"id\", ((\"close\" / lag(\"close\") over (partition by \"quote_id\" order by \"date\" desc)) - 1) AS \"daily_return\" "
+        "FROM (SELECT \"id\", ((\"close\" / \"lag\"(\"close\") over (partition by \"quote_id\" order by \"date\" desc)) - 1) AS \"daily_return\" "
         "FROM \"prices\" WHERE (\"prices\".\"quote_id\" = 1)) AS \"u\" WHERE ((\"prices\".\"id\" = \"u\".\"id\") and (\"prices\".\"quote_id\" = 1))")]
   (let [quote {:id 1}]
     (update db :prices '((= :daily-return :u.daily-return))
@@ -1315,7 +1315,7 @@
   [(str "UPDATE \"airports\" SET \"country_id\" = \"u\".\"id\", \"gps_code\" = \"u\".\"gps_code\", \"wikipedia_url\" = \"u\".\"wikipedia\", \"location\" = \"u\".\"geom\" "
         "FROM (SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
         "FROM \"natural_earth\".\"airports\" \"a\" JOIN \"countries\" \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
-        "LEFT JOIN \"airports\" ON (lower(\"airports\".\"iata_code\") = lower(\"a\".\"iata_code\")) "
+        "LEFT JOIN \"airports\" ON (\"lower\"(\"airports\".\"iata_code\") = \"lower\"(\"a\".\"iata_code\")) "
         "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NOT NULL))) AS \"u\" "
         "WHERE (\"airports\".\"iata_code\" = \"u\".\"iata_code\")")]
   (update db :airports
@@ -1335,7 +1335,7 @@
 
 (deftest-stmt test-update-countries
   [(str "UPDATE \"countries\" SET \"geom\" = \"u\".\"geom\" FROM (SELECT \"iso_a2\", \"iso_a3\", \"iso_n3\", \"geom\" FROM \"natural_earth\".\"countries\") AS \"u\" "
-        "WHERE ((lower(\"countries\".\"iso_3166_1_alpha_2\") = lower(\"u\".\"iso_a2\")) or (lower(\"countries\".\"iso_3166_1_alpha_3\") = lower(\"u\".\"iso_a3\")))")]
+        "WHERE ((\"lower\"(\"countries\".\"iso_3166_1_alpha_2\") = \"lower\"(\"u\".\"iso_a2\")) or (\"lower\"(\"countries\".\"iso_3166_1_alpha_3\") = \"lower\"(\"u\".\"iso_a3\")))")]
   (update db :countries
           '((= :geom :u.geom))
     (from (as (select db [:iso-a2 :iso-a3 :iso-n3 :geom]
@@ -1344,7 +1344,7 @@
                 (= (lower :countries.iso-3166-1-alpha-3) (lower :u.iso-a3))))))
 
 (deftest-stmt test-update-with-fn-call
-  ["UPDATE \"films\" SET \"name\" = lower(\"name\") WHERE (\"id\" = 1)"]
+  ["UPDATE \"films\" SET \"name\" = \"lower\"(\"name\") WHERE (\"id\" = 1)"]
   (update db :films {:name '(lower :name)}
     (where `(= :id 1))))
 
@@ -1404,19 +1404,19 @@
                 (cast "a fat cat sat on a mat and ate a fat rat" :tsvector))]))
 
 (deftest-stmt test-basic-text-matching-3
-  ["SELECT (to_tsvector(?) @@ to_tsquery(?))" "fat cats ate fat rats" "fat & rat"]
+  ["SELECT (\"to_tsvector\"(?) @@ \"to_tsquery\"(?))" "fat cats ate fat rats" "fat & rat"]
   (select db [`(~(keyword "@@")
                 (to_tsvector "fat cats ate fat rats")
                 (to_tsquery "fat & rat"))]))
 
 (deftest-stmt test-basic-text-matching-4
-  ["SELECT (CAST(? AS tsvector) @@ to_tsquery(?))" "fat cats ate fat rats" "fat & rat"]
+  ["SELECT (CAST(? AS tsvector) @@ \"to_tsquery\"(?))" "fat cats ate fat rats" "fat & rat"]
   (select db [`(~(keyword "@@")
                 (cast "fat cats ate fat rats" :tsvector)
                 (to_tsquery "fat & rat"))]))
 
 (deftest-stmt test-searching-a-table-1
-  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector(?, \"body\") @@ to_tsquery(?, ?))" "english" "english" "friend"]
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (\"to_tsvector\"(?, \"body\") @@ \"to_tsquery\"(?, ?))" "english" "english" "friend"]
   (select db [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
@@ -1424,7 +1424,7 @@
              (to_tsquery "english" "friend")))))
 
 (deftest-stmt test-searching-a-table-2
-  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector(\"body\") @@ to_tsquery(?))" "friend"]
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (\"to_tsvector\"(\"body\") @@ \"to_tsquery\"(?))" "friend"]
   (select db [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
@@ -1432,7 +1432,7 @@
              (to_tsquery "friend")))))
 
 (deftest-stmt test-searching-a-table-3
-  ["SELECT \"title\" FROM \"pgweb\" WHERE (to_tsvector((\"title\" || ? || \"body\")) @@ to_tsquery(?)) ORDER BY \"last_mod_date\" DESC LIMIT 10" " " "create & table"]
+  ["SELECT \"title\" FROM \"pgweb\" WHERE (\"to_tsvector\"((\"title\" || ? || \"body\")) @@ \"to_tsquery\"(?)) ORDER BY \"last_mod_date\" DESC LIMIT 10" " " "create & table"]
   (select db [:title]
     (from :pgweb)
     (where `(~(keyword "@@")
@@ -1445,13 +1445,13 @@
 
 (deftest-stmt test-with-query
   [(str "WITH regional_sales AS ("
-        "SELECT \"region\", sum(\"amount\") AS \"total_sales\" "
+        "SELECT \"region\", \"sum\"(\"amount\") AS \"total_sales\" "
         "FROM \"orders\" GROUP BY \"region\"), "
         "top_regions AS ("
         "SELECT \"region\" "
         "FROM \"regional_sales\" "
-        "WHERE (\"total_sales\" > (SELECT (sum(\"total_sales\") / 10) FROM \"regional_sales\"))) "
-        "SELECT \"region\", \"product\", sum(\"quantity\") AS \"product_units\", sum(\"amount\") AS \"product_sales\" "
+        "WHERE (\"total_sales\" > (SELECT (\"sum\"(\"total_sales\") / 10) FROM \"regional_sales\"))) "
+        "SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product_units\", \"sum\"(\"amount\") AS \"product_sales\" "
         "FROM \"orders\" "
         "WHERE \"region\" IN (SELECT \"region\" "
         "FROM \"top_regions\") "
@@ -1518,11 +1518,11 @@
 ;; ATTRIBUTES OF COMPOSITE TYPES
 
 (deftest-stmt test-attr-composite-type
-  ["SELECT (new_emp()).\"name\" AS \"x\""]
+  ["SELECT (\"new_emp\"()).\"name\" AS \"x\""]
   (select db [(as '(.-name (new-emp)) :x)]))
 
 (deftest-stmt test-nested-attr-composite-type
-  ["SELECT ((new_emp()).\"name\").\"first\" AS \"x\""]
+  ["SELECT ((\"new_emp\"()).\"name\").\"first\" AS \"x\""]
   (select db [(as '(.-first (.-name (new-emp))) :x)]))
 
 (deftest-stmt test-select-as-alias
@@ -1598,22 +1598,22 @@
 (deftest test-window-compare-salaries
   (is (= (sql (select db [:depname :empno :salary '(over (avg :salary) (partition-by :depname))]
                 (from :empsalary)))
-         ["SELECT \"depname\", \"empno\", \"salary\", avg(\"salary\") OVER (PARTITION BY \"depname\") FROM \"empsalary\""])))
+         ["SELECT \"depname\", \"empno\", \"salary\", \"avg\"(\"salary\") OVER (PARTITION BY \"depname\") FROM \"empsalary\""])))
 
 (deftest test-window-rank-over-order-by
   (is (= (sql (select db [:depname :empno :salary '(over (rank) (partition-by :depname (order-by (desc :salary))))]
                 (from :empsalary)))
-         ["SELECT \"depname\", \"empno\", \"salary\", rank() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""])))
+         ["SELECT \"depname\", \"empno\", \"salary\", \"rank\"() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""])))
 
 (deftest test-window-over-empty
   (is (= (sql (select db [:salary '(over (sum :salary))]
                 (from :empsalary)))
-         ["SELECT \"salary\", sum(\"salary\") OVER () FROM \"empsalary\""])))
+         ["SELECT \"salary\", \"sum\"(\"salary\") OVER () FROM \"empsalary\""])))
 
 (deftest test-window-sum-over-order-by
   (is (= (sql (select db [:salary '(over (sum :salary) (order-by :salary))]
                 (from :empsalary)))
-         ["SELECT \"salary\", sum(\"salary\") OVER (ORDER BY \"salary\") FROM \"empsalary\""])))
+         ["SELECT \"salary\", \"sum\"(\"salary\") OVER (ORDER BY \"salary\") FROM \"empsalary\""])))
 
 (deftest test-window-rank-over-partition-by
   (is (= (sql (select db [:depname :empno :salary :enroll-date]
@@ -1624,7 +1624,7 @@
                 (where '(< pos 3))))
          [(str "SELECT \"depname\", \"empno\", \"salary\", \"enroll_date\" "
                "FROM (SELECT \"depname\", \"empno\", \"salary\", \"enroll_date\", "
-               "rank() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC, \"empno\") AS \"pos\" "
+               "\"rank\"() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC, \"empno\") AS \"pos\" "
                "FROM \"empsalary\") AS \"ss\" WHERE (pos < 3)")])))
 
 (deftest test-window-alias
@@ -1633,8 +1633,8 @@
                 (from :empsalary)
                 (window (as '(partition-by
                               :depname (order-by (desc salary))) :w))))
-         [(str "SELECT sum(\"salary\") OVER (\"w\"), "
-               "avg(\"salary\") OVER (\"w\") "
+         [(str "SELECT \"sum\"(\"salary\") OVER (\"w\"), "
+               "\"avg\"(\"salary\") OVER (\"w\") "
                "FROM \"empsalary\" "
                "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC)")])))
 
@@ -1644,7 +1644,12 @@
                 (order-by :sum)
                 (window (as '(partition-by
                               :depname (order-by (desc salary))) :w))))
-         [(str "SELECT sum(\"salary\") OVER (\"w\") AS \"sum\" "
+         [(str "SELECT \"sum\"(\"salary\") OVER (\"w\") AS \"sum\" "
                "FROM \"empsalary\" "
                "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC) "
                "ORDER BY \"sum\"")])))
+
+(deftest test-not-expr
+  (is (= (sql (select db [:*]
+                (where `(not (= :id 1)))))
+         ["SELECT * WHERE (NOT (\"id\" = 1))"])))
