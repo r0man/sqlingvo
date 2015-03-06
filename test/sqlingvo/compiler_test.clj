@@ -57,7 +57,7 @@
     {:op :keyword :form :continents.created-at}
     ["\"continents\".\"created_at\""]
     {:op :fn :name 'max :args [{:op :keyword :form :created-at}]}
-    ["max(\"created_at\")"]
+    ["\"max\"(\"created_at\")"]
     {:op :fn
      :name 'greatest
      :args [{:op :constant
@@ -70,9 +70,9 @@
              :literal? true
              :type :number
              :val 2}]}
-    ["greatest(1, 2)"]
-    {:op :fn :name 'ST_AsText :args [{:op :fn :name 'ST_Centroid :args [{:op :constant :form "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"}]}]}
-    ["ST_AsText(ST_Centroid(?))" "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"]))
+    ["\"greatest\"(1, 2)"]
+    {:op :fn :name 'st_astext :args [{:op :fn :name 'st_centroid :args [{:op :constant :form "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"}]}]}
+    ["\"st_astext\"(\"st_centroid\"(?))" "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"]))
 
 (deftest test-compile-drop-table
   (are [ast expected]
