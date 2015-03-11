@@ -6,7 +6,7 @@
             [sqlingvo.expr :refer :all]
             [sqlingvo.util :refer :all])
   (:import (sqlingvo.expr Stmt))
-  (:refer-clojure :exclude [distinct group-by replace]))
+  (:refer-clojure :exclude [distinct group-by replace update]))
 
 (defn sql-name [db x]
   (compiler/sql-name db x))
