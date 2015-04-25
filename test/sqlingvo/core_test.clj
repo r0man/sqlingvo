@@ -1653,3 +1653,8 @@
   (is (= (sql (select db [:*]
                 (where `(not (= :id 1)))))
          ["SELECT * WHERE (NOT (\"id\" = 1))"])))
+
+(deftest test-slash-in-function-name
+  ;; TODO: Get rid of fn name conversion in tests
+  (is (= (sql (select db [`(~(symbol "m/s->km/h") 10)]))
+         ["SELECT \"m/s_>km/h\"(10)"])))
