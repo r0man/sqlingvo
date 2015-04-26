@@ -27,6 +27,18 @@
   "Returns the qualified name of `k`."
   [k] (replace (str k) #"^:" ""))
 
+(defn unintern-name
+  "Returns `k` without any interned namespace."
+  [k]
+  (let [ns (namespace k)
+        kw (name k)]
+    (cond
+      (and ns (find-ns (symbol ns)))
+      (str kw)
+      (and ns kw)
+      (str ns "/" kw)
+      :else (str kw))))
+
 (defn make-node [& {:as node}]
   (assert (:op node) (str "Missing :op in make-node: " (pr-str node)))
   (if-not (empty? (:children node))
@@ -78,7 +90,7 @@
   (make-node
    :op :fn
    :children [:args]
-   :name (keyword (name (first expr)))
+   :name (unintern-name (first expr))
    :args (map parse-expr (rest expr))))
 
 (defn- parse-attr-expr [expr]

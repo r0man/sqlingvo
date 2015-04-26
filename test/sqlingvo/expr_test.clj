@@ -48,36 +48,36 @@
     `(= 1 1)
     {:op :fn
      :children [:args]
-     :name :=
+     :name "="
      :args [(parse-expr 1) (parse-expr 1)]}
     '(= :name "Europe")
     {:op :fn
      :children [:args]
-     :name :=
+     :name "="
      :args [(parse-expr :name) (parse-expr "Europe")]}
     '(max 1 2)
     {:op :fn
      :children [:args]
-     :name :max
+     :name "max"
      :args [(parse-expr 1) (parse-expr 2)]}
     '(max 1 (max 2 3))
     {:op :fn
      :children [:args]
-     :name :max
+     :name "max"
      :args [(parse-expr 1)
             {:op :fn
              :children [:args]
-             :name :max
+             :name "max"
              :args [(parse-expr 2) (parse-expr 3)]}]}
     '(now)
     {:op :fn
      :children [:args]
-     :name :now
+     :name "now"
      :args []}
     '(in 1 (1 2 3))
     {:op :fn
      :children [:args]
-     :name :in
+     :name "in"
      :args [(parse-expr 1)
             {:op :list
              :children [(parse-expr 1)
@@ -95,7 +95,7 @@
      :name :val
      :arg {:op :fn,
            :children [:args]
-           :name :new-emp
+           :name "new-emp"
            :args []}}))
 
 (deftest test-parse-expr-list
@@ -104,7 +104,7 @@
            :children
            [{:args [{:children [:name] :name :close :op :column}]
              :children [:args]
-             :name :lag
+             :name "lag"
              :op :fn}
             {:val over
              :type :symbol
@@ -118,7 +118,7 @@
               {:val by :type :symbol :op :constant :literal? true :form by}
               {:children [:name] :name :date :op :column}
               {:val desc :type :symbol :op :constant :literal? true :form desc}]
-             :children [:args] :name :partition :op :fn}]
+             :children [:args] :name "partition" :op :fn}]
            :as nil})))
 
 (deftest test-parse-expr-backquote
@@ -147,7 +147,7 @@
     '(generate_series 0 10)
     {:op :fn
      :children [:args]
-     :name :generate_series
+     :name "generate_series"
      :args [(parse-expr 0) (parse-expr 10)]}))
 
 (deftest test-qualified-name
@@ -165,3 +165,10 @@
     1 :number
     "1" :string
     ))
+
+(deftest test-unintern-name
+  (are [k expected]
+    (= (unintern-name k) expected)
+    :x "x"
+    (keyword "m/s->km/h") "m/s->km/h"
+    (keyword "sqlingvo.expr-test/m/s->km/h") "m/s->km/h"))
