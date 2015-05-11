@@ -213,8 +213,13 @@
                 ")" (compile-alias db (:as node)))))
 
 (defmethod compile-fn :partition-by [db node]
-  (concat-sql "PARTITION BY "
-              (compile-sql-join db " " (:args node))))
+  (let [[expr & more-args] (:args node)]
+    (concat-sql "PARTITION BY "
+                (if (= :array (:op expr))
+                  (compile-sql-join db ", " (:children expr))
+                  (compile-expr db expr))
+                (when (seq more-args)
+                  (concat-sql " " (compile-sql-join db " " more-args))))))
 
 (defmethod compile-fn :order-by [db node]
   (concat-sql "ORDER BY " (compile-sql-join db ", " (:args node))))

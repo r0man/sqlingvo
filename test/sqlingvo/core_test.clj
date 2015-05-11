@@ -1600,10 +1600,20 @@
                 (from :empsalary)))
          ["SELECT \"depname\", \"empno\", \"salary\", \"avg\"(\"salary\") OVER (PARTITION BY \"depname\") FROM \"empsalary\""])))
 
+(deftest test-window-compare-salaries-by-year
+  (is (= (sql (select db [:year :depname :empno :salary '(over (avg :salary) (partition-by [:year :depname]))]
+                (from :empsalary)))
+         ["SELECT \"year\", \"depname\", \"empno\", \"salary\", \"avg\"(\"salary\") OVER (PARTITION BY \"year\", \"depname\") FROM \"empsalary\""])))
+
 (deftest test-window-rank-over-order-by
   (is (= (sql (select db [:depname :empno :salary '(over (rank) (partition-by :depname (order-by (desc :salary))))]
                 (from :empsalary)))
          ["SELECT \"depname\", \"empno\", \"salary\", \"rank\"() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""])))
+
+(deftest test-window-rank-over-multiple-cols-order-by
+  (is (= (sql (select db [:year :depname :empno :salary '(over (rank) (partition-by [:year :depname] (order-by (desc :salary))))]
+                (from :empsalary)))
+         ["SELECT \"year\", \"depname\", \"empno\", \"salary\", \"rank\"() OVER (PARTITION BY \"year\", \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""])))
 
 (deftest test-window-over-empty
   (is (= (sql (select db [:salary '(over (sum :salary))]
