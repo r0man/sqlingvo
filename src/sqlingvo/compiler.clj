@@ -271,6 +271,7 @@
   (concat-sql
    (sql-quote db (:name column))
    " " (replace (upper-case (name (:type column))) "-" " ")
+   (if (:array? column) "[]")
    (if-let [length (:length column)]
      (str "(" length ")"))
    (if (:not-null? column)

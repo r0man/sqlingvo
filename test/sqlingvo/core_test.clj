@@ -151,6 +151,11 @@
     (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))
     (primary-key :user-id :spot-id :created-at)))
 
+(deftest test-create-table-array-column
+  (is (= (sql (create-table db :ratings
+                (column :x :text :array? true)))
+         ["CREATE TABLE \"ratings\" (\"x\" TEXT[])"])))
+
 ;; COPY
 
 (deftest-stmt test-copy-stdin
