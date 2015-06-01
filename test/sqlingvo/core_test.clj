@@ -1381,6 +1381,10 @@
   ["SELECT (ARRAY[1, 2] <@ ARRAY[3, 4])"]
   (select db [`(~(keyword "<@") [1 2] [3 4])]))
 
+(deftest test-insert-array
+  (is (= (sql (insert db :test [:x] (values [{:x ["1" 2]}])))
+         ["INSERT INTO \"test\" (\"x\") VALUES (ARRAY[?, 2])" "1"])))
+
 ;; POSTGRESQL FULLTEXT
 
 (deftest-stmt test-cast-as-document-1

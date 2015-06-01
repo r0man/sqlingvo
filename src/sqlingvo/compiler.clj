@@ -90,12 +90,15 @@
 
 ;; COMPILE EXPRESSIONS
 
+(defn- compile-array [db {:keys [children]}]
+  (concat-sql "ARRAY[" (compile-sql-join db ", " children) "]"))
+
 (defmulti compile-expr
   "Compile a SQL expression."
   (fn [db ast] (:op ast)))
 
-(defmethod compile-expr :array [db {:keys [children]}]
-  (concat-sql "ARRAY[" (compile-sql-join db ", " children) "]"))
+(defmethod compile-expr :array [db node]
+  (compile-array db node))
 
 (defmethod compile-expr :select [db {:keys [as] :as expr}]
   (concat-sql (wrap-stmt (compile-sql db expr))
@@ -284,6 +287,9 @@
      (concat-sql " DEFAULT " (compile-sql db default)))))
 
 ;; COMPILE SQL
+
+(defmethod compile-sql :array [db node]
+  (compile-array db node))
 
 (defmethod compile-sql :cascade [db node]
   ["CASCADE"])
