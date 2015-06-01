@@ -151,6 +151,11 @@
     (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))
     (primary-key :user-id :spot-id :created-at)))
 
+(deftest test-create-table-array-column
+  (is (= (sql (create-table db :ratings
+                (column :x :text :array? true)))
+         ["CREATE TABLE \"ratings\" (\"x\" TEXT[])"])))
+
 ;; COPY
 
 (deftest-stmt test-copy-stdin
@@ -1375,6 +1380,10 @@
 (deftest-stmt test-select-array-contained
   ["SELECT (ARRAY[1, 2] <@ ARRAY[3, 4])"]
   (select db [`(~(keyword "<@") [1 2] [3 4])]))
+
+(deftest test-insert-array
+  (is (= (sql (insert db :test [:x] (values [{:x ["1" 2]}])))
+         ["INSERT INTO \"test\" (\"x\") VALUES (ARRAY[?, 2])" "1"])))
 
 ;; POSTGRESQL FULLTEXT
 
