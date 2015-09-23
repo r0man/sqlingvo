@@ -19,7 +19,9 @@
     {:op :column :schema :public :table :continents :name :created-at}
     ["\"public\".\"continents\".\"created_at\""]
     {:op :column :schema :public :table :continents :name :created-at :as :c}
-    ["\"public\".\"continents\".\"created_at\" AS \"c\""]))
+    ["\"public\".\"continents\".\"created_at\" AS \"c\""]
+    {:op :column :table :continents :name :some_key :references "other_table(other_key)"}
+    ["\"continents\".\"some_key\" REFERENCES other_table(other_key)"]))
 
 (deftest test-compile-constant
   (are [ast expected]
