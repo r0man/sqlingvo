@@ -270,6 +270,9 @@
 (defmethod compile-from :table [db node]
   (compile-sql db node))
 
+(defn- references-name [reference]
+  (str (namespace reference) "(" (name reference) ")"))
+
 (defn compile-column [db column]
   (concat-sql
    (sql-quote db (:name column))
@@ -283,6 +286,8 @@
      " UNIQUE")
    (if (:primary-key? column)
      " PRIMARY KEY")
+   (if-let [foreign-key (:references column)]
+     (str " REFERENCES " (references-name foreign-key)))
    (if-let [default (:default column)]
      (concat-sql " DEFAULT " (compile-sql db default)))))
 

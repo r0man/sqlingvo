@@ -135,8 +135,8 @@
 (deftest-stmt test-create-table-compound-primary-key
   [(str "CREATE TABLE \"ratings\" ("
         "\"id\" SERIAL, "
-        "\"user_id\" INTEGER NOT NULL, "
-        "\"spot_id\" INTEGER NOT NULL, "
+        "\"user_id\" INTEGER NOT NULL REFERENCES users(id), "
+        "\"spot_id\" INTEGER NOT NULL REFERENCES spots(id), "
         "\"rating\" INTEGER NOT NULL, "
         "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
         "\"updated_at\" TIMESTAMP WITH "
