@@ -271,7 +271,6 @@
   (compile-sql db node))
 
 (defn compile-column [db column]
-  (println "compile-column" column)
   (concat-sql
    (sql-quote db (:name column))
    " " (replace (upper-case (name (:type column))) "-" " ")
