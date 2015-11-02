@@ -3,7 +3,7 @@
 #+LANGUAGE: en
 
 [[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.png]]
-[[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.png]]
+[[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
 
 A SQL DSL in Clojure.
 
