@@ -280,6 +280,6 @@ A SQL DSL in Clojure.
 
 * License
 
-  Copyright © 2012-2014 roman
+  Copyright © 2012-2015 roman
 
   Distributed under the Eclipse Public License, the same as Clojure.
