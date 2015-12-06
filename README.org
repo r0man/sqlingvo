@@ -278,27 +278,6 @@ A SQL DSL in Clojure.
 
   For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
 
-* Emacs
-
-  For better indentation in clojure-mode add this to your Emacs config.
-
-  #+BEGIN_SRC emacs-lisp
-    (add-hook
-     'clojure-mode-hook
-     (lambda ()
-       (define-clojure-indent
-         (copy 2)
-         (create-table 1)
-         (delete 1)
-         (drop-materialized-view 2)
-         (drop-table 1)
-         (insert 2)
-         (refresh-materialized-view 2)
-         (select 1)
-         (truncate 1)
-         (update 2))))
-  #+END_SRC
-
 * License
 
   Copyright © 2012-2014 roman
