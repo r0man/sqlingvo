@@ -2,7 +2,7 @@
 #+author: roman
 #+LANGUAGE: en
 
-[[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.png]]
+[[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
 [[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
 
 A SQL DSL in Clojure.
