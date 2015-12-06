@@ -252,23 +252,23 @@ A SQL DSL in Clojure.
 ** [[http://www.postgresql.org/docs/9.4/static/queries-with.html][With Queries or Common Table Expressions]]
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (with db [:regional-sales
-                  (select db [:region (as '(sum :amount) :total-sales)]
-                    (from :orders)
-                    (group-by :region))
-                  :top-regions
-                  (select db [:region]
-                    (from :regional-sales)
-                    (where `(> :total-sales
-                               ~(select ['(/ (sum :total-sales) 10)]
+     (sql (with db [:regional-sales
+                    (select db [:region (as '(sum :amount) :total-sales)]
+                      (from :orders)
+                      (group-by :region))
+                    :top-regions
+                    (select db [:region]
+                      (from :regional-sales)
+                      (where `(> :total-sales
+                                 ~(select db ['(/ (sum :total-sales) 10)]
                                     (from :regional-sales)))))]
-          (select db [:region :product
-                      (as '(sum :quantity) :product-units)
-                      (as '(sum :amount) :product-sales)]
-            (from :orders)
-            (where `(in :region ~(select [:region]
+            (select db [:region :product
+                        (as '(sum :quantity) :product-units)
+                        (as '(sum :amount) :product-sales)]
+              (from :orders)
+              (where `(in :region ~(select db [:region]
                                      (from :top-regions))))
-            (group-by :region :product))))
+              (group-by :region :product))))
    #+END_SRC
 
    #+RESULTS:
