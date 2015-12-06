@@ -119,8 +119,8 @@
 
   (copy db :country []
   (from \"/usr1/proj/bray/sql/country_data\"))
-  ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]
-  "
+  ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]"
+  {:style/indent 3}
   [db table columns & body]
   (let [table (parse-table table)
         columns (map parse-column columns)]
@@ -135,6 +135,7 @@
 
 (defn create-table
   "Returns a fn that builds a CREATE TABLE statement."
+  {:style/indent 2}
   [db table & body]
   (let [table (parse-table table)]
     (Stmt. (fn [_]
@@ -155,8 +156,8 @@ Examples:
 
   (delete db :continents
     (where '(= :id 1)))
-  ;=> [\"DELETE FROM \\\"continents\\\" WHERE (\\\"id\\\" = 1)\"]
-"
+  ;=> [\"DELETE FROM \\\"continents\\\" WHERE (\\\"id\\\" = 1)\"]"
+  {:style/indent 2}
   [db table & body]
   (let [table (parse-table table)]
     (Stmt. (fn [_]
@@ -176,9 +177,8 @@ Examples:
   ;=> [\"DROP TABLE TABLE \\\"continents\\\"\"]
 
   (drop-table db [:continents :countries])
-  ;=> [\"DROP TABLE TABLE \\\"continents\\\", \\\"countries\\\"\"]
-
-"
+  ;=> [\"DROP TABLE TABLE \\\"continents\\\", \\\"countries\\\"\"]"
+  {:style/indent 2}
   [db tables & body]
   (let [tables (map parse-table tables)]
     (Stmt. (fn [stmt]
@@ -262,6 +262,7 @@ Examples:
 
 (defn insert
   "Returns a fn that builds a INSERT statement."
+  {:style/indent 3}
   [db table columns & body]
   (let [table (parse-table table)
         columns (map parse-column columns)]
@@ -353,6 +354,7 @@ Examples:
 
 (defn drop-materialized-view
   "Drop a materialized view."
+  {:style/indent 2}
   [db view & body]
   (let [view (parse-table view)]
     (Stmt. (fn [_]
@@ -404,9 +406,8 @@ Examples:
 
   (select db [:id :name]
   (from :continents))
-  ;=> [\"SELECT \\\"id\\\", \\\"name\\\" FROM \\\"continents\\\"\"]
-
-  "
+  ;=> [\"SELECT \\\"id\\\", \\\"name\\\" FROM \\\"continents\\\"\"]"
+  {:style/indent 2}
   [db exprs & body]
   (let [[_ select]
         ((m-seq (remove nil? body))
@@ -433,14 +434,14 @@ Examples:
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement.
 
-Examples:
+  Examples:
 
   (truncate db [:continents])
   ;=> [\"TRUNCATE TABLE \\\"continents\\\"\"]
 
   (truncate db [:continents :countries])
-  ;=> [\"TRUNCATE TABLE \\\"continents\\\", \\\"countries\\\"\"]
-"
+  ;=> [\"TRUNCATE TABLE \\\"continents\\\", \\\"countries\\\"\"]"
+  {:style/indent 1}
   [db tables & body]
   (let [tables (map parse-table tables)]
     (Stmt. (fn [_]
@@ -467,13 +468,13 @@ Examples:
 (defn update
   "Returns a fn that builds a UPDATE statement.
 
-Examples:
+  Examples:
 
   (update db :films {:kind \"Dramatic\"}
     (where '(= :kind \"Drama\")))
   ;=> [\"UPDATE \\\"films\\\" SET \\\"kind\\\" = ? WHERE (\\\"kind\\\" = ?)\"
-  ;=>  \"Dramatic\" \"Drama\"]
-"
+  ;=>  \"Dramatic\" \"Drama\"]"
+  {:style/indent 2}
   [db table row & body]
   (let [table (parse-table table)
         exprs (if (sequential? row) (parse-exprs row))
@@ -519,6 +520,7 @@ Examples:
 
 (defn with
   "Returns a fn that builds a WITH (common table expressions) query."
+  {:style/indent 2}
   [db bindings query]
   (assert (even? (count bindings)) "The WITH bindings must be even.")
   (let [bindings (map (fn [[name stmt]]
