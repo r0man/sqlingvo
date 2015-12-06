@@ -1275,7 +1275,8 @@
 
 (deftest-stmt test-update-drama-to-dramatic
   ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
-  (update db :films {:kind "Dramatic"}
+  (update db :films
+    {:kind "Dramatic"}
     (where '(= :kind "Drama")))
   (is (= :update (:op stmt)))
   (is (= (parse-table :films) (:table stmt)))
@@ -1285,7 +1286,8 @@
 
 (deftest-stmt test-update-drama-to-dramatic-returning
   ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?) RETURNING *" "Dramatic" "Drama"]
-  (update db :films {:kind "Dramatic"}
+  (update db :films
+    {:kind "Dramatic"}
     (where '(= :kind "Drama"))
     (returning *))
   (is (= :update (:op stmt)))
@@ -1297,7 +1299,8 @@
 
 (deftest-stmt test-update-daily-return
   ["UPDATE \"quotes\" SET \"daily_return\" = \"u\".\"daily_return\" FROM (SELECT \"id\", \"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) AS \"daily_return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
-  (update db :quotes '((= :daily-return :u.daily-return))
+  (update db :quotes
+    '((= :daily-return :u.daily-return))
     (where '(= :quotes.id :u.id))
     (from (as (select db [:id (as '((lag :close) over (partition by :company-id order by :date desc)) :daily-return)]
                 (from :quotes))
@@ -1308,7 +1311,8 @@
         "FROM (SELECT \"id\", ((\"close\" / \"lag\"(\"close\") over (partition by \"quote_id\" order by \"date\" desc)) - 1) AS \"daily_return\" "
         "FROM \"prices\" WHERE (\"prices\".\"quote_id\" = 1)) AS \"u\" WHERE ((\"prices\".\"id\" = \"u\".\"id\") and (\"prices\".\"quote_id\" = 1))")]
   (let [quote {:id 1}]
-    (update db :prices '((= :daily-return :u.daily-return))
+    (update db :prices
+      '((= :daily-return :u.daily-return))
       (from (as (select db [:id (as '(- (/ :close ((lag :close) over (partition by :quote-id order by :date desc))) 1) :daily-return)]
                   (from :prices)
                   (where `(= :prices.quote-id ~(:id quote))))
@@ -1324,10 +1328,10 @@
         "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NOT NULL))) AS \"u\" "
         "WHERE (\"airports\".\"iata_code\" = \"u\".\"iata_code\")")]
   (update db :airports
-          '((= :country-id :u.id)
-            (= :gps-code :u.gps-code)
-            (= :wikipedia-url :u.wikipedia)
-            (= :location :u.geom))
+    '((= :country-id :u.id)
+      (= :gps-code :u.gps-code)
+      (= :wikipedia-url :u.wikipedia)
+      (= :location :u.geom))
     (from (as (select db (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
                 (from (as :natural-earth.airports :a))
                 (join (as :countries :c) '(on (:&& :c.geography :a.geom)))
@@ -1342,7 +1346,7 @@
   [(str "UPDATE \"countries\" SET \"geom\" = \"u\".\"geom\" FROM (SELECT \"iso_a2\", \"iso_a3\", \"iso_n3\", \"geom\" FROM \"natural_earth\".\"countries\") AS \"u\" "
         "WHERE ((\"lower\"(\"countries\".\"iso_3166_1_alpha_2\") = \"lower\"(\"u\".\"iso_a2\")) or (\"lower\"(\"countries\".\"iso_3166_1_alpha_3\") = \"lower\"(\"u\".\"iso_a3\")))")]
   (update db :countries
-          '((= :geom :u.geom))
+    '((= :geom :u.geom))
     (from (as (select db [:iso-a2 :iso-a3 :iso-n3 :geom]
                 (from :natural-earth.countries)) :u))
     (where '(or (= (lower :countries.iso-3166-1-alpha-2) (lower :u.iso-a2))
@@ -1350,7 +1354,8 @@
 
 (deftest-stmt test-update-with-fn-call
   ["UPDATE \"films\" SET \"name\" = \"lower\"(\"name\") WHERE (\"id\" = 1)"]
-  (update db :films {:name '(lower :name)}
+  (update db :films
+    {:name '(lower :name)}
     (where `(= :id 1))))
 
 ;; QUOTING
@@ -1506,7 +1511,8 @@
         "SELECT ?, 1 "
         "WHERE (NOT EXISTS (SELECT * FROM \"upsert\"))")
    "counter-name" "counter-name"]
-  (with db [:upsert (update db :counter_table '((= counter counter+1))
+  (with db [:upsert (update db :counter_table
+                      '((= counter counter+1))
                       (where '(= :id "counter-name"))
                       (returning *))]
     (insert db :counter_table [:id :counter]
