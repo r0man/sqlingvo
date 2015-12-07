@@ -283,6 +283,8 @@
      " UNIQUE")
    (if (:primary-key? column)
      " PRIMARY KEY")
+   (if-let [foreign-key (:references column)]
+     (str " REFERENCES " foreign-key))
    (if-let [default (:default column)]
      (concat-sql " DEFAULT " (compile-sql db default)))))
 
@@ -300,7 +302,7 @@
 (defmethod compile-sql :condition [db {:keys [condition]}]
   (compile-sql db condition))
 
-(defmethod compile-sql :column [db {:keys [as schema name table direction nulls]}]
+(defmethod compile-sql :column [db {:keys [as schema name table direction nulls references]}]
   (concat-sql
    (->> [(if schema (sql-quote db schema))
          (if table (sql-quote db table))
@@ -309,6 +311,7 @@
         (join "."))
    (compile-alias db as)
    (if direction (str " " (upper-case (core/name direction))))
+   (if references (str " REFERENCES " references))
    (if nulls (str " NULLS " (keyword-sql nulls)))))
 
 (defmethod compile-sql :constant [db node]

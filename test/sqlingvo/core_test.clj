@@ -135,8 +135,8 @@
 (deftest-stmt test-create-table-compound-primary-key
   [(str "CREATE TABLE \"ratings\" ("
         "\"id\" SERIAL, "
-        "\"user_id\" INTEGER NOT NULL, "
-        "\"spot_id\" INTEGER NOT NULL, "
+        "\"user_id\" INTEGER NOT NULL REFERENCES users(id), "
+        "\"spot_id\" INTEGER NOT NULL REFERENCES spots(id), "
         "\"rating\" INTEGER NOT NULL, "
         "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
         "\"updated_at\" TIMESTAMP WITH "
@@ -144,8 +144,8 @@
         "PRIMARY KEY(user_id, spot_id, created_at))")]
   (create-table db :ratings
     (column :id :serial)
-    (column :user-id :integer :not-null? true :references :users/id)
-    (column :spot-id :integer :not-null? true :references :spots/id)
+    (column :user-id :integer :not-null? true :references "users(id)")
+    (column :spot-id :integer :not-null? true :references "spots(id)")
     (column :rating :integer :not-null? true)
     (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
     (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))
