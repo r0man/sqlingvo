@@ -5,6 +5,18 @@
             [sqlingvo.driver :as driver]
             [sqlingvo.test :refer [with-backends]]))
 
+(def countries
+  [{:id 1 :name "Spain"}
+   {:id 2 :name "Germany"}
+   {:id 3 :name "France"}
+   {:id 4 :name "Portugal"}])
+
+(defn drop-countries
+  "Drop the countries table."
+  [db]
+  @(drop-table db [:countries]
+     (if-exists true)))
+
 (defn create-countries
   "Create the countries table."
   [db]
@@ -16,35 +28,49 @@
   "Insert countries into the table."
   [db]
   @(insert db :countries [:id :name]
-     (values [{:id 1 :name "Spain"}
-              {:id 2 :name "Germany"}
-              {:id 3 :name "France"}
-              {:id 4 :name "Portugal"}])))
+     (values countries)))
 
 (defn setup-countries [db]
-  @(drop-table db [:countries]
-     (if-exists true))
+  (drop-countries db)
   (create-countries db)
   (insert-countries db))
 
-(deftest test-select-countries
+(deftest test-select
   (with-backends [db]
     (setup-countries db)
-    (is (= @(select db [:id :name]
-              (from :countries)
-              (order-by :id))
-           [{:id 1 :name "Spain"}
-            {:id 2 :name "Germany"}
-            {:id 3 :name "France"}
-            {:id 4 :name "Portugal"}]))))
+    (is (= @(select db [:*]
+              (from :countries))
+           countries))))
 
-(deftest test-select-countries-by-name
+(deftest test-select-columns
+  (with-backends [db]
+    (setup-countries db)
+    (is (= @(select db [:id]
+              (from :countries))
+           (map #(select-keys % [:id]) countries)))))
+
+(deftest test-select-where-equals
   (with-backends [db]
     (setup-countries db)
     (is (= @(select db [:id :name]
               (from :countries)
-              (where '(or (= :name "Spain")
-                          (= :name "Portugal")))
-              (order-by :id))
-           [{:id 1 :name "Spain"}
-            {:id 4 :name "Portugal"}]))))
+              (where '(= :name "Spain")))
+           [{:id 1 :name "Spain"}]))))
+
+(deftest test-insert-returning
+  (with-backends [db]
+    (drop-countries db)
+    (create-countries db)
+    (is (= @(insert db :countries []
+              (values countries)
+              (returning :*))
+           countries))))
+
+(deftest test-insert-returning-column
+  (with-backends [db]
+    (drop-countries db)
+    (create-countries db)
+    (is (= @(insert db :countries []
+              (values countries)
+              (returning :id))
+           (map #(select-keys % [:id]) countries)))))

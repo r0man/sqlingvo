@@ -10,10 +10,16 @@
   [{:keys [db] :as ast}]
   (let [sql (compile-stmt db ast)]
     (case (:op ast)
-      :create-table (jdbc/execute! db sql)
-      :drop-table (jdbc/execute! db sql)
-      :insert (jdbc/execute! db sql)
-      :select (jdbc/query db sql))))
+      :create-table
+      (jdbc/execute! db sql)
+      :drop-table
+      (jdbc/execute! db sql)
+      :insert
+      (if (:returning ast)
+        (jdbc/query db sql)
+        (jdbc/execute! db sql))
+      :select
+      (jdbc/query db sql))))
 
 (defmethod open-db 'clojure.java.jdbc [db]
   (assoc db :connection (jdbc/get-connection db)))
