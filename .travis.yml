@@ -1,3 +1,10 @@
 language: clojure
 script: lein ci
 sudo: false
+addons:
+  postgresql: "9.4"
+before_script:
+- psql -c "CREATE DATABASE sqlingvo;" -U postgres
+- psql -c "CREATE USER tiger SUPERUSER UNENCRYPTED PASSWORD 'scotch';" -U postgres
+jdk:
+  - oraclejdk8
