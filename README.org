@@ -249,7 +249,7 @@ A SQL DSL in Clojure.
    #+RESULTS:
    : ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
 
-** [[http://www.postgresql.org/docs/9.4/static/queries-with.html][With Queries or Common Table Expressions]]
+** [[http://www.postgresql.org/docs/9.4/static/queries-with.html][Common Table Expressions]]
 
    #+BEGIN_SRC clojure :exports both :results verbatim
      (sql (with db [:regional-sales
