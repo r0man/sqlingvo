@@ -6,6 +6,7 @@
     (assoc db :eval-fn eval-db)))
 
 (try
-  (doseq [ns '[sqlingvo.driver.clojure sqlingvo.driver.funcool]]
+  (doseq [ns '[sqlingvo.driver.clojure
+               sqlingvo.driver.funcool]]
     (try (require ns)
          (catch Exception _))))
