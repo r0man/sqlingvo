@@ -149,7 +149,7 @@
 (defn delete
   "Returns a fn that builds a DELETE statement.
 
-Examples:
+  Examples:
 
   (delete db :continents)
   ;=> [\"DELETE FROM \\\"continents\\\"\"]
@@ -171,7 +171,7 @@ Examples:
 (defn drop-table
   "Returns a fn that builds a DROP TABLE statement.
 
-Examples:
+  Examples:
 
   (drop-table db [:continents])
   ;=> [\"DROP TABLE TABLE \\\"continents\\\"\"]
@@ -189,25 +189,42 @@ Examples:
                :children [:tables]
                :tables tables))))))
 
+(defn- make-set-op
+  [op args]
+  (let [[[opts] stmts] (split-with map? args)]
+    (Stmt. (fn [_]
+             [nil (merge
+                   (make-node
+                    :op op
+                    :db (-> stmts first ast :db)
+                    :children [:stmts]
+                    :stmts (map ast stmts))
+                   opts)]))))
+
 (defn except
-  "Returns a fn that adds a EXCEPT clause to an SQL statement."
-  [stmt-2 & {:keys [all]}]
-  (let [stmt-2 (ast stmt-2)]
-    (fn [stmt-1]
-      [nil (update-in
-            stmt-1 [:set] conj
-            (make-node
-             :op :except
-             :children [:stmt :all]
-             :stmt stmt-2
-             :all all))])))
+  "Returns a SQL EXCEPT statement.
+
+   Examples:
+
+   (except
+    (select db [1])
+    (select db [2]))
+   ;=> [\"SELECT 1 EXCEPT SELECT 2\"]
+
+   (except
+    {:all true}
+    (select db [1])
+    (select db [2]))
+   ;=> [\"SELECT 1 EXCEPT ALL SELECT 2\"]"
+  [& args]
+  (make-set-op :except args))
 
 (defn from
   "Returns a fn that adds a FROM clause to an SQL statement. The
   `from` forms can be one or more tables, :stdin, a filename or an
   other sub query.
 
-Examples:
+  Examples:
 
   (select [:*]
     (from :continents))
@@ -230,7 +247,7 @@ Examples:
   (copy :country []
     (from \"/usr1/proj/bray/sql/country_data\"))
   ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]
-"
+  "
   [& from]
   (fn [stmt]
     (let [from (case (:op stmt)
@@ -276,17 +293,22 @@ Examples:
                :columns columns))))))
 
 (defn intersect
-  "Returns a fn that adds a INTERSECT clause to an SQL statement."
-  [stmt-2 & {:keys [all]}]
-  (let [stmt-2 (ast stmt-2)]
-    (fn [stmt-1]
-      [nil (update-in
-            stmt-1 [:set] conj
-            (make-node
-             :op :intersect
-             :children [:stmt :all]
-             :stmt stmt-2
-             :all all))])))
+  "Returns a SQL INTERSECT statement.
+
+   Examples:
+
+   (intersect
+    (select db [1])
+    (select db [2]))
+   ;=> [\"SELECT 1 INTERSECT SELECT 2\"]
+
+   (intersect
+    {:all true}
+    (select db [1])
+    (select db [2]))
+   ;=> [\"SELECT 1 INTERSECT ALL SELECT 2\"]"
+  [& args]
+  (make-set-op :intersect args))
 
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
@@ -423,7 +445,7 @@ Examples:
              (->> (case (:op stmt)
                     :insert (assoc stmt :select select)
                     :select (assoc stmt :exprs (:exprs select))
-                    nil select)
+                    select)
                   (repeat 2))))))
 
 (defn temporary
@@ -453,17 +475,22 @@ Examples:
                :tables tables))))))
 
 (defn union
-  "Returns a fn that adds a UNION clause to an SQL statement."
-  [stmt-2 & {:keys [all]}]
-  (let [stmt-2 (ast stmt-2)]
-    (fn [stmt-1]
-      [nil (update-in
-            stmt-1 [:set] conj
-            (make-node
-             :op :union
-             :children [:stmt :all]
-             :stmt stmt-2
-             :all all))])))
+  "Returns a SQL UNION statement.
+
+   Examples:
+
+   (union
+    (select db [1])
+    (select db [2]))
+   ;=> [\"SELECT 1 UNION SELECT 2\"]
+
+   (union
+    {:all true}
+    (select db [1])
+    (select db [2]))
+   ;=> [\"SELECT 1 UNION ALL SELECT 2\"]"
+  [& args]
+  (make-set-op :union args))
 
 (defn update
   "Returns a fn that builds a UPDATE statement.

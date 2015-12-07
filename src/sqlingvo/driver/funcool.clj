@@ -18,7 +18,6 @@
       (if (:returning ast)
         (jdbc/fetch db sql)
         (jdbc/execute db sql))
-      :select
       (jdbc/fetch db sql))))
 
 (defmethod open-db 'jdbc.core [db]

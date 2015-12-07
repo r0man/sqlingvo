@@ -62,10 +62,9 @@
   (let [[sql & args] stmt]
     (cons (replace sql #"^\(|\)$" "") args)))
 
-(defn- compile-set-op [db op {:keys [stmt all] :as node}]
-  (concat-sql (upper-case (name op))
-              (if all " ALL") " "
-              (compile-sql db stmt) ))
+(defn- compile-set-op [db op {:keys [stmts all] :as node}]
+  (let [separater (str " " (upper-case (name op)) " " (if all "ALL "))]
+    (compile-sql-join db separater (:stmts node))))
 
 ;; COMPILE CONSTANTS
 
