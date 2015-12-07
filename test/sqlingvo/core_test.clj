@@ -11,6 +11,11 @@
 
 (def db (db/postgresql))
 
+(defmacro are-sql [& body]
+  `(are [form# expected#]
+       (= (sql form#) expected#)
+     ~@body))
+
 (defmacro deftest-stmt [name sql forms & body]
   `(deftest ~name
      (let [[result# ~'stmt] (~forms {})]
@@ -1040,80 +1045,50 @@
           '(on (and (= :quotes.company-id :start-dates.company-id)
                     (= :quotes.date :start-dates.start-date))))))
 
-(deftest-stmt test-select-except
-  ["SELECT 1 EXCEPT SELECT 2"]
-  (select db [1]
-    (except (select db [2])))
-  (is (= :select (:op stmt)))
-  (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [except (first (:set stmt))]
-    (is (= :except (:op except)))
-    (let [stmt (:stmt except)]
-      (is (= :select (:op stmt)))
-      (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest test-select-except
+  (are-sql
+   (except
+    (select db [1])
+    (select db [2]))
+   ["SELECT 1 EXCEPT SELECT 2"]))
 
-(deftest-stmt test-select-except-all
-  ["SELECT 1 EXCEPT ALL SELECT 2"]
-  (select db [1]
-    (except (select db [2]) :all true))
-  (is (= :select (:op stmt)))
-  (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [except (first (:set stmt))]
-    (is (= :except (:op except)))
-    (is (= true (:all except)))
-    (let [stmt (:stmt except)]
-      (is (= :select (:op stmt)))
-      (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest test-select-except-all
+  (are-sql
+   (except
+    {:all true}
+    (select db [1])
+    (select db [2]))
+   ["SELECT 1 EXCEPT ALL SELECT 2"]))
 
-(deftest-stmt test-select-intersect
-  ["SELECT 1 INTERSECT SELECT 2"]
-  (select db [1]
-    (intersect (select db [2])))
-  (is (= :select (:op stmt)))
-  (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [intersect (first (:set stmt))]
-    (is (= :intersect (:op intersect)))
-    (let [stmt (:stmt intersect)]
-      (is (= :select (:op stmt)))
-      (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest test-select-intersect
+  (are-sql
+   (intersect
+    (select db [1])
+    (select db [2]))
+   ["SELECT 1 INTERSECT SELECT 2"]))
 
-(deftest-stmt test-select-intersect-all
-  ["SELECT 1 INTERSECT ALL SELECT 2"]
-  (select db [1]
-    (intersect (select db [2]) :all true))
-  (is (= :select (:op stmt)))
-  (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [intersect (first (:set stmt))]
-    (is (= :intersect (:op intersect)))
-    (is (= true (:all intersect)))
-    (let [stmt (:stmt intersect)]
-      (is (= :select (:op stmt)))
-      (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest test-select-intersect-all
+  (are-sql
+   (intersect
+    {:all true}
+    (select db [1])
+    (select db [2]))
+   ["SELECT 1 INTERSECT ALL SELECT 2"]))
 
-(deftest-stmt test-select-union
-  ["SELECT 1 UNION SELECT 2"]
-  (select db [1]
-    (union (select db [2])))
-  (is (= :select (:op stmt)))
-  (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [union (first (:set stmt))]
-    (is (= :union (:op union)))
-    (let [stmt (:stmt union)]
-      (is (= :select (:op stmt)))
-      (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest test-select-union
+  (are-sql
+   (union
+    (select db [1])
+    (select db [2]))
+   ["SELECT 1 UNION SELECT 2"]))
 
-(deftest-stmt test-select-union-all
-  ["SELECT 1 UNION ALL SELECT 2"]
-  (select db [1]
-    (union (select db [2]) :all true))
-  (is (= :select (:op stmt)))
-  (is (= (map parse-expr [1]) (:exprs stmt)))
-  (let [union (first (:set stmt))]
-    (is (= :union (:op union)))
-    (is (= true (:all union)))
-    (let [stmt (:stmt union)]
-      (is (= :select (:op stmt)))
-      (is (= (map parse-expr [2]) (:exprs stmt))))))
+(deftest test-select-union-all
+  (are-sql
+   (union
+    {:all true}
+    (select db [1])
+    (select db [2]))
+   ["SELECT 1 UNION ALL SELECT 2"]))
 
 (deftest-stmt test-select-where-combine-and-1
   ["SELECT 1 WHERE (1 = 1)"]

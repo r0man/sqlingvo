@@ -74,3 +74,32 @@
               (values countries)
               (returning :id))
            (map #(select-keys % [:id]) countries)))))
+
+(deftest test-except
+  (with-backends [db]
+    (is (= @(except
+             (select db [(as '(generate_series 1 3) :x)])
+             (select db [(as '(generate_series 3 4) :x)]))
+           [{:x 1} {:x 2}]))))
+
+(deftest test-union
+  (with-backends [db]
+    (is (= @(union
+             (select db [(as 1 :x)])
+             (select db [(as 1 :x)]))
+           [{:x 1}]))))
+
+(deftest test-union-all
+  (with-backends [db]
+    (is (= @(union
+             {:all true}
+             (select db [(as 1 :x)])
+             (select db [(as 1 :x)]))
+           [{:x 1} {:x 1}]))))
+
+(deftest test-intersect
+  (with-backends [db]
+    (is (= @(intersect
+             (select db [(as '(generate_series 1 2) :x)])
+             (select db [(as '(generate_series 2 3) :x)]))
+           [{:x 2}]))))

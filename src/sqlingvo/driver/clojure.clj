@@ -18,7 +18,6 @@
       (if (:returning ast)
         (jdbc/query db sql)
         (jdbc/execute! db sql))
-      :select
       (jdbc/query db sql))))
 
 (defmethod open-db 'clojure.java.jdbc [db]
