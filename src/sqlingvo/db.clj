@@ -5,10 +5,10 @@
 (defrecord Database []
   compiler/Keywordable
   (sql-keyword [m x]
-    ((or (:sql-keyword m) sql-name-underscore) x))
+    ((or (:sql-keyword m) keyword) x))
   compiler/Nameable
   (sql-name [m x]
-    ((or (:sql-name m) sql-keyword-hyphenate) x))
+    ((or (:sql-name m) name) x))
   compiler/Quoteable
   (sql-quote [m x]
     ((or (:sql-quote m) sql-quote-backtick)
@@ -29,41 +29,29 @@
 (defdb mysql
   "The world's most popular open source database."
   :classname "com.mysql.jdbc.Driver"
-  :name sql-name-underscore
-  :keyword sql-keyword-hyphenate
   :quote sql-quote-backtick)
 
 (defdb postgresql
   "The world's most advanced open source database."
   :classname "org.postgresql.Driver"
-  :name sql-name-underscore
-  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
 
 (defdb oracle
   "Oracle Database."
   :classname "oracle.jdbc.driver.OracleDriver"
-  :name sql-name-underscore
-  :keyword sql-keyword-hyphenate
-  :quote identity)
+  :quote sql-quote-double-quote)
 
 (defdb sqlite
   "The in-process SQL database engine."
   :classname "org.sqlite.JDBC"
-  :name sql-name-underscore
-  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
 
 (defdb sqlserver
   "Microsoft SQL server."
   :classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-  :name sql-name-underscore
-  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)
 
 (defdb vertica
   "The Real-Time Analytics Platform."
   :classname "com.vertica.jdbc.Driver"
-  :name sql-name-underscore
-  :keyword sql-keyword-hyphenate
   :quote sql-quote-double-quote)

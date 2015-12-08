@@ -33,9 +33,9 @@
 
 (deftest test-compose-where-clause-using-and
   (with-stmt
-    ["SELECT \"color\", \"num_sides\" FROM \"shapes\" WHERE ((\"num_sides\" = 3) and (\"color\" = ?))" "green"]
-    (let [triangles (compose (select db [:color :num_sides] (from :shapes))
-                             (where '(= :num_sides 3)))]
+    ["SELECT \"color\", \"num-sides\" FROM \"shapes\" WHERE ((\"num-sides\" = 3) and (\"color\" = ?))" "green"]
+    (let [triangles (compose (select db [:color :num-sides] (from :shapes))
+                             (where '(= :num-sides 3)))]
       (compose triangles (where '(= :color "green") :and)))))
 
 (deftest test-compose-selects
@@ -74,8 +74,8 @@
 
 (deftest test-cast-with-alias
   (with-stmt
-    ["SELECT CAST(? AS int) AS \"numeric_id\"" "1"]
-    (select db [(as `(cast "1" :int) :numeric_id)])))
+    ["SELECT CAST(? AS int) AS \"numeric-id\"" "1"]
+    (select db [(as `(cast "1" :int) :numeric-id)])))
 
 ;; TABLE
 (deftest test-create-table-tmp-if-not-exists-inherits
@@ -100,7 +100,7 @@
 
 (deftest test-create-table-like-including-defaults
   (with-stmt
-    ["CREATE TABLE \"tmp_films\" (LIKE \"films\" INCLUDING DEFAULTS)"]
+    ["CREATE TABLE \"tmp-films\" (LIKE \"films\" INCLUDING DEFAULTS)"]
     (create-table db :tmp-films
       (like :films :including [:defaults]))
     (is (= :create-table (:op stmt)))
@@ -111,7 +111,7 @@
 
 (deftest test-create-table-like-excluding-indexes
   (with-stmt
-    ["CREATE TABLE \"tmp_films\" (LIKE \"films\" EXCLUDING INDEXES)"]
+    ["CREATE TABLE \"tmp-films\" (LIKE \"films\" EXCLUDING INDEXES)"]
     (create-table db :tmp-films
       (like :films :excluding [:indexes]))
     (is (= :create-table (:op stmt)))
@@ -126,11 +126,11 @@
           "\"code\" CHAR(5) PRIMARY KEY, "
           "\"title\" VARCHAR(40) NOT NULL, "
           "\"did\" INTEGER NOT NULL, "
-          "\"date_prod\" DATE, "
+          "\"date-prod\" DATE, "
           "\"kind\" VARCHAR(10), "
           "\"len\" INTERVAL, "
-          "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
-          "\"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"())")]
+          "\"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
+          "\"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"())")]
     (create-table db :films
       (column :code :char :length 5 :primary-key? true)
       (column :title :varchar :length 40 :not-null? true)
@@ -145,13 +145,13 @@
   (with-stmt
     [(str "CREATE TABLE \"ratings\" ("
           "\"id\" SERIAL, "
-          "\"user_id\" INTEGER NOT NULL, "
-          "\"spot_id\" INTEGER NOT NULL, "
+          "\"user-id\" INTEGER NOT NULL, "
+          "\"spot-id\" INTEGER NOT NULL, "
           "\"rating\" INTEGER NOT NULL, "
-          "\"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
-          "\"updated_at\" TIMESTAMP WITH "
+          "\"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
+          "\"updated-at\" TIMESTAMP WITH "
           "TIME ZONE NOT NULL DEFAULT \"now\"(), "
-          "PRIMARY KEY(user_id, spot_id, created_at))")]
+          "PRIMARY KEY(\"user-id\", \"spot-id\", \"created-at\"))")]
     (create-table db :ratings
       (column :id :serial)
       (column :user-id :integer :not-null? true :references :users/id)
@@ -264,7 +264,7 @@
 
 (deftest test-delete-films-by-producer-name
   (with-stmt
-    ["DELETE FROM \"films\" WHERE \"producer_id\" IN (SELECT \"id\" FROM \"producers\" WHERE (\"name\" = ?))" "foo"]
+    ["DELETE FROM \"films\" WHERE \"producer-id\" IN (SELECT \"id\" FROM \"producers\" WHERE (\"name\" = ?))" "foo"]
     (delete db :films
       (where `(in :producer-id
                   ~(select db [:id]
@@ -280,7 +280,7 @@
 
 (deftest test-delete-quotes
   (with-stmt
-    [(str "DELETE FROM \"quotes\" WHERE ((\"company_id\" = 1) and (\"date\" > (SELECT \"min\"(\"date\") FROM \"import\")) and "
+    [(str "DELETE FROM \"quotes\" WHERE ((\"company-id\" = 1) and (\"date\" > (SELECT \"min\"(\"date\") FROM \"import\")) and "
           "(\"date\" > (SELECT \"max\"(\"date\") FROM \"import\")))")]
     (delete db :quotes
       (where `(and (= :company-id 1)
@@ -353,31 +353,31 @@
 
 (deftest test-insert-single-row-as-map
   (with-stmt
-    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date_prod\", \"kind\") VALUES (?, ?, 106, ?, ?)"
-     "T_601" "Yojimbo" "1961-06-16" "Drama"]
+    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)"
+     "T-601" "Yojimbo" "1961-06-16" "Drama"]
     (insert db :films []
-      (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
+      (values {:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
     (is (= :insert (:op stmt)))
     (is (= [] (:columns stmt)))
-    (is (= [(parse-map-expr {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})]
+    (is (= [(parse-map-expr {:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})]
            (:values stmt)))
     (is (= (parse-table :films) (:table stmt)))))
 
 (deftest test-insert-single-row-as-seq
   (with-stmt
-    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date_prod\", \"kind\") VALUES (?, ?, 106, ?, ?)"
-     "T_601" "Yojimbo" "1961-06-16" "Drama"]
+    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)"
+     "T-601" "Yojimbo" "1961-06-16" "Drama"]
     (insert db :films []
-      (values [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
+      (values [{:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
     (is (= :insert (:op stmt)))
     (is (= [] (:columns stmt)))
-    (is (= [(parse-map-expr {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})]
+    (is (= [(parse-map-expr {:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})]
            (:values stmt)))
     (is (= (parse-table :films) (:table stmt)))))
 
 (deftest test-insert-multi-row
   (with-stmt
-    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date_prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)"
+    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)"
      "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
     (insert db :films []
       (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
@@ -403,7 +403,7 @@
 
 (deftest test-insert-subselect
   (with-stmt
-    ["INSERT INTO \"films\" SELECT * FROM \"tmp_films\" WHERE (\"date_prod\" < ?)" "2004-05-07"]
+    ["INSERT INTO \"films\" SELECT * FROM \"tmp-films\" WHERE (\"date-prod\" < ?)" "2004-05-07"]
     (insert db :films []
       (select db [*]
         (from :tmp-films)
@@ -418,11 +418,11 @@
 
 (deftest test-insert-airports
   (with-stmt
-    [(str "INSERT INTO \"airports\" (\"country_id\", \"name\", \"gps_code\", \"iata_code\", \"wikipedia_url\", \"location\") "
-          "SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
-          "FROM \"natural_earth\".\"airports\" \"a\" JOIN \"countries\" \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
-          "LEFT JOIN \"airports\" ON (\"airports\".\"iata_code\" = \"a\".\"iata_code\") "
-          "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NULL))")]
+    [(str "INSERT INTO \"airports\" (\"country-id\", \"name\", \"gps-code\", \"iata-code\", \"wikipedia-url\", \"location\") "
+          "SELECT DISTINCT ON (\"a\".\"iata-code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps-code\", \"a\".\"iata-code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
+          "FROM \"natural-earth\".\"airports\" \"a\" JOIN \"countries\" \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
+          "LEFT JOIN \"airports\" ON (\"airports\".\"iata-code\" = \"a\".\"iata-code\") "
+          "WHERE ((\"a\".\"gps-code\" IS NOT NULL) and (\"a\".\"iata-code\" IS NOT NULL) and (\"airports\".\"iata-code\" IS NULL))")]
     (insert db :airports [:country-id, :name :gps-code :iata-code :wikipedia-url :location]
       (select db (distinct [:c.id :a.name :a.gps-code :a.iata-code :a.wikipedia :a.geom] :on [:a.iata-code])
         (from (as :natural-earth.airports :a))
@@ -464,8 +464,8 @@
                           :symbol "SPY"
                           :exchange-id 2
                           :id 6}])))
-         [(str "INSERT INTO \"quotes\" (\"id\", \"exchange_id\", "
-               "\"company_id\", \"symbol\", \"created_at\", \"updated_at\") "
+         [(str "INSERT INTO \"quotes\" (\"id\", \"exchange-id\", "
+               "\"company-id\", \"symbol\", \"created-at\", \"updated-at\") "
                "VALUES (5, 2, 5, ?, ?, ?), (6, 2, NULL, ?, ?, ?)")
           "MSFT"
           #inst "2012-11-02T18:22:59.688-00:00"
@@ -520,7 +520,7 @@
 
 (deftest test-select-count-distinct
   (with-stmt
-    ["SELECT count(DISTINCT \"user_id\") FROM \"tweets\""]
+    ["SELECT count(DISTINCT \"user-id\") FROM \"tweets\""]
     (select db ['(count distinct :user-id)]
       (from :tweets))))
 
@@ -669,7 +669,7 @@
 
 (deftest test-select-backquote-date
   (with-stmt
-    ["SELECT * FROM \"countries\" WHERE (\"created_at\" > ?)" (Date. 0)]
+    ["SELECT * FROM \"countries\" WHERE (\"created-at\" > ?)" (Date. 0)]
     (select db [*]
       (from :countries)
       (where `(> :created-at ~(Date. 0))))
@@ -686,7 +686,7 @@
 
 (deftest test-select-column
   (with-stmt
-    ["SELECT \"created_at\" FROM \"continents\""]
+    ["SELECT \"created-at\" FROM \"continents\""]
     (select db [:created-at]
       (from :continents))
     (is (= :select (:op stmt)))
@@ -695,7 +695,7 @@
 
 (deftest test-select-columns
   (with-stmt
-    ["SELECT \"name\", \"created_at\" FROM \"continents\""]
+    ["SELECT \"name\", \"created-at\" FROM \"continents\""]
     (select db [:name :created-at]
       (from :continents))
     (is (= :select (:op stmt)))
@@ -704,7 +704,7 @@
 
 (deftest test-select-column-alias
   (with-stmt
-    ["SELECT \"created_at\" AS \"c\" FROM \"continents\""]
+    ["SELECT \"created-at\" AS \"c\" FROM \"continents\""]
     (select db [(as :created-at :c)]
       (from :continents))
     (is (= :select (:op stmt)))
@@ -727,7 +727,7 @@
 
 (deftest test-select-fn-alias
   (with-stmt
-    ["SELECT \"max\"(\"created_at\") AS \"m\" FROM \"continents\""]
+    ["SELECT \"max\"(\"created-at\") AS \"m\" FROM \"continents\""]
     (select db [(as '(max :created-at) :m)]
       (from :continents))
     (is (= :select (:op stmt)))
@@ -778,7 +778,7 @@
 
 (deftest test-select-column-max
   (with-stmt
-    ["SELECT \"max\"(\"created_at\") FROM \"continents\""]
+    ["SELECT \"max\"(\"created-at\") FROM \"continents\""]
     (select db ['(max :created-at)]
       (from :continents))
     (is (= :select (:op stmt)))
@@ -817,7 +817,7 @@
 
 (deftest test-select-most-recent-weather-report
   (with-stmt
-    ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
+    ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather-reports\" ORDER BY \"location\", \"time\" DESC"]
     (select db (distinct [:location :time :report] :on [:location])
       (from :weather-reports)
       (order-by :location (desc :time)))
@@ -831,7 +831,7 @@
 
 (deftest test-select-order-by-asc
   (with-stmt
-    ["SELECT * FROM \"continents\" ORDER BY \"created_at\" ASC"]
+    ["SELECT * FROM \"continents\" ORDER BY \"created-at\" ASC"]
     (select db [*]
       (from :continents)
       (order-by (asc :created-at)))
@@ -849,7 +849,7 @@
 
 (deftest test-select-order-by-desc
   (with-stmt
-    ["SELECT * FROM \"continents\" ORDER BY \"created_at\" DESC"]
+    ["SELECT * FROM \"continents\" ORDER BY \"created-at\" DESC"]
     (select db [*]
       (from :continents)
       (order-by (desc :created-at)))
@@ -860,7 +860,7 @@
 
 (deftest test-select-order-by-nulls-first
   (with-stmt
-    ["SELECT * FROM \"continents\" ORDER BY \"created_at\" NULLS FIRST"]
+    ["SELECT * FROM \"continents\" ORDER BY \"created-at\" NULLS FIRST"]
     (select db [*]
       (from :continents)
       (order-by (nulls :created-at :first)))
@@ -871,7 +871,7 @@
 
 (deftest test-select-order-by-nulls-last
   (with-stmt
-    ["SELECT * FROM \"continents\" ORDER BY \"created_at\" NULLS LAST"]
+    ["SELECT * FROM \"continents\" ORDER BY \"created-at\" NULLS LAST"]
     (select db [*]
       (from :continents)
       (order-by (nulls :created-at :last)))
@@ -966,7 +966,7 @@
 
 (deftest test-select-parition-by
   (with-stmt
-    ["SELECT \"id\", \"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) FROM \"quotes\""]
+    ["SELECT \"id\", \"lag\"(\"close\") over (partition by \"company-id\" order by \"date\" desc) FROM \"quotes\""]
     (select db [:id '((lag :close) over (partition by :company-id order by :date desc))]
       (from :quotes))
     (is (= :select (:op stmt)))
@@ -976,7 +976,7 @@
 
 (deftest test-select-total-return
   (with-stmt
-    ["SELECT \"id\", (\"close\" / (\"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) FROM \"quotes\""]
+    ["SELECT \"id\", (\"close\" / (\"lag\"(\"close\") over (partition by \"company-id\" order by \"date\" desc) - 1)) FROM \"quotes\""]
     (select db [:id '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1))]
       (from :quotes))
     (is (= :select (:op stmt)))
@@ -986,7 +986,7 @@
 
 (deftest test-select-total-return-alias
   (with-stmt
-    ["SELECT \"id\", (\"close\" / (\"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) - 1)) AS \"daily_return\" FROM \"quotes\""]
+    ["SELECT \"id\", (\"close\" / (\"lag\"(\"close\") over (partition by \"company-id\" order by \"date\" desc) - 1)) AS \"daily-return\" FROM \"quotes\""]
     (select db [:id (as '(/ :close (- ((lag :close) over (partition by :company-id order by :date desc)) 1)) :daily-return)]
       (from :quotes))
     (is (= :select (:op stmt)))
@@ -996,7 +996,7 @@
 
 (deftest test-select-group-by-a-order-by-1
   (with-stmt
-    ["SELECT \"a\", \"max\"(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
+    ["SELECT \"a\", \"max\"(\"b\") FROM \"table-1\" GROUP BY \"a\" ORDER BY 1"]
     (select db [:a '(max :b)]
       (from :table-1)
       (group-by :a)
@@ -1008,7 +1008,7 @@
 
 (deftest test-select-order-by-query-select
   (with-stmt
-    ["SELECT \"a\", \"b\" FROM \"table_1\" ORDER BY (\"a\" + \"b\"), \"c\""]
+    ["SELECT \"a\", \"b\" FROM \"table-1\" ORDER BY (\"a\" + \"b\"), \"c\""]
     (select db [:a :b]
       (from :table-1)
       (order-by '(+ :a :b) :c))
@@ -1019,7 +1019,7 @@
 
 (deftest test-select-order-by-sum
   (with-stmt
-    ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table_1\" ORDER BY \"sum\""]
+    ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table-1\" ORDER BY \"sum\""]
     (select db [(as '(+ :a :b) :sum) :c]
       (from :table-1)
       (order-by :sum))
@@ -1030,7 +1030,7 @@
 
 (deftest test-select-setval
   (with-stmt
-    ["SELECT \"setval\"(\"continent_id_seq\", (SELECT \"max\"(\"id\") FROM \"continents\"))"]
+    ["SELECT \"setval\"(\"continent-id-seq\", (SELECT \"max\"(\"id\") FROM \"continents\"))"]
     (select db [`(setval :continent-id-seq ~(select db [`(max :id)] (from :continents)))])
     (is (= :select (:op stmt)))
     (is (= (map parse-expr [`(setval :continent-id-seq ~(select db [`(max :id)] (from :continents)))])
@@ -1049,7 +1049,7 @@
 
 (deftest test-select-join-on-columns
   (with-stmt
-    ["SELECT * FROM \"countries\" JOIN \"continents\" ON (\"continents\".\"id\" = \"countries\".\"continent_id\")"]
+    ["SELECT * FROM \"countries\" JOIN \"continents\" ON (\"continents\".\"id\" = \"countries\".\"continent-id\")"]
     (select db [*]
       (from :countries)
       (join :continents '(on (= :continents.id :countries.continent-id))))
@@ -1063,7 +1063,7 @@
 
 (deftest test-select-join-with-keywords
   (with-stmt
-    ["SELECT * FROM \"continents\" JOIN \"countries\" ON (\"countries\".\"continent_id\" = \"continents\".\"id\")"]
+    ["SELECT * FROM \"continents\" JOIN \"countries\" ON (\"countries\".\"continent-id\" = \"continents\".\"id\")"]
     (select db [*]
       (from :continents)
       (join :countries.continent-id :continents.id))
@@ -1077,7 +1077,7 @@
 
 (deftest test-select-join-on-columns-alias
   (with-stmt
-    ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+    ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent-id\")"]
     (select db [*]
       (from (as :countries :c))
       (join :continents '(on (= :continents.id :c.continent-id))))
@@ -1105,7 +1105,7 @@
 
 (deftest test-select-join-using-columns
   (with-stmt
-    ["SELECT * FROM \"countries\" JOIN \"continents\" USING (\"id\", \"created_at\")"]
+    ["SELECT * FROM \"countries\" JOIN \"continents\" USING (\"id\", \"created-at\")"]
     (select db [*]
       (from :countries)
       (join :continents '(using :id :created-at)))
@@ -1119,22 +1119,22 @@
 
 (deftest test-select-join-alias
   (with-stmt
-    ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+    ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent-id\")"]
     (select db [*]
       (from (as :countries :c))
       (join :continents '(on (= :continents.id :c.continent-id))))))
 
 (deftest test-select-join-syntax-quote
   (with-stmt
-    ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent_id\")"]
+    ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent-id\")"]
     (select db [*]
       (from (as :countries :c))
       (join :continents `(on (= :continents.id :c.continent-id))))))
 
 (deftest test-select-join-subselect-alias
   (with-stmt
-    [(str "SELECT \"quotes\".*, \"start_date\" FROM \"quotes\" JOIN (SELECT \"company_id\", \"min\"(\"date\") AS \"start_date\" "
-          "FROM \"quotes\" GROUP BY \"company_id\") AS \"start_dates\" ON ((\"quotes\".\"company_id\" = \"start_dates\".\"company_id\") and (\"quotes\".\"date\" = \"start_dates\".\"start_date\"))")]
+    [(str "SELECT \"quotes\".*, \"start-date\" FROM \"quotes\" JOIN (SELECT \"company-id\", \"min\"(\"date\") AS \"start-date\" "
+          "FROM \"quotes\" GROUP BY \"company-id\") AS \"start-dates\" ON ((\"quotes\".\"company-id\" = \"start-dates\".\"company-id\") and (\"quotes\".\"date\" = \"start-dates\".\"start-date\"))")]
     (select db [:quotes.* :start-date]
       (from :quotes)
       (join (as (select db [:company-id (as '(min :date) :start-date)]
@@ -1403,7 +1403,7 @@
 
 (deftest test-update-daily-return
   (with-stmt
-    ["UPDATE \"quotes\" SET \"daily_return\" = \"u\".\"daily_return\" FROM (SELECT \"id\", \"lag\"(\"close\") over (partition by \"company_id\" order by \"date\" desc) AS \"daily_return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
+    ["UPDATE \"quotes\" SET \"daily-return\" = \"u\".\"daily-return\" FROM (SELECT \"id\", \"lag\"(\"close\") over (partition by \"company-id\" order by \"date\" desc) AS \"daily-return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
     (update db :quotes
       '((= :daily-return :u.daily-return))
       (where '(= :quotes.id :u.id))
@@ -1413,9 +1413,9 @@
 
 (deftest test-update-prices
   (with-stmt
-    [(str "UPDATE \"prices\" SET \"daily_return\" = \"u\".\"daily_return\" "
-          "FROM (SELECT \"id\", ((\"close\" / \"lag\"(\"close\") over (partition by \"quote_id\" order by \"date\" desc)) - 1) AS \"daily_return\" "
-          "FROM \"prices\" WHERE (\"prices\".\"quote_id\" = 1)) AS \"u\" WHERE ((\"prices\".\"id\" = \"u\".\"id\") and (\"prices\".\"quote_id\" = 1))")]
+    [(str "UPDATE \"prices\" SET \"daily-return\" = \"u\".\"daily-return\" "
+          "FROM (SELECT \"id\", ((\"close\" / \"lag\"(\"close\") over (partition by \"quote-id\" order by \"date\" desc)) - 1) AS \"daily-return\" "
+          "FROM \"prices\" WHERE (\"prices\".\"quote-id\" = 1)) AS \"u\" WHERE ((\"prices\".\"id\" = \"u\".\"id\") and (\"prices\".\"quote-id\" = 1))")]
     (let [quote {:id 1}]
       (update db :prices
         '((= :daily-return :u.daily-return))
@@ -1428,12 +1428,12 @@
 
 (deftest test-update-airports
   (with-stmt
-    [(str "UPDATE \"airports\" SET \"country_id\" = \"u\".\"id\", \"gps_code\" = \"u\".\"gps_code\", \"wikipedia_url\" = \"u\".\"wikipedia\", \"location\" = \"u\".\"geom\" "
-          "FROM (SELECT DISTINCT ON (\"a\".\"iata_code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps_code\", \"a\".\"iata_code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
-          "FROM \"natural_earth\".\"airports\" \"a\" JOIN \"countries\" \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
-          "LEFT JOIN \"airports\" ON (\"lower\"(\"airports\".\"iata_code\") = \"lower\"(\"a\".\"iata_code\")) "
-          "WHERE ((\"a\".\"gps_code\" IS NOT NULL) and (\"a\".\"iata_code\" IS NOT NULL) and (\"airports\".\"iata_code\" IS NOT NULL))) AS \"u\" "
-          "WHERE (\"airports\".\"iata_code\" = \"u\".\"iata_code\")")]
+    [(str "UPDATE \"airports\" SET \"country-id\" = \"u\".\"id\", \"gps-code\" = \"u\".\"gps-code\", \"wikipedia-url\" = \"u\".\"wikipedia\", \"location\" = \"u\".\"geom\" "
+          "FROM (SELECT DISTINCT ON (\"a\".\"iata-code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps-code\", \"a\".\"iata-code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
+          "FROM \"natural-earth\".\"airports\" \"a\" JOIN \"countries\" \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
+          "LEFT JOIN \"airports\" ON (\"lower\"(\"airports\".\"iata-code\") = \"lower\"(\"a\".\"iata-code\")) "
+          "WHERE ((\"a\".\"gps-code\" IS NOT NULL) and (\"a\".\"iata-code\" IS NOT NULL) and (\"airports\".\"iata-code\" IS NOT NULL))) AS \"u\" "
+          "WHERE (\"airports\".\"iata-code\" = \"u\".\"iata-code\")")]
     (update db :airports
       '((= :country-id :u.id)
         (= :gps-code :u.gps-code)
@@ -1451,8 +1451,8 @@
 
 (deftest test-update-countries
   (with-stmt
-    [(str "UPDATE \"countries\" SET \"geom\" = \"u\".\"geom\" FROM (SELECT \"iso_a2\", \"iso_a3\", \"iso_n3\", \"geom\" FROM \"natural_earth\".\"countries\") AS \"u\" "
-          "WHERE ((\"lower\"(\"countries\".\"iso_3166_1_alpha_2\") = \"lower\"(\"u\".\"iso_a2\")) or (\"lower\"(\"countries\".\"iso_3166_1_alpha_3\") = \"lower\"(\"u\".\"iso_a3\")))")]
+    [(str "UPDATE \"countries\" SET \"geom\" = \"u\".\"geom\" FROM (SELECT \"iso-a2\", \"iso-a3\", \"iso-n3\", \"geom\" FROM \"natural-earth\".\"countries\") AS \"u\" "
+          "WHERE ((\"lower\"(\"countries\".\"iso-3166-1-alpha-2\") = \"lower\"(\"u\".\"iso-a2\")) or (\"lower\"(\"countries\".\"iso-3166-1-alpha-3\") = \"lower\"(\"u\".\"iso-a3\")))")]
     (update db :countries
       '((= :geom :u.geom))
       (from (as (select db [:iso-a2 :iso-a3 :iso-n3 :geom]
@@ -1471,11 +1471,15 @@
 
 (deftest test-db-specifiy-quoting
   (are [db expected]
-      (is (= expected (sql (select db [:continents.id] (from :continents)))))
-    (db/mysql) ["SELECT `continents`.`id` FROM `continents`"]
-    (db/postgresql) ["SELECT \"continents\".\"id\" FROM \"continents\""]
-    (db/oracle) ["SELECT continents.id FROM continents"]
-    (db/vertica) ["SELECT \"continents\".\"id\" FROM \"continents\""]))
+      (= expected (sql (select db [:continents.id] (from :continents))))
+    (db/mysql)
+    ["SELECT `continents`.`id` FROM `continents`"]
+    (db/postgresql)
+    ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    (db/oracle)
+    ["SELECT \"continents\".\"id\" FROM \"continents\""]
+    (db/vertica)
+    ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
 ;; POSTGRESQL ARRAYS
 
@@ -1568,7 +1572,7 @@
 
 (deftest test-searching-a-table-3
   (with-stmt
-    ["SELECT \"title\" FROM \"pgweb\" WHERE (\"to_tsvector\"((\"title\" || ? || \"body\")) @@ \"to_tsquery\"(?)) ORDER BY \"last_mod_date\" DESC LIMIT 10" " " "create & table"]
+    ["SELECT \"title\" FROM \"pgweb\" WHERE (\"to_tsvector\"((\"title\" || ? || \"body\")) @@ \"to_tsquery\"(?)) ORDER BY \"last-mod-date\" DESC LIMIT 10" " " "create & table"]
     (select db [:title]
       (from :pgweb)
       (where `(~(keyword "@@")
@@ -1581,17 +1585,17 @@
 
 (deftest test-with-query
   (with-stmt
-    [(str "WITH regional_sales AS ("
-          "SELECT \"region\", \"sum\"(\"amount\") AS \"total_sales\" "
+    [(str "WITH \"regional-sales\" AS ("
+          "SELECT \"region\", \"sum\"(\"amount\") AS \"total-sales\" "
           "FROM \"orders\" GROUP BY \"region\"), "
-          "top_regions AS ("
+          "\"top-regions\" AS ("
           "SELECT \"region\" "
-          "FROM \"regional_sales\" "
-          "WHERE (\"total_sales\" > (SELECT (\"sum\"(\"total_sales\") / 10) FROM \"regional_sales\"))) "
-          "SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product_units\", \"sum\"(\"amount\") AS \"product_sales\" "
+          "FROM \"regional-sales\" "
+          "WHERE (\"total-sales\" > (SELECT (\"sum\"(\"total-sales\") / 10) FROM \"regional-sales\"))) "
+          "SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product-units\", \"sum\"(\"amount\") AS \"product-sales\" "
           "FROM \"orders\" "
           "WHERE \"region\" IN (SELECT \"region\" "
-          "FROM \"top_regions\") "
+          "FROM \"top-regions\") "
           "GROUP BY \"region\", \"product\"")]
     (with db [:regional-sales
               (select db [:region (as '(sum :amount) :total-sales)]
@@ -1613,11 +1617,11 @@
 
 (deftest test-with-modify-data
   (with-stmt
-    [(str "WITH moved_rows AS ("
+    [(str "WITH \"moved-rows\" AS ("
           "DELETE FROM \"products\" "
           "WHERE ((\"date\" >= ?) and (\"date\" < ?)) "
           "RETURNING *) "
-          "INSERT INTO \"product_logs\" SELECT * FROM \"moved_rows\"")
+          "INSERT INTO \"product-logs\" SELECT * FROM \"moved-rows\"")
      "2010-10-01" "2010-11-01"]
     (with db [:moved-rows
               (delete db :products
@@ -1629,30 +1633,30 @@
 
 (deftest test-with-counter-update
   (with-stmt
-    [(str "WITH upsert AS ("
-          "UPDATE \"counter_table\" SET counter = counter+1 "
+    [(str "WITH \"upsert\" AS ("
+          "UPDATE \"counter-table\" SET counter = counter+1 "
           "WHERE (\"id\" = ?) RETURNING *) "
-          "INSERT INTO \"counter_table\" (\"id\", \"counter\") "
+          "INSERT INTO \"counter-table\" (\"id\", \"counter\") "
           "SELECT ?, 1 "
           "WHERE (NOT EXISTS (SELECT * FROM \"upsert\"))")
      "counter-name" "counter-name"]
-    (with db [:upsert (update db :counter_table
+    (with db [:upsert (update db :counter-table
                         '((= counter counter+1))
                         (where '(= :id "counter-name"))
                         (returning *))]
-      (insert db :counter_table [:id :counter]
+      (insert db :counter-table [:id :counter]
         (select db ["counter-name" 1])
         (where `(not-exists ~(select db [*] (from :upsert))))))))
 
 (deftest test-with-delete
   (with-stmt
-    ["WITH t AS (DELETE FROM \"foo\") DELETE FROM \"bar\""]
+    ["WITH \"t\" AS (DELETE FROM \"foo\") DELETE FROM \"bar\""]
     (with db [:t (delete db :foo)]
       (delete db :bar))))
 
 (deftest test-with-compose
   (with-stmt
-    ["WITH a AS (SELECT * FROM \"b\") SELECT * FROM \"a\" WHERE (1 = 1)"]
+    ["WITH \"a\" AS (SELECT * FROM \"b\") SELECT * FROM \"a\" WHERE (1 = 1)"]
     (compose (with db [:a (select db [:*] (from :b))]
                (select db [:*] (from :a)))
              (where '(= 1 1)))))
@@ -1661,12 +1665,12 @@
 
 (deftest test-attr-composite-type
   (with-stmt
-    ["SELECT (\"new_emp\"()).\"name\" AS \"x\""]
+    ["SELECT (\"new-emp\"()).\"name\" AS \"x\""]
     (select db [(as '(.-name (new-emp)) :x)])))
 
 (deftest test-nested-attr-composite-type
   (with-stmt
-    ["SELECT ((\"new_emp\"()).\"name\").\"first\" AS \"x\""]
+    ["SELECT ((\"new-emp\"()).\"name\").\"first\" AS \"x\""]
     (select db [(as '(.-first (.-name (new-emp))) :x)])))
 
 (deftest test-select-as-alias
@@ -1677,37 +1681,37 @@
 
 (deftest test-refresh-materialized-view
   (is (= (sql (refresh-materialized-view db :order-summary))
-         ["REFRESH MATERIALIZED VIEW \"order_summary\""]))
+         ["REFRESH MATERIALIZED VIEW \"order-summary\""]))
   (is (= (sql (refresh-materialized-view db :order-summary
                                          (concurrently true)))
-         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order_summary\""]))
+         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\""]))
   (is (= (sql (refresh-materialized-view db :order-summary
                                          (with-data true)))
-         ["REFRESH MATERIALIZED VIEW \"order_summary\" WITH DATA"]))
+         ["REFRESH MATERIALIZED VIEW \"order-summary\" WITH DATA"]))
   (is (= (sql (refresh-materialized-view db :order-summary
                                          (with-data false)))
-         ["REFRESH MATERIALIZED VIEW \"order_summary\" WITH NO DATA"]))
+         ["REFRESH MATERIALIZED VIEW \"order-summary\" WITH NO DATA"]))
   (is (= (sql (refresh-materialized-view db :order-summary
                                          (concurrently true)
                                          (with-data false)))
-         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order_summary\" WITH NO DATA"])))
+         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\" WITH NO DATA"])))
 
 (deftest test-drop-materialized-view
   (is (= (sql (drop-materialized-view db :order-summary))
-         ["DROP MATERIALIZED VIEW \"order_summary\""]))
+         ["DROP MATERIALIZED VIEW \"order-summary\""]))
   (is (= (sql (drop-materialized-view db :order-summary
                 (if-exists true)))
-         ["DROP MATERIALIZED VIEW IF EXISTS \"order_summary\""]))
+         ["DROP MATERIALIZED VIEW IF EXISTS \"order-summary\""]))
   (is (= (sql (drop-materialized-view db :order-summary
                 (cascade true)))
-         ["DROP MATERIALIZED VIEW \"order_summary\" CASCADE"]))
+         ["DROP MATERIALIZED VIEW \"order-summary\" CASCADE"]))
   (is (= (sql (drop-materialized-view db :order-summary
                 (restrict true)))
-         ["DROP MATERIALIZED VIEW \"order_summary\" RESTRICT"]))
+         ["DROP MATERIALIZED VIEW \"order-summary\" RESTRICT"]))
   (is (= (sql (drop-materialized-view db :order-summary
                 (if-exists true)
                 (cascade true)))
-         ["DROP MATERIALIZED VIEW IF EXISTS \"order_summary\" CASCADE"])))
+         ["DROP MATERIALIZED VIEW IF EXISTS \"order-summary\" CASCADE"])))
 
 (deftest test-case
   (with-stmt
@@ -1780,8 +1784,8 @@
                             (from :empsalary))
                           :ss))
                 (where '(< pos 3))))
-         [(str "SELECT \"depname\", \"empno\", \"salary\", \"enroll_date\" "
-               "FROM (SELECT \"depname\", \"empno\", \"salary\", \"enroll_date\", "
+         [(str "SELECT \"depname\", \"empno\", \"salary\", \"enroll-date\" "
+               "FROM (SELECT \"depname\", \"empno\", \"salary\", \"enroll-date\", "
                "\"rank\"() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC, \"empno\") AS \"pos\" "
                "FROM \"empsalary\") AS \"ss\" WHERE (pos < 3)")])))
 
@@ -1813,6 +1817,5 @@
          ["SELECT * WHERE (NOT (\"id\" = 1))"])))
 
 (deftest test-slash-in-function-name
-  ;; TODO: Get rid of fn name conversion in tests
   (is (= (sql (select db [`(~(symbol "m/s->km/h") 10)]))
-         ["SELECT \"m/s_>km/h\"(10)"])))
+         ["SELECT \"m/s->km/h\"(10)"])))

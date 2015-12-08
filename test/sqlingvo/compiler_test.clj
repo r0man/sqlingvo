@@ -7,23 +7,23 @@
 
 (deftest test-compile-column
   (are [ast expected]
-    (is (= expected (compile-stmt db ast)))
+      (= expected (compile-stmt db ast))
     {:op :column :name :*}
     ["*"]
     {:op :column :table :continents :name :*}
     ["\"continents\".*"]
     {:op :column :name :created-at}
-    ["\"created_at\""]
+    ["\"created-at\""]
     {:op :column :table :continents :name :created-at}
-    ["\"continents\".\"created_at\""]
+    ["\"continents\".\"created-at\""]
     {:op :column :schema :public :table :continents :name :created-at}
-    ["\"public\".\"continents\".\"created_at\""]
+    ["\"public\".\"continents\".\"created-at\""]
     {:op :column :schema :public :table :continents :name :created-at :as :c}
-    ["\"public\".\"continents\".\"created_at\" AS \"c\""]))
+    ["\"public\".\"continents\".\"created-at\" AS \"c\""]))
 
 (deftest test-compile-constant
   (are [ast expected]
-    (is (= expected (compile-stmt db ast)))
+      (= expected (compile-stmt db ast))
     {:op :constant
      :form 1
      :literal? true
@@ -45,7 +45,7 @@
 
 (deftest test-compile-sql
   (are [ast expected]
-    (is (= expected (compile-sql db ast)))
+      (= expected (compile-sql db ast))
     {:op :nil}
     ["NULL"]
     {:op :constant
@@ -55,9 +55,9 @@
      :val 1}
     ["1"]
     {:op :keyword :form :continents.created-at}
-    ["\"continents\".\"created_at\""]
+    ["\"continents\".\"created-at\""]
     {:op :fn :name 'max :args [{:op :keyword :form :created-at}]}
-    ["\"max\"(\"created_at\")"]
+    ["\"max\"(\"created-at\")"]
     {:op :fn
      :name 'greatest
      :args [{:op :constant
@@ -76,7 +76,7 @@
 
 (deftest test-compile-drop-table
   (are [ast expected]
-    (is (= expected (compile-sql db ast)))
+      (= expected (compile-sql db ast))
     {:op :drop-table :tables [{:op :table :name :continents}]}
     ["DROP TABLE \"continents\""]
     {:op :drop-table :tables [{:op :table :name :continents}] :cascade {:op :cascade :cascade true}}
@@ -93,7 +93,7 @@
 
 (deftest test-compile-limit
   (are [ast expected]
-    (is (= expected (compile-sql db ast)))
+      (= expected (compile-sql db ast))
     {:op :limit :count 1}
     ["LIMIT 1"]
     {:op :limit :count nil}
@@ -101,7 +101,7 @@
 
 (deftest test-compile-offset
   (are [ast expected]
-    (is (= expected (compile-sql db ast)))
+      (= expected (compile-sql db ast))
     {:op :offset :start 1}
     ["OFFSET 1"]
     {:op :offset :start nil}
@@ -109,7 +109,7 @@
 
 (deftest test-compile-table
   (are [ast expected]
-    (is (= expected (compile-sql db ast)))
+      (= expected (compile-sql db ast))
     {:op :table :name :continents}
     ["\"continents\""]
     {:op :table :schema :public :name :continents}
@@ -119,7 +119,7 @@
 
 (deftest test-wrap-stmt
   (are [stmt expected]
-    (is (= expected (wrap-stmt stmt)))
+      (= expected (wrap-stmt stmt))
     ["SELECT 1"]
     ["(SELECT 1)"]
     ["SELECT ?" "x"]
@@ -127,7 +127,7 @@
 
 (deftest test-unwrap-stmt
   (are [stmt expected]
-    (is (= expected (unwrap-stmt stmt)))
+      (= expected (unwrap-stmt stmt))
     ["(SELECT 1)"]
     ["SELECT 1"]
     ["(SELECT ?)" "x"]

@@ -249,7 +249,7 @@
      "WITH "
      (join-sql
       ", " (map (fn [alias stmt]
-                  (concat-sql (sql-name db alias) " AS (" (compile-sql db stmt) ")"))
+                  (concat-sql (sql-quote db alias) " AS (" (compile-sql db stmt) ")"))
                 (map first bindings)
                 (map second bindings)))
      " " compiled-statement)
@@ -353,7 +353,7 @@
        like
        (compile-sql db like))
      (if-not (empty? primary-key)
-       (concat-sql ", PRIMARY KEY(" (join ", " (map #(sql-name db %1) primary-key)) ")"))
+       (concat-sql ", PRIMARY KEY(" (join ", " (map #(sql-quote db %1) primary-key)) ")"))
      ")"
      (if inherits
        (concat-sql " INHERITS (" (compile-sql-join db ", " inherits) ")")))))
