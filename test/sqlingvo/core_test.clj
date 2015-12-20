@@ -1828,7 +1828,7 @@
          [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
                "VALUES (5, ?), (6, ?) "
                "ON CONFLICT (\"did\") "
-               "DO UPDATE SET \"dname\" = \"EXCLUDED\".\"dname\"")
+               "DO UPDATE SET \"dname\" = EXCLUDED.\"dname\"")
           "Gizmo Transglobal"
           "Associated Computing, Inc"])))
 
@@ -1844,15 +1844,15 @@
           "Redline GmbH"])))
 
 (deftest test-upsert-on-conflict-do-update-where
-  (is (= (sql (insert db :distributors [:did :dname]
+  (is (= (sql (insert db (as :distributors :d) [:did :dname]
                 (values [{:did 8 :dname "Anvil Distribution"}])
                 (on-conflict [:did]
                   (do-update {:dname '(:|| :EXCLUDED.dname " (formerly " :d.dname ")")})
                   (where '(:<> :d.zipcode "21201")))))
-         [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+         [(str "INSERT INTO \"distributors\" AS \"d\" (\"did\", \"dname\") "
                "VALUES (8, ?) "
                "ON CONFLICT (\"did\") "
-               "DO UPDATE SET \"dname\" = (\"EXCLUDED\".\"dname\" || ? || \"d\".\"dname\" || ?) "
+               "DO UPDATE SET \"dname\" = (EXCLUDED.\"dname\" || ? || \"d\".\"dname\" || ?) "
                "WHERE (\"d\".\"zipcode\" <> ?)")
           "Anvil Distribution" " (formerly " ")" "21201"])))
 

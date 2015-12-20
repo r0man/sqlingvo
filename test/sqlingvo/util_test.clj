@@ -9,7 +9,8 @@
     nil ""
     :continents "`continents`"
     :continents.name "`continents`.`name`"
-    :continents.* "`continents`.*"))
+    :continents.* "`continents`.*"
+    :EXCLUDED.dname "EXCLUDED.`dname`"))
 
 (deftest test-sql-quote-double-quote
   (are [x expected]
@@ -17,7 +18,8 @@
     nil ""
     :continents "\"continents\""
     :continents.name "\"continents\".\"name\""
-    :continents.* "\"continents\".*"))
+    :continents.* "\"continents\".*"
+    :EXCLUDED.dname "EXCLUDED.\"dname\""))
 
 (deftest test-sql-name
   (are [x expected]
@@ -47,6 +49,7 @@
     db/postgresql "" "\"\""
     db/postgresql :a "\"a\""
     db/postgresql :a-1 "\"a-1\""
+    db/postgresql :EXCLUDED.dname "EXCLUDED.\"dname\""
     db/vertica"" "\"\""
     db/vertica :a "\"a\""
     db/vertica :a-1 "\"a-1\""))

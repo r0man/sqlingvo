@@ -2,6 +2,10 @@
   (:require [clojure.string :refer [join replace split]])
   (:refer-clojure :exclude [replace]))
 
+(def ^:dynamic *reserved*
+  "A set of reserved words that should not be quoted."
+  #{"EXCLUDED"})
+
 (defn m-bind [mv mf]
   (fn [state]
     (let [[temp-v temp-state] (mv state)
@@ -67,6 +71,15 @@
 (defn- sql-quote-char [x before after]
   (if-not (= "*" x)
     (str before x after) "*" ))
+
+(defn- sql-quote-char [x before after]
+  (cond
+    (= "*" x)
+    "*"
+    (contains? *reserved* x)
+    x
+    :else
+    (str before x after)))
 
 (defn sql-quote-backtick [x]
   (map-sql-name #(sql-quote-char %1 "`" "`") x))
