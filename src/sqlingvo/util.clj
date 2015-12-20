@@ -69,10 +69,6 @@
   (keyword (map-sql-name #(replace (name %1) "_" "-") x)))
 
 (defn- sql-quote-char [x before after]
-  (if-not (= "*" x)
-    (str before x after) "*" ))
-
-(defn- sql-quote-char [x before after]
   (cond
     (= "*" x)
     "*"
