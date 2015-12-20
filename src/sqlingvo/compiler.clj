@@ -174,7 +174,7 @@
               (if (= 'distinct (:form (first args))) "DISTINCT ")
               (join-sql ", " (map #(compile-sql db %1)
                                   (remove #(= 'distinct (:form %1)) args))) ")"
-                                  (compile-alias db as)))
+              (compile-alias db as)))
 
 (defmethod compile-fn :in [db {[member expr] :args}]
   (concat-sql (compile-expr db member) " IN "
@@ -421,6 +421,40 @@
   (let [values (map #(compile-value db columns %) values)]
     (concat-sql ["VALUES "] (join-sql ", " values))))
 
+(defn compile-row [db row]
+  (join-sql
+   ", "
+   (for [column (keys row)]
+     (concat-sql
+      (str (sql-quote db column) " = ")
+      (compile-sql db (get row column))))))
+
+(defmethod compile-sql :do-nothing [db node]
+  " DO NOTHING")
+
+(defmethod compile-sql :do-update [db node]
+  (concat-sql " DO UPDATE SET " (compile-row db (:expr node))))
+
+(defmethod compile-sql :on-conflict [db node]
+  (concat-sql
+   " ON CONFLICT "
+   (when-let [target (:target node)]
+     (concat-sql "(" (join-sql ", " (map #(compile-sql db %) target)) ")"))
+   (compile-sql db (:do-update node))
+   (when-let [where (:where node)]
+     (concat-sql " WHERE " (compile-sql db where)))
+   (compile-sql db (:do-nothing node))))
+
+(defmethod compile-sql :on-conflict-on-constraint [db node]
+  (concat-sql
+   " ON CONFLICT ON CONSTRAINT"
+   (when-let [target (:target node)]
+     (concat-sql " " (sql-quote db target)))
+   (compile-sql db (:do-update node))
+   (when-let [where (:where node)]
+     (concat-sql " WHERE " (compile-sql db where)))
+   (compile-sql db (:do-nothing node))))
+
 (defmethod compile-sql :insert [db node]
   (let [{:keys [table columns rows default-values values returning select where]} node
         columns (if (and (empty? columns)
@@ -443,7 +477,9 @@
       (if-not (empty? returning)
         (concat-sql " RETURNING " (compile-sql-join db ", " returning)))
       (if-not (empty? where)
-        (concat-sql " WHERE " (compile-sql db where)))))))
+        (concat-sql " WHERE " (compile-sql db where)))
+      (compile-sql db (:on-conflict node))
+      (compile-sql db (:on-conflict-on-constraint node))))))
 
 (defmethod compile-sql :intersect [db node]
   (compile-set-op db :intersect node))
@@ -565,14 +601,9 @@
      (concat-sql
       "UPDATE " (compile-sql db table)
       " SET "
-      (join-sql
-       ", " (if row
-              (for [column (keys row)]
-                ;; [(str (sql-quote db column) " = ?") (get row column)]
-                (concat-sql
-                 (str (sql-quote db column) " = ")
-                 (compile-sql db (get row column))))
-              (map unwrap-stmt (compile-exprs db exprs))))
+      (if row
+        (compile-row db row)
+        (join-sql ", "(map unwrap-stmt (compile-exprs db exprs))))
       (if-not (empty? from)
         (concat-sql " FROM " (join-sql " " (map #(compile-from db %1) from))))
       (if-not (empty? where)
