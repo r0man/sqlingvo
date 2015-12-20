@@ -1,4 +1,4 @@
-(defproject sqlingvo "0.8.2"
+(defproject sqlingvo "0.8.3-SNAPSHOT"
   :description "A SQL DSL in Clojure."
   :url "http://github.com/r0man/sqlingvo"
   :license {:name "Eclipse Public License"
