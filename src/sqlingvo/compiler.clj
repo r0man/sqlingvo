@@ -646,4 +646,4 @@
   statement vector."
   [stmt]
   (assert (:db stmt) "No db given!")
-  (compile-sql (:db stmt) stmt))
+  (vec (compile-sql (:db stmt) stmt)))

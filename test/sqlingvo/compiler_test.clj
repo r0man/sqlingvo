@@ -1,7 +1,8 @@
 (ns sqlingvo.compiler-test
   (:require [clojure.test :refer :all]
             [sqlingvo.compiler :refer :all]
-            [sqlingvo.db :as db :refer [postgresql]]))
+            [sqlingvo.core :refer [ast select]]
+            [sqlingvo.db :as db]))
 
 (def db (db/postgresql))
 
@@ -132,3 +133,8 @@
     ["SELECT 1"]
     ["(SELECT ?)" "x"]
     ["SELECT ?" "x"]))
+
+(deftest test-compile-stmt-returns-vector
+  (let [sql (compile-stmt (ast (select db [1])))]
+    (is (vector? sql))
+    (is (= sql ["SELECT 1"]))))
