@@ -80,6 +80,21 @@
   [condition]
   (conditional-clause :concurrently condition))
 
+(defn do-constraint
+  "Add a DO CONSTRAINT clause to a SQL statement."
+  [constraint]
+  (set-val :do-constraint constraint))
+
+(defn do-nothing
+  "Add a DO NOTHING clause to a SQL statement."
+  []
+  (assoc-op :do-nothing))
+
+(defn do-update
+  "Add a DO UPDATE clause to a SQL statement."
+  [expr]
+  (assoc-op :do-update :expr (parse-map-expr expr)))
+
 (defn with-data
   "Add a WITH [NO] DATA clause to a SQL statement."
   [data?]
@@ -125,7 +140,7 @@
   (let [table (parse-table table)
         columns (map parse-column columns)]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :copy
                :db db
@@ -139,7 +154,7 @@
   [db table & body]
   (let [table (parse-table table)]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :create-table
                :db db
@@ -161,7 +176,7 @@
   [db table & body]
   (let [table (parse-table table)]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :delete
                :db db
@@ -182,7 +197,7 @@
   [db tables & body]
   (let [tables (map parse-table tables)]
     (Stmt. (fn [stmt]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :drop-table
                :db db
@@ -284,7 +299,7 @@
   (let [table (parse-table table)
         columns (map parse-column columns)]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :insert
                :db db
@@ -353,6 +368,33 @@
   "Parse `expr` and return an NULLS FIRST/LAST expr."
   [expr where] (assoc (parse-expr expr) :nulls where))
 
+(defn on-conflict
+  "Add a ON CONFLICT clause to a SQL statement."
+  {:style/indent 1}
+  [target & body]
+  (let [target (map parse-column target)]
+    (let [[_ node]
+          ((chain-state body)
+           (make-node
+            :op :on-conflict
+            :target target
+            :children [:target]))]
+      (Stmt. (fn [stmt]
+               [_ (assoc stmt :on-conflict node)])))))
+
+(defn on-conflict-on-constraint
+  "Add a ON CONFLICT ON CONSTRAINT clause to a SQL statement."
+  {:style/indent 1}
+  [target & body]
+  (let [[_ node]
+        ((chain-state body)
+         (make-node
+          :op :on-conflict-on-constraint
+          :target target
+          :children [:target]))]
+    (Stmt. (fn [stmt]
+             [_ (assoc stmt :on-conflict-on-constraint node)]))))
+
 (defn offset
   "Returns a fn that adds a OFFSET clause to an SQL statement."
   [start]
@@ -380,7 +422,7 @@
   [db view & body]
   (let [view (parse-table view)]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :drop-materialized-view
                :db db
@@ -392,7 +434,7 @@
   [db view & body]
   (let [view (parse-table view)]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :refresh-materialized-view
                :db db
@@ -432,7 +474,7 @@
   {:style/indent 2}
   [db exprs & body]
   (let [[_ select]
-        ((m-seq (remove nil? body))
+        ((chain-state body)
          (make-node
           :op :select
           :db db
@@ -467,7 +509,7 @@
   [db tables & body]
   (let [tables (map parse-table tables)]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :truncate
                :db db
@@ -507,7 +549,7 @@
         exprs (if (sequential? row) (parse-exprs row))
         row (if (map? row) (parse-map-expr row))]
     (Stmt. (fn [_]
-             ((m-seq (remove nil? body))
+             ((chain-state body)
               (make-node
                :op :update
                :db db
