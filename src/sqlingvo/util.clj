@@ -73,3 +73,19 @@
 
 (defn sql-quote-double-quote [x]
   (map-sql-name #(sql-quote-char %1 "\"" "\"") x))
+
+(defn sql-name
+  "Return the `db` specific SQL name for `x`."
+  [db x]
+  ((or (:sql-name db) name) x))
+
+(defn sql-keyword
+  "Return the `db` specific SQL keyword for `x`."
+  [db x]
+  ((or (:sql-keyword db) keyword) x))
+
+(defn sql-quote
+  "Return the `db` specific quoted string for `x`."
+  [db x]
+  ((or (:sql-quote db) sql-quote-backtick)
+   (sql-name db x)))

@@ -4,17 +4,7 @@
   (:require [clojure.core :as core]
             [clojure.java.io :refer [file]]
             [clojure.string :refer [blank? join replace upper-case]]
-            [sqlingvo.util :as util]))
-
-(defn sql-name [db x]
-  ((or (:sql-name db) name) x))
-
-(defn sql-keyword [db x]
-  ((or (:sql-keyword db) keyword) x))
-
-(defn sql-quote [db x]
-  ((or (:sql-quote db) util/sql-quote-backtick)
-   (sql-name db x)))
+            [sqlingvo.util :as util :refer [sql-quote]]))
 
 (defmulti compile-sql
   "Compile the `ast` into SQL."

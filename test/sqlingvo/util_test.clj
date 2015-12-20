@@ -1,10 +1,11 @@
 (ns sqlingvo.util-test
   (:require [clojure.test :refer :all]
+            [sqlingvo.db :as db]
             [sqlingvo.util :refer :all]))
 
 (deftest test-sql-quote-backtick
   (are [x expected]
-    (= expected (sql-quote-backtick x))
+      (= expected (sql-quote-backtick x))
     nil ""
     :continents "`continents`"
     :continents.name "`continents`.`name`"
@@ -12,8 +13,40 @@
 
 (deftest test-sql-quote-double-quote
   (are [x expected]
-    (= expected (sql-quote-double-quote x))
+      (= expected (sql-quote-double-quote x))
     nil ""
     :continents "\"continents\""
     :continents.name "\"continents\".\"name\""
     :continents.* "\"continents\".*"))
+
+(deftest test-sql-name
+  (are [x expected]
+      (and (= expected (sql-name (db/mysql) x))
+           (= expected (sql-name (db/postgresql) x))
+           (= expected (sql-name (db/vertica) x)))
+    "" ""
+    :a "a"
+    :a-1 "a-1"))
+
+(deftest test-sql-keyword
+  (are [x expected]
+      (and (= expected (sql-keyword (db/mysql) x))
+           (= expected (sql-keyword (db/postgresql) x))
+           (= expected (sql-keyword (db/vertica) x)))
+    "" (keyword "")
+    :a :a
+    :a-1 :a-1
+    :a_1 :a_1))
+
+(deftest test-sql-quote
+  (are [db x expected]
+      (= expected (sql-quote (db) x))
+    db/mysql "" "``"
+    db/mysql :a "`a`"
+    db/mysql :a-1 "`a-1`"
+    db/postgresql "" "\"\""
+    db/postgresql :a "\"a\""
+    db/postgresql :a-1 "\"a-1\""
+    db/vertica"" "\"\""
+    db/vertica :a "\"a\""
+    db/vertica :a-1 "\"a-1\""))
