@@ -1,24 +1,14 @@
 (ns sqlingvo.core
-  (:require [clojure.pprint :as pprint]
-            [clojure.string :as str]
+  (:refer-clojure :exclude [distinct group-by replace update])
+  (:require [clojure.string :as str]
             [sqlingvo.compiler :as compiler]
             [sqlingvo.db :as db]
-            [sqlingvo.expr :refer :all]
-            [sqlingvo.util :refer :all])
-  (:import (sqlingvo.expr Stmt))
-  (:refer-clojure :exclude [distinct group-by replace update]))
-
-(defn sql-name [db x]
-  (compiler/sql-name db x))
-
-(defn sql-keyword [db x]
-  (compiler/sql-keyword db x))
-
-(defn sql-quote [db x]
-  (compiler/sql-quote db x))
+            [sqlingvo.expr :as expr]
+            [sqlingvo.util :as util])
+  (:import [sqlingvo.expr Stmt]))
 
 (defn chain-state [body]
-  (m-seq (remove nil? body)))
+  (util/m-seq (remove nil? body)))
 
 (defn compose
   "Compose multiple SQL statements."
@@ -40,29 +30,29 @@
   [expr alias]
   (if (sequential? alias)
     (for [alias alias]
-      (let [column (parse-column (str expr "." (name alias)))]
+      (let [column (expr/parse-column (str expr "." (name alias)))]
         (assoc column
                :as (->> (map column [:schema :table :name])
                         (remove nil?)
                         (map name)
                         (str/join "-")
                         (keyword)))))
-    (assoc (parse-expr expr) :as alias)))
+    (assoc (expr/parse-expr expr) :as alias)))
 
 (defn asc
   "Parse `expr` and return an ORDER BY expr using ascending order."
-  [expr] (assoc (parse-expr expr) :direction :asc))
+  [expr] (assoc (expr/parse-expr expr) :direction :asc))
 
 (defn cascade
   "Returns a fn that adds a CASCADE clause to an SQL statement."
   [condition]
-  (conditional-clause :cascade condition))
+  (util/conditional-clause :cascade condition))
 
 (defn column
   "Add a column to `stmt`."
   [name type & {:as options}]
   (let [column (assoc options :op :column :name name :type type)
-        column (update-in column [:default] #(if %1 (parse-expr %1)))]
+        column (update-in column [:default] #(if %1 (expr/parse-expr %1)))]
     (fn [stmt]
       [nil (-> (update-in stmt [:columns] #(concat %1 [(:name column)]))
                (assoc-in [:column (:name column)]
@@ -73,55 +63,56 @@
 (defn continue-identity
   "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
   [condition]
-  (conditional-clause :continue-identity condition))
+  (util/conditional-clause :continue-identity condition))
 
 (defn concurrently
   "Add a CONCURRENTLY clause to a SQL statement."
   [condition]
-  (conditional-clause :concurrently condition))
+  (util/conditional-clause :concurrently condition))
 
 (defn do-constraint
   "Add a DO CONSTRAINT clause to a SQL statement."
   [constraint]
-  (set-val :do-constraint constraint))
+  (util/set-val :do-constraint constraint))
 
 (defn do-nothing
   "Add a DO NOTHING clause to a SQL statement."
   []
-  (assoc-op :do-nothing))
+  (util/assoc-op :do-nothing))
 
 (defn do-update
   "Add a DO UPDATE clause to a SQL statement."
   [expr]
-  (assoc-op :do-update :expr (parse-map-expr expr)))
+  (util/assoc-op :do-update :expr (expr/parse-map-expr expr)))
 
 (defn with-data
   "Add a WITH [NO] DATA clause to a SQL statement."
   [data?]
-  (assoc-op :with-data :data data?))
+  (util/assoc-op :with-data :data data?))
 
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
-  [expr] (assoc (parse-expr expr) :direction :desc))
+  [expr]
+  (assoc (expr/parse-expr expr) :direction :desc))
 
 (defn distinct
   "Parse `exprs` and return a DISTINCT clause."
   [exprs & {:keys [on]}]
-  (make-node
+  (expr/make-node
    :op :distinct
    :children [:exprs :on]
-   :exprs (parse-exprs exprs)
-   :on (parse-exprs on)))
+   :exprs (expr/parse-exprs exprs)
+   :on (expr/parse-exprs on)))
 
 (defn delimiter
   "Returns a fn that adds a DELIMITER clause to an SQL statement."
   [delimiter]
-  (set-val :delimiter delimiter))
+  (util/set-val :delimiter delimiter))
 
 (defn encoding
   "Returns a fn that adds a ENCODING clause to an SQL statement."
   [encoding]
-  (set-val :encoding encoding))
+  (util/set-val :encoding encoding))
 
 (defn copy
   "Returns a fn that builds a COPY statement.
@@ -137,11 +128,11 @@
   ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]"
   {:style/indent 3}
   [db table columns & body]
-  (let [table (parse-table table)
-        columns (map parse-column columns)]
+  (let [table (expr/parse-table table)
+        columns (map expr/parse-column columns)]
     (Stmt. (fn [_]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :copy
                :db db
                :children [:table :columns]
@@ -152,10 +143,10 @@
   "Returns a fn that builds a CREATE TABLE statement."
   {:style/indent 2}
   [db table & body]
-  (let [table (parse-table table)]
+  (let [table (expr/parse-table table)]
     (Stmt. (fn [_]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :create-table
                :db db
                :children [:table]
@@ -174,10 +165,10 @@
   ;=> [\"DELETE FROM \\\"continents\\\" WHERE (\\\"id\\\" = 1)\"]"
   {:style/indent 2}
   [db table & body]
-  (let [table (parse-table table)]
+  (let [table (expr/parse-table table)]
     (Stmt. (fn [_]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :delete
                :db db
                :children [:table]
@@ -195,10 +186,10 @@
   ;=> [\"DROP TABLE TABLE \\\"continents\\\", \\\"countries\\\"\"]"
   {:style/indent 2}
   [db tables & body]
-  (let [tables (map parse-table tables)]
+  (let [tables (map expr/parse-table tables)]
     (Stmt. (fn [stmt]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :drop-table
                :db db
                :children [:tables]
@@ -209,7 +200,7 @@
   (let [[[opts] stmts] (split-with map? args)]
     (Stmt. (fn [_]
              [nil (merge
-                   (make-node
+                   (expr/make-node
                     :op op
                     :db (-> stmts first ast :db)
                     :children [:stmts]
@@ -267,28 +258,28 @@
   (fn [stmt]
     (let [from (case (:op stmt)
                  :copy [(first from)]
-                 (map parse-from from))]
+                 (map expr/parse-from from))]
       [from (update-in stmt [:from] #(concat %1 from))])))
 
 (defn group-by
   "Returns a fn that adds a GROUP BY clause to an SQL statement."
   [& exprs]
-  (concat-in [:group-by] (parse-exprs exprs)))
+  (util/concat-in [:group-by] (expr/parse-exprs exprs)))
 
 (defn if-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [condition]
-  (conditional-clause :if-exists condition))
+  (util/conditional-clause :if-exists condition))
 
 (defn if-not-exists
   "Returns a fn that adds a IF EXISTS clause to an SQL statement."
   [condition]
-  (conditional-clause :if-not-exists condition))
+  (util/conditional-clause :if-not-exists condition))
 
 (defn inherits
   "Returns a fn that adds an INHERITS clause to an SQL statement."
   [& tables]
-  (let [tables (map parse-table tables)]
+  (let [tables (map expr/parse-table tables)]
     (fn [stmt]
       [tables (assoc stmt :inherits tables)])))
 
@@ -296,11 +287,11 @@
   "Returns a fn that builds a INSERT statement."
   {:style/indent 3}
   [db table columns & body]
-  (let [table (parse-table table)
-        columns (map parse-column columns)]
+  (let [table (expr/parse-table table)
+        columns (map expr/parse-column columns)]
     (Stmt. (fn [_]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :insert
                :db db
                :children [:table :columns]
@@ -328,54 +319,55 @@
 (defn join
   "Returns a fn that adds a JOIN clause to an SQL statement."
   [from condition & {:keys [type outer pk]}]
-  (concat-in
+  (util/concat-in
    [:joins]
-   [(let [join (make-node
+   [(let [join (expr/make-node
                 :op :join
                 :children [:outer :type :from]
                 :outer outer
                 :type type
-                :from (parse-from from))]
+                :from (expr/parse-from from))]
       (cond
         (and (sequential? condition)
              (= :on (keyword (name (first condition)))))
         (assoc join
-               :on (parse-expr (first (rest condition))))
+               :on (expr/parse-expr (first (rest condition))))
         (and (sequential? condition)
              (= :using (keyword (name (first condition)))))
         (assoc join
-               :using (parse-exprs (rest condition)))
+               :using (expr/parse-exprs (rest condition)))
         (and (keyword? from)
              (keyword? condition))
         (assoc join
-               :from (parse-table (str/join "." (butlast (str/split (name from) #"\."))))
-               :on (parse-expr `(= ~from ~condition)))
+               :from (expr/parse-table (str/join "." (butlast (str/split (name from) #"\."))))
+               :on (expr/parse-expr `(= ~from ~condition)))
         :else (throw (ex-info "Invalid JOIN condition." {:condition condition}))))]))
 
 (defn like
   "Returns a fn that adds a LIKE clause to an SQL statement."
   [table & {:as opts}]
-  (let [table (parse-table table)
+  (let [table (expr/parse-table table)
         like (assoc opts :op :like :table table)]
-    (set-val :like like)))
+    (util/set-val :like like)))
 
 (defn limit
   "Returns a fn that adds a LIMIT clause to an SQL statement."
   [count]
-  (assoc-op :limit :count count))
+  (util/assoc-op :limit :count count))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
-  [expr where] (assoc (parse-expr expr) :nulls where))
+  [expr where]
+  (assoc (expr/parse-expr expr) :nulls where))
 
 (defn on-conflict
   "Add a ON CONFLICT clause to a SQL statement."
   {:style/indent 1}
   [target & body]
-  (let [target (map parse-column target)]
+  (let [target (map expr/parse-column target)]
     (let [[_ node]
           ((chain-state body)
-           (make-node
+           (expr/make-node
             :op :on-conflict
             :target target
             :children [:target]))]
@@ -388,7 +380,7 @@
   [target & body]
   (let [[_ node]
         ((chain-state body)
-         (make-node
+         (expr/make-node
           :op :on-conflict-on-constraint
           :target target
           :children [:target]))]
@@ -398,17 +390,17 @@
 (defn offset
   "Returns a fn that adds a OFFSET clause to an SQL statement."
   [start]
-  (assoc-op :offset :start start))
+  (util/assoc-op :offset :start start))
 
 (defn order-by
   "Returns a fn that adds a ORDER BY clause to an SQL statement."
   [& exprs]
-  (concat-in [:order-by] (parse-exprs exprs)))
+  (util/concat-in [:order-by] (expr/parse-exprs exprs)))
 
 (defn window
   "Returns a fn that adds a WINDOW clause to an SQL statement."
   [& exprs]
-  (assoc-op :window :definitions (parse-exprs exprs)))
+  (util/assoc-op :window :definitions (expr/parse-exprs exprs)))
 
 (defn primary-key
   "Returns a fn that adds the primary key to a table."
@@ -420,10 +412,10 @@
   "Drop a materialized view."
   {:style/indent 2}
   [db view & body]
-  (let [view (parse-table view)]
+  (let [view (expr/parse-table view)]
     (Stmt. (fn [_]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :drop-materialized-view
                :db db
                :children [:view]
@@ -432,10 +424,10 @@
 (defn refresh-materialized-view
   "Refresh a materialized view."
   [db view & body]
-  (let [view (parse-table view)]
+  (let [view (expr/parse-table view)]
     (Stmt. (fn [_]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :refresh-materialized-view
                :db db
                :children [:view]
@@ -444,17 +436,17 @@
 (defn restart-identity
   "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
   [condition]
-  (conditional-clause :restart-identity condition))
+  (util/conditional-clause :restart-identity condition))
 
 (defn restrict
   "Returns a fn that adds a RESTRICT clause to an SQL statement."
   [condition]
-  (conditional-clause :restrict condition))
+  (util/conditional-clause :restrict condition))
 
 (defn returning
   "Returns a fn that adds a RETURNING clause to an SQL statement."
   [& exprs]
-  (concat-in [:returning] (parse-exprs exprs)))
+  (util/concat-in [:returning] (expr/parse-exprs exprs)))
 
 (defn select
   "Returns a fn that builds a SELECT statement.
@@ -475,14 +467,14 @@
   [db exprs & body]
   (let [[_ select]
         ((chain-state body)
-         (make-node
+         (expr/make-node
           :op :select
           :db db
           :children [:distinct :exprs]
           :distinct (if (= :distinct (:op exprs))
                       exprs)
           :exprs (if (sequential? exprs)
-                   (parse-exprs exprs))))]
+                   (expr/parse-exprs exprs))))]
     (Stmt. (fn [stmt]
              (->> (case (:op stmt)
                     :insert (assoc stmt :select select)
@@ -493,7 +485,7 @@
 (defn temporary
   "Returns a fn that adds a TEMPORARY clause to an SQL statement."
   [condition]
-  (conditional-clause :temporary condition))
+  (util/conditional-clause :temporary condition))
 
 (defn truncate
   "Returns a fn that builds a TRUNCATE statement.
@@ -507,10 +499,10 @@
   ;=> [\"TRUNCATE TABLE \\\"continents\\\", \\\"countries\\\"\"]"
   {:style/indent 1}
   [db tables & body]
-  (let [tables (map parse-table tables)]
+  (let [tables (map expr/parse-table tables)]
     (Stmt. (fn [_]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :truncate
                :db db
                :children [:tables]
@@ -545,12 +537,12 @@
   ;=>  \"Dramatic\" \"Drama\"]"
   {:style/indent 2}
   [db table row & body]
-  (let [table (parse-table table)
-        exprs (if (sequential? row) (parse-exprs row))
-        row (if (map? row) (parse-map-expr row))]
+  (let [table (expr/parse-table table)
+        exprs (if (sequential? row) (expr/parse-exprs row))
+        row (if (map? row) (expr/parse-map-expr row))]
     (Stmt. (fn [_]
              ((chain-state body)
-              (make-node
+              (expr/make-node
                :op :update
                :db db
                :children [:table :exprs :row]
@@ -562,13 +554,13 @@
   "Returns a fn that adds a VALUES clause to an SQL statement."
   [values]
   (if (= :default values)
-    (set-val :default-values true)
-    (concat-in [:values] (map parse-map-expr (sequential values)))))
+    (util/set-val :default-values true)
+    (util/concat-in [:values] (map expr/parse-map-expr (util/sequential values)))))
 
 (defn where
   "Returns a fn that adds a WHERE clause to an SQL statement."
   [condition & [combine]]
-  (let [condition (parse-condition condition)]
+  (let [condition (expr/parse-condition condition)]
     (fn [stmt]
       (cond
         (or (nil? combine)
@@ -577,10 +569,10 @@
         :else
         [nil (assoc-in
               stmt [:where :condition]
-              (make-node
+              (expr/make-node
                :op :condition
                :children [:condition]
-               :condition (make-node
+               :condition (expr/make-node
                            :op :fn
                            :children [:name :args]
                            :name combine
@@ -599,7 +591,7 @@
         query (ast query)]
     (Stmt. (fn [stmt]
              [nil (assoc query
-                         :with (make-node
+                         :with (expr/make-node
                                 :op :with
                                 :db db
                                 :children [:bindings]

@@ -2,29 +2,34 @@
   (:require [sqlingvo.compiler :as compiler]
             [sqlingvo.util :refer :all]))
 
-(defrecord Database []
-  compiler/Keywordable
-  (sql-keyword [m x]
-    ((or (:sql-keyword m) keyword) x))
-  compiler/Nameable
-  (sql-name [m x]
-    ((or (:sql-name m) name) x))
-  compiler/Quoteable
-  (sql-quote [m x]
-    ((or (:sql-quote m) sql-quote-backtick)
-     (compiler/sql-name m x))))
+(defrecord Database [subprotocol])
 
-(defmacro defdb [name doc & {:as opts}]
-  `(defn ~name [& [~'opts]]
-     (let [db# (map->Database
-                (merge {:doc ~doc
-                        :classname ~(:classname opts)
-                        :subprotocol ~(clojure.core/name name)
-                        :sql-keyword ~(:keyword opts)
-                        :sql-name ~(:name opts)
-                        :sql-quote ~(:quote opts)}
-                       ~'opts))]
-       (assoc db# :eval-fn #(compiler/compile-stmt db# %)))))
+(defmulti db
+  "Return the `Database` record for :adapter or :subprotocol in
+  `db-spec`."
+  (fn [db-spec] (keyword (:subprotocol db-spec))))
+
+(defmethod db :default [{:keys [subprotocol] :as db-spec}]
+  (throw (ex-info (format "Unknown database subprotocol: %s"
+                          (some-> db-spec :subprotocol name))
+                  db-spec)))
+
+(defmacro defdb
+  "Define a database vendor."
+  [db-name doc & {:as opts}]
+  `(do
+     (defmethod db ~(keyword db-name) [~'db-spec]
+       (map->Database
+        (merge ~'db-spec
+               {:classname ~(:classname opts)
+                :doc ~doc
+                :eval-fn compiler/eval-str
+                :sql-keyword ~(:keyword opts)
+                :sql-name ~(:name opts)
+                :sql-quote ~(:quote opts)
+                :subprotocol ~(name db-name)})))
+     (defn ~(symbol db-name) [& [~'db-spec]]
+       (db (assoc ~'db-spec :subprotocol ~(name db-name))))))
 
 (defdb mysql
   "The world's most popular open source database."

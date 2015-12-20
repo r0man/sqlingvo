@@ -3,16 +3,18 @@
   (:refer-clojure :exclude [replace])
   (:require [clojure.core :as core]
             [clojure.java.io :refer [file]]
-            [clojure.string :refer [blank? join replace upper-case]]))
+            [clojure.string :refer [blank? join replace upper-case]]
+            [sqlingvo.util :as util]))
 
-(defprotocol Keywordable
-  (sql-keyword [obj x]))
+(defn sql-name [db x]
+  ((or (:sql-name db) name) x))
 
-(defprotocol Nameable
-  (sql-name [obj x]))
+(defn sql-keyword [db x]
+  ((or (:sql-keyword db) keyword) x))
 
-(defprotocol Quoteable
-  (sql-quote [obj x]))
+(defn sql-quote [db x]
+  ((or (:sql-quote db) util/sql-quote-backtick)
+   (sql-name db x)))
 
 (defmulti compile-sql
   "Compile the `ast` into SQL."
@@ -655,3 +657,9 @@
   [db stmt]
   (assert db "No db given!")
   (apply vector (compile-sql db stmt)))
+
+(defn eval-str
+  "The default eval function, compiles a SQL statement into a vector."
+  [stmt]
+  (assert (:db stmt) "No db given!")
+  (compile-stmt (:db stmt) stmt))
