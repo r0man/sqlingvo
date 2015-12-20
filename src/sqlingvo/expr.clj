@@ -1,7 +1,6 @@
 (ns sqlingvo.expr
   (:refer-clojure :exclude [replace])
-  (:require [clojure.string :refer [replace]]
-            [sqlingvo.compiler :refer [compile-stmt]]))
+  (:require [clojure.string :refer [replace]]))
 
 (def ^:dynamic *column-regex*
   #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?")

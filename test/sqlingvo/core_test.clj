@@ -3,7 +3,6 @@
   (:refer-clojure :exclude [distinct group-by update])
   (:require [clojure.java.io :refer [file]]
             [clojure.test :refer :all]
-            [sqlingvo.compiler :refer [compile-stmt]]
             [sqlingvo.core :refer :all]
             [sqlingvo.db :as db]
             [sqlingvo.expr :refer :all]

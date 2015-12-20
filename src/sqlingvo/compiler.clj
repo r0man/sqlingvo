@@ -654,12 +654,6 @@
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
-  [db stmt]
-  (assert db "No db given!")
-  (apply vector (compile-sql db stmt)))
-
-(defn eval-str
-  "The default eval function, compiles a SQL statement into a vector."
   [stmt]
   (assert (:db stmt) "No db given!")
-  (compile-stmt (:db stmt) stmt))
+  (compile-sql (:db stmt) stmt))

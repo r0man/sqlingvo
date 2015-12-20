@@ -23,7 +23,7 @@
         (merge ~'db-spec
                {:classname ~(:classname opts)
                 :doc ~doc
-                :eval-fn compiler/eval-str
+                :eval-fn compiler/compile-stmt
                 :sql-keyword ~(:keyword opts)
                 :sql-name ~(:name opts)
                 :sql-quote ~(:quote opts)

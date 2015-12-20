@@ -39,7 +39,7 @@
 
 (deftest test-compile-column
   (are [ast expected]
-      (= expected (compile-stmt db ast))
+      (= expected (compile-sql db ast))
     {:op :column :name :*}
     ["*"]
     {:op :column :table :continents :name :*}
@@ -55,7 +55,7 @@
 
 (deftest test-compile-constant
   (are [ast expected]
-      (= expected (compile-stmt db ast))
+      (= expected (compile-sql db ast))
     {:op :constant
      :form 1
      :literal? true

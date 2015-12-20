@@ -600,8 +600,7 @@
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
   [stmt]
-  (let [ast (ast stmt)]
-    (compiler/compile-stmt (:db ast) ast)))
+  (compiler/compile-stmt (ast stmt)))
 
 (defmethod print-method Stmt
   [stmt writer]
