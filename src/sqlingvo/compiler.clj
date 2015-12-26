@@ -466,12 +466,12 @@
         (concat-sql " " (compile-sql db select)))
       (if default-values
         " DEFAULT VALUES")
-      (if-not (empty? returning)
-        (concat-sql " RETURNING " (compile-sql-join db ", " returning)))
       (if-not (empty? where)
         (concat-sql " WHERE " (compile-sql db where)))
       (compile-sql db (:on-conflict node))
-      (compile-sql db (:on-conflict-on-constraint node))))))
+      (compile-sql db (:on-conflict-on-constraint node))
+      (if-not (empty? returning)
+        (concat-sql " RETURNING " (compile-sql-join db ", " returning)))))))
 
 (defmethod compile-sql :intersect [db node]
   (compile-set-op db :intersect node))

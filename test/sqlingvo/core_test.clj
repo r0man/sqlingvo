@@ -1843,6 +1843,19 @@
                "DO NOTHING")
           "Redline GmbH"])))
 
+(deftest test-upsert-on-conflict-do-nothing-returning
+  (is (= (sql (insert db :distributors [:did :dname]
+                (values [{:did 7 :dname "Redline GmbH"}])
+                (on-conflict [:did]
+                  (do-nothing))
+                (returning :*)))
+         [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+               "VALUES (7, ?) "
+               "ON CONFLICT (\"did\") "
+               "DO NOTHING "
+               "RETURNING *")
+          "Redline GmbH"])))
+
 (deftest test-upsert-on-conflict-do-update-where
   (is (= (sql (insert db (as :distributors :d) [:did :dname]
                 (values [{:did 8 :dname "Anvil Distribution"}])
