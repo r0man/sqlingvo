@@ -174,8 +174,8 @@ A SQL DSL in Clojure.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (select db [:*]
-       (from :weather)
-       (join :cities '(on :weather.city :cities.name))))
+          (from :weather)
+          (join :cities '(on :weather.city :cities.name))))
    #+END_SRC
 
    #+RESULTS:
@@ -185,8 +185,8 @@ A SQL DSL in Clojure.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (select db [:*]
-       (from :weather)
-       (join :cities '(on :weather.city :cities.name) :type :inner)))
+          (from :weather)
+          (join :cities '(on :weather.city :cities.name) :type :inner)))
    #+END_SRC
 
    #+RESULTS:
