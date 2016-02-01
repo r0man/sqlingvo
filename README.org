@@ -39,7 +39,7 @@ A SQL DSL in Clojure.
   #+END_SRC
 
 ** DDL
-** [[http://www.postgresql.org/docs/9.4/static/sql-copy.html][Copy]]
+** [[http://www.postgresql.org/docs/9.5/static/sql-copy.html][Copy]]
 
    Copy from standard input.
 
@@ -71,7 +71,7 @@ A SQL DSL in Clojure.
    #+RESULTS:
    : ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
 
-** [[http://www.postgresql.org/docs/9.4/static/sql-createtable.html][Create table]]
+** [[http://www.postgresql.org/docs/9.5/static/sql-createtable.html][Create table]]
 
    Define a new database table.
 
@@ -91,7 +91,7 @@ A SQL DSL in Clojure.
    : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date_prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), \"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())"]
 
 ** SQL
-** [[http://www.postgresql.org/docs/9.4/static/sql-delete.html][Delete]]
+** [[http://www.postgresql.org/docs/9.5/static/sql-delete.html][Delete]]
 
    Clear the table films.
 
@@ -123,7 +123,7 @@ A SQL DSL in Clojure.
    #+RESULTS:
    : ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
 
-** [[http://www.postgresql.org/docs/9.4/static/sql-insert.html][Insert]]
+** [[http://www.postgresql.org/docs/9.5/static/sql-insert.html][Insert]]
 
    Insert a single row into table films.
 
@@ -192,7 +192,7 @@ A SQL DSL in Clojure.
    #+RESULTS:
    : ["SELECT * FROM \"weather\" INNER JOIN \"cities\" ON \"weather\".\"city\""]
 
-** [[http://www.postgresql.org/docs/9.4/static/sql-select.html][Select]]
+** [[http://www.postgresql.org/docs/9.5/static/sql-select.html][Select]]
 
    Select all films.
 
@@ -225,7 +225,7 @@ A SQL DSL in Clojure.
    #+RESULTS:
    : ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
 
-** [[http://www.postgresql.org/docs/9.4/static/sql-update.html][Update]]
+** [[http://www.postgresql.org/docs/9.5/static/sql-update.html][Update]]
 
    Change the word Drama to Dramatic in the column kind of the table films.
 
@@ -237,7 +237,7 @@ A SQL DSL in Clojure.
    #+RESULTS:
    : ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
 
-** [[http://www.postgresql.org/docs/9.4/static/queries-order.html][Sorting Rows]]
+** [[http://www.postgresql.org/docs/9.5/static/queries-order.html][Sorting Rows]]
 
    The sort expression(s) can be any expression that would be valid in the query's select list.
 
@@ -273,7 +273,7 @@ A SQL DSL in Clojure.
    #+RESULTS:
    : ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
 
-** [[http://www.postgresql.org/docs/9.4/static/queries-with.html][Common Table Expressions]]
+** [[http://www.postgresql.org/docs/9.5/static/queries-with.html][Common Table Expressions]]
 
    #+BEGIN_SRC clojure :exports both :results verbatim
      (sql (with db [:regional-sales
