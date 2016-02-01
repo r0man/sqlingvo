@@ -1,5 +1,5 @@
 #+title: SQLingvo
-#+author: roman
+#+author: r0man
 #+LANGUAGE: en
 
 [[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
@@ -280,6 +280,6 @@ A SQL DSL in Clojure.
 
 * License
 
-  Copyright © 2012-2015 roman
+  Copyright © 2012-2015 r0man
 
   Distributed under the Eclipse Public License, the same as Clojure.
