@@ -175,22 +175,22 @@ A SQL DSL in Clojure.
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (select db [:*]
           (from :weather)
-          (join :cities '(on :weather.city :cities.name))))
+          (join :cities '(on (= :weather.city :cities.name)))))
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT * FROM \"weather\" JOIN \"cities\" ON \"weather\".\"city\""]
+   : ["SELECT * FROM \"weather\" JOIN \"cities\" ON (\"weather\".\"city\" = \"cities\".\"name\")"]
 
    The type of join can be given as the last keyword argument.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (select db [:*]
           (from :weather)
-          (join :cities '(on :weather.city :cities.name) :type :inner)))
+          (join :cities '(on (= :weather.city :cities.name)) :type :inner)))
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT * FROM \"weather\" INNER JOIN \"cities\" ON \"weather\".\"city\""]
+   : ["SELECT * FROM \"weather\" INNER JOIN \"cities\" ON (\"weather\".\"city\" = \"cities\".\"name\")"]
 
 ** [[http://www.postgresql.org/docs/9.5/static/sql-select.html][Select]]
 
