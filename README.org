@@ -18,8 +18,8 @@ A SQL DSL in Clojure.
 
   This library is designed for [[http://www.postgresql.org/][PostgreSQL]], but you might be lucky and be able to
   use it with other databases as well. SQLingvo shadows some Clojure core
-  functions. If you use/require all of =sqlingvo.core= you have to exclude these
-  functions: =distinct=, =group-by=, =update= functions.
+  functions. If you use/require all of =sqlingvo.core= you have to exclude the 
+  =distinct=, =group-by= and =update= functions.
 
   #+BEGIN_SRC clojure :exports code :results silent
   (refer-clojure :exclude '[distinct group-by update])
