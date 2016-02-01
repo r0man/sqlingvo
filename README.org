@@ -88,7 +88,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+END_SRC
 
    #+RESULTS:
-   : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date_prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), \"updated_at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())"]
+   : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date-prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), \"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"())"]
 
 ** SQL
 ** [[http://www.postgresql.org/docs/9.5/static/sql-delete.html][Delete]]
@@ -133,7 +133,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+END_SRC
 
    #+RESULTS:
-   : ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, 106, ?, ?)" "1961-06-16" "Yojimbo" "Drama" "T_601"]
+   : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)" "T_601" "Yojimbo" "1961-06-16" "Drama"]
 
    Insert multiple rows into the table films using the multirow VALUES syntax.
 
@@ -144,7 +144,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+END_SRC
 
    #+RESULTS:
-   : ["INSERT INTO \"films\" (\"date_prod\", \"title\", \"did\", \"kind\", \"code\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "1985-02-10" "Tampopo" "Comedy" "B6717" "1985-02-10" "The Dinner Game" "Comedy" "HG120"]
+   : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
 
    Insert a row consisting entirely of default values.
 
@@ -156,17 +156,17 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+RESULTS:
    : ["INSERT INTO \"films\" DEFAULT VALUES"]
 
-   Insert some rows into table films from a table tmp_films with the same column layout as films.
+   Insert some rows into table films from a table tmp-films with the same column layout as films.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (insert db :films []
           (select db [:*]
             (from :tmp-films)
-            (where '(< :date_prod "2004-05-07")))))
+            (where '(< :date-prod "2004-05-07")))))
    #+END_SRC
 
    #+RESULTS:
-   : ["INSERT INTO \"films\" SELECT  WHERE (\"date_prod\" < ?)" "2004-05-07"]
+   : ["INSERT INTO \"films\" SELECT * FROM \"tmp-films\" WHERE (\"date-prod\" < ?)" "2004-05-07"]
 
 ** [[http://www.postgresql.org/docs/9.5/static/tutorial-join.html][Joins]]
 
@@ -223,7 +223,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather_reports\" ORDER BY \"location\", \"time\" DESC"]
+   : ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather-reports\" ORDER BY \"location\", \"time\" DESC"]
 
 ** [[http://www.postgresql.org/docs/9.5/static/sql-update.html][Update]]
 
@@ -248,7 +248,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT \"a\", \"b\" FROM \"table_1\" ORDER BY (\"a\" + \"b\"), \"c\""]
+   : ["SELECT \"a\", \"b\" FROM \"table-1\" ORDER BY (\"a\" + \"b\"), \"c\""]
 
    A sort expression can also be the column label
 
@@ -259,7 +259,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table_1\" ORDER BY \"sum\""]
+   : ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table-1\" ORDER BY \"sum\""]
 
    or the number of an output column.
 
@@ -271,7 +271,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT \"a\", max(\"b\") FROM \"table_1\" GROUP BY \"a\" ORDER BY 1"]
+   : ["SELECT \"a\", \"max\"(\"b\") FROM \"table-1\" GROUP BY \"a\" ORDER BY 1"]
 
 ** [[http://www.postgresql.org/docs/9.5/static/queries-with.html][Common Table Expressions]]
 
@@ -296,7 +296,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+END_SRC
 
    #+RESULTS:
-   : ["WITH regional_sales AS (SELECT \"region\", sum(\"amount\") AS \"total_sales\" FROM \"orders\" GROUP BY \"region\"), top_regions AS (SELECT \"region\" FROM \"regional_sales\" WHERE (\"total_sales\" > (SELECT ))) SELECT \"region\", \"product\", sum(\"quantity\") AS \"product_units\", sum(\"amount\") AS \"product_sales\" FROM \"orders\" WHERE \"region\" IN (SELECT ) GROUP BY \"region\", \"product\""]
+   : ["WITH \"regional-sales\" AS (SELECT \"region\", \"sum\"(\"amount\") AS \"total-sales\" FROM \"orders\" GROUP BY \"region\"), \"top-regions\" AS (SELECT \"region\" FROM \"regional-sales\" WHERE (\"total-sales\" > (SELECT (\"sum\"(\"total-sales\") / 10) FROM \"regional-sales\"))) SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product-units\", \"sum\"(\"amount\") AS \"product-sales\" FROM \"orders\" WHERE \"region\" IN (SELECT \"region\" FROM \"top-regions\") GROUP BY \"region\", \"product\""]
 
 * Tips & Tricks
 
