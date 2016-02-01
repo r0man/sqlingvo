@@ -125,7 +125,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
 
 ** [[http://www.postgresql.org/docs/9.5/static/sql-insert.html][Insert]]
 
-   Insert a single row into table films.
+   Insert a single row into the table films.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (insert db :films []
@@ -146,12 +146,12 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+RESULTS:
    : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?) RETURNING *" "T_601" "Yojimbo" "1961-06-16" "Drama"]
 
-   Insert multiple rows into the table films using the multirow VALUES syntax.
+   Insert multiple rows into the table films.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (insert db :films []
           (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-                   {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])))
+                   {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10" :kind "Comedy"}])))
    #+END_SRC
 
    #+RESULTS:
