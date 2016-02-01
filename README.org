@@ -117,7 +117,7 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (delete db :tasks
           (where '(= :status "DONE"))
-          (returning *)))
+          (returning :*)))
    #+END_SRC
 
    #+RESULTS:
@@ -134,6 +134,17 @@ A Clojure DSL to create SQL statements that are compatible with the [[https://gi
 
    #+RESULTS:
    : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)" "T_601" "Yojimbo" "1961-06-16" "Drama"]
+
+   Insert a row into a table and return the inserted records.
+
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (insert db :films []
+          (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})
+          (returning :*)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?) RETURNING *" "T_601" "Yojimbo" "1961-06-16" "Drama"]
 
    Insert multiple rows into the table films using the multirow VALUES syntax.
 
