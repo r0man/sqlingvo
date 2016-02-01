@@ -120,11 +120,11 @@
   Examples:
 
   (copy db :country []
-  (from :stdin))
+    (from :stdin))
   ;=> [\"COPY \\\"country\\\" FROM STDIN\"]
 
   (copy db :country []
-  (from \"/usr1/proj/bray/sql/country_data\"))
+    (from \"/usr1/proj/bray/sql/country_data\"))
   ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]"
   {:style/indent 3}
   [db table columns & body]
@@ -232,25 +232,25 @@
 
   Examples:
 
-  (select [:*]
+  (select db [:*]
     (from :continents))
   ;=> [\"SELECT * FROM \\\"continents\\\"\"]
 
-  (select [:*]
+  (select db [:*]
     (from :continents :countries)
     (where '(= :continents.id :continent-id)))
   ;=> [\"SELECT * FROM \\\"continents\\\", \\\"countries\\\"
   ;=>  WHERE (\\\"continents\\\".\\\"id\\\" = \\\"continent_id\\\")\"]
 
-  (select [*]
+  (select db [*]
     (from (as (select [1 2 3]) :x)))
   ;=> [\"SELECT * FROM (SELECT 1, 2, 3) AS \\\"x\\\"\"]
 
-  (copy :country []
+  (copy db :country []
     (from :stdin))
   ;=> [\"COPY \\\"country\\\" FROM STDIN\"]
 
-  (copy :country []
+  (copy db :country []
     (from \"/usr1/proj/bray/sql/country_data\"))
   ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]
   "
@@ -457,11 +457,11 @@
   ;=> [\"SELECT 1\"]
 
   (select db [:*]
-  (from :continents))
+    (from :continents))
   ;=> [\"SELECT * FROM \\\"continents\\\"\"]
 
   (select db [:id :name]
-  (from :continents))
+    (from :continents))
   ;=> [\"SELECT \\\"id\\\", \\\"name\\\" FROM \\\"continents\\\"\"]"
   {:style/indent 2}
   [db exprs & body]
