@@ -160,8 +160,8 @@ A SQL DSL in Clojure.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
    (sql (insert db :films []
-          (select [*]
-              (from :tmp-films)
+          (select db [*]
+            (from :tmp-films)
             (where '(< :date_prod "2004-05-07")))))
    #+END_SRC
 
