@@ -242,7 +242,7 @@
   ;=> [\"SELECT * FROM \\\"continents\\\", \\\"countries\\\"
   ;=>  WHERE (\\\"continents\\\".\\\"id\\\" = \\\"continent_id\\\")\"]
 
-  (select db [*]
+  (select db [:*]
     (from (as (select [1 2 3]) :x)))
   ;=> [\"SELECT * FROM (SELECT 1, 2, 3) AS \\\"x\\\"\"]
 
