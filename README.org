@@ -18,7 +18,7 @@ A SQL DSL in Clojure.
 
   This library is designed for [[http://www.postgresql.org/][PostgreSQL]], but you might be lucky and be able to
   use it with other databases as well. SQLingvo shadows some Clojure core
-  functions. If you use/require all of =sqlingvo.core= you have to exclude the 
+  functions. If you use/require all of =sqlingvo.core= you have to exclude the
   =distinct=, =group-by= and =update= functions.
 
   #+BEGIN_SRC clojure :exports code :results silent
@@ -167,6 +167,30 @@ A SQL DSL in Clojure.
 
    #+RESULTS:
    : ["INSERT INTO \"films\" SELECT  WHERE (\"date_prod\" < ?)" "2004-05-07"]
+
+** Joins
+
+   Join the weathers table with the cities table.
+
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (select db [:*]
+       (from :weather)
+       (join :cities '(on :weather.city :cities.name))))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["SELECT * FROM \"weather\" JOIN \"cities\" ON \"weather\".\"city\""]
+
+   The type of join can be given as the last keyword argument.
+
+   #+BEGIN_SRC clojure :exports both :results verbatim
+   (sql (select db [:*]
+       (from :weather)
+       (join :cities '(on :weather.city :cities.name) :type :inner)))
+   #+END_SRC
+
+   #+RESULTS:
+   : ["SELECT * FROM \"weather\" INNER JOIN \"cities\" ON \"weather\".\"city\""]
 
 ** [[http://www.postgresql.org/docs/9.4/static/sql-select.html][Select]]
 
