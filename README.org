@@ -168,7 +168,7 @@ A SQL DSL in Clojure.
    #+RESULTS:
    : ["INSERT INTO \"films\" SELECT  WHERE (\"date_prod\" < ?)" "2004-05-07"]
 
-** Joins
+** [[http://www.postgresql.org/docs/9.5/static/tutorial-join.html][Joins]]
 
    Join the weathers table with the cities table.
 
