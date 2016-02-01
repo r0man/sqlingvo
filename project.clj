@@ -1,5 +1,5 @@
 (defproject sqlingvo "0.8.5-SNAPSHOT"
-  :description "A SQL DSL in Clojure."
+  :description "A Clojure DSL to create SQL statements"
   :url "http://github.com/r0man/sqlingvo"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

@@ -6,7 +6,7 @@
 [[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
 [[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
 
-A SQL DSL in Clojure.
+A Clojure DSL to create SQL statements that are compatible with the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]] and [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] libraries.
 
 [[http://imgs.xkcd.com/comics/exploits_of_a_mom.png]]
 
