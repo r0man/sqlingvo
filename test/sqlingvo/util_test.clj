@@ -6,7 +6,7 @@
 (deftest test-sql-quote-backtick
   (are [x expected]
       (= expected (sql-quote-backtick x))
-    nil ""
+    nil nil
     :continents "`continents`"
     :continents.name "`continents`.`name`"
     :continents.* "`continents`.*"
@@ -15,7 +15,7 @@
 (deftest test-sql-quote-double-quote
   (are [x expected]
       (= expected (sql-quote-double-quote x))
-    nil ""
+    nil nil
     :continents "\"continents\""
     :continents.name "\"continents\".\"name\""
     :continents.* "\"continents\".*"
@@ -26,6 +26,7 @@
       (and (= expected (sql-name (db/mysql) x))
            (= expected (sql-name (db/postgresql) x))
            (= expected (sql-name (db/vertica) x)))
+    nil nil
     "" ""
     :a "a"
     :a-1 "a-1"))
@@ -35,6 +36,7 @@
       (and (= expected (sql-keyword (db/mysql) x))
            (= expected (sql-keyword (db/postgresql) x))
            (= expected (sql-keyword (db/vertica) x)))
+    nil nil
     "" (keyword "")
     :a :a
     :a-1 :a-1
@@ -43,6 +45,7 @@
 (deftest test-sql-quote
   (are [db x expected]
       (= expected (sql-quote (db) x))
+    db/mysql nil nil
     db/mysql "" "``"
     db/mysql :a "`a`"
     db/mysql :a-1 "`a-1`"
