@@ -557,7 +557,7 @@
     You can compose more complex /SQL/ statements with common table
     expressions.
 
-    Define the =regional-sales= and =top-sales= helper functions.
+    Define the =regional-sales= and =top-regions= helper functions.
 
     #+BEGIN_SRC clojure :exports code :results silent
       (defn regional-sales [db]
@@ -567,7 +567,7 @@
     #+END_SRC
 
     #+BEGIN_SRC clojure :exports code :results silent
-      (defn top-sales [db]
+      (defn top-regions [db]
         (select db [:region]
           (from :regional-sales)
           (where `(> :total-sales
@@ -579,7 +579,7 @@
 
     #+BEGIN_SRC clojure :exports both :results verbatim
       (with db [:regional-sales (regional-sales db)
-                :top-regions (top-sales db)]
+                :top-regions (top-regions db)]
         (select db [:region :product
                     (as '(sum :quantity) :product-units)
                     (as '(sum :amount) :product-sales)]
