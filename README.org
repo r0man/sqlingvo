@@ -229,7 +229,7 @@
    #+RESULTS:
    : ["SELECT \"id\", \"name\" FROM \"films\" WHERE (\"kind\" = ?)" "Action"]
 
-** Examples
+** Detailed SQL examples
 
    The following examples show how to build /SQL/ statements found in
    the /PostgreSQL/ [[https://www.postgresql.org/docs/9.5/interactive/index.html][documentation]] with /SQLingvo/. Note that we don't
