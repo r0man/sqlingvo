@@ -5,8 +5,7 @@
             [sqlingvo.util :as util]))
 
 (deftest test-db
-  (is (= (db {:subprotocol :postgresql})
-         (db {:subprotocol "postgresql"})
+  (is (= (db {:subprotocol "postgresql"})
          (postgresql)))
   (is (thrown? Exception (db nil))))
 
