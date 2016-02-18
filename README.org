@@ -1,320 +1,579 @@
-#+title: SQLingvo
-#+author: r0man
-#+LANGUAGE: en
+* SQLingvo
+  #+author: r0man
+  #+LANGUAGE: en
 
-[[http://imgs.xkcd.com/comics/exploits_of_a_mom.png]]
+  A [[https://clojure.org][Clojure]] /DSL/ to build /SQL/ statements that are compatible with
+  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]] and [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] libraries.
 
-A Clojure DSL to create SQL statements that are compatible with the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]] and [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] libraries.
+  [[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
+  [[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
+  [[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
 
-[[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
-[[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
-[[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
+  [[http://imgs.xkcd.com/comics/exploits_of_a_mom.png]]
 
-* Installation
+  This library is designed to be used with [[http://www.postgresql.org/][PostgreSQL]]. If you are not
+  using vendor specific features you might be lucky and be able to use
+  it with other databases as well.
 
-[[https://clojars.org/sqlingvo][https://clojars.org/sqlingvo/latest-version.svg]]
+** Installation
 
-* Usage
+   [[https://clojars.org/sqlingvo][https://clojars.org/sqlingvo/latest-version.svg]]
 
-  This library is designed for [[http://www.postgresql.org/][PostgreSQL]], but you might be lucky and be able to
-  use it with other databases as well. SQLingvo shadows some Clojure core
-  functions. If you use/require all of =sqlingvo.core= you have to exclude the
-  =distinct=, =group-by= and =update= functions.
+** Usage
 
-  #+BEGIN_SRC clojure :exports code :results silent
-  (refer-clojure :exclude '[distinct group-by update])
-  (require '[sqlingvo.core :refer :all])
-  #+END_SRC
+   /SQLingvo/ shadows some functions from the =clojure.core=
+   namespace. If you want to use or require all symbols from the
+   =sqlingvo.core= namespace you have to exclude the =distinct=,
+   =group-by= and =update= functions.
 
-** SQL dialect
+   #+BEGIN_SRC clojure :exports code :results silent
+     (refer-clojure :exclude '[distinct group-by uypdate])
+     (require '[sqlingvo.core :refer :all])
+   #+END_SRC
 
-  Database vendors use different characters to quote identifiers in
-  SQL statements. All functions that produce SQL statement take a
-  database as first argument. A database defines the quoting strategy
-  used when generating SQL and can be created like this:
+** Database specification
 
-  #+BEGIN_SRC clojure :exports code :results silent
-  (require '[sqlingvo.db :as db])
-  (def db (db/postgresql))
-  #+END_SRC
+   /SQLingvo/ uses a database specification to configure how /SQL/
+   identifiers are quoted and column and table names are translated
+   between /Clojure/ and your database. There are helper functions in
+   the =sqlingvo.db= namespace for common database vendors, like
+   /PostgreSQL/, /MySQL/ and others. The following code defines a
+   database specification using the naming and quoting strategy for
+   /PostgreSQL/.
 
-** DDL
-** [[http://www.postgresql.org/docs/9.5/static/sql-copy.html][Copy]]
+   #+BEGIN_SRC clojure :exports code :results silent
+     (require '[sqlingvo.db :as db])
+     (def db (db/postgresql))
+   #+END_SRC
 
-   Copy from standard input.
+   Such a database specification is needed by all functions that
+   produce /SQL/ statements.
+
+*** Naming strategy
+
+    The naming strategy is used to configure how column and table
+    names are translated between /Clojure/ and the /SQL/ dialect of the
+    database. The strategy can be configured with the =:sql-name=
+    entry in a database specification.
+
+    The default strategy used is =clojure.core/name=, which translates
+    a /Clojure/ keyword to a string.
+
+    A common use case is to translate from a keyword to a string and
+    replace all hyphens with underscores. This can be done with the
+    following code:
+
+    #+BEGIN_SRC clojure :exports code :results silent
+      (require '[clojure.string :as str])
+
+      (defn underscore [s]
+        (str/replace (name s) "-" "_"))
+
+      (def db' (db/postgresql {:sql-name underscore}))
+    #+END_SRC
+
+    All the hyphens in column and table names are now translated to
+    underscores.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (sql (select db' [:first-name]
+             (from :people)))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT \"first_name\" FROM \"people\""]
+
+*** Quoting strategy
+
+    The quoting strategy defines how column and table names are quoted
+    when building /SQL/. The strategy can be configured with the
+    =:sql-quote= entry in a database specification. The database
+    specification functions in the =sqlingvo.db= namespace ship with
+    appropriate defaults for each vendor.
+
+    You could change the quoting strategy with the following code:
+
+    #+BEGIN_SRC clojure :exports code :results silent
+      (require '[sqlingvo.util :refer [sql-quote-backtick]])
+
+      (def db' (db/postgresql {:sql-quote sql-quote-backtick}))
+    #+END_SRC
+
+    Now the column and table names are quoted with back ticks, instead
+    of double quotes.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (sql (select db' [:first-name]
+             (from :people)))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT `first-name` FROM `people`"]
+
+** SQL statement
+
+   /SQLingvo/ comes with functions for common /SQL/ commands like
+   =select=, =insert=, =update= and more. These functions return an
+   instance of =sqlingvo.expr.Stmt=, a data structure that can be
+   compiled into /SQL/ with the =sql= function, or used by other
+   functions to build derived statements.
+
+   Here's an example:
+
+   #+BEGIN_SRC clojure :exports code :results silent
+     (def commendy-films-stmt
+       (select db [:id :name]
+         (from :films)
+         (where '(= :kind "Comedy"))))
+   #+END_SRC
+
+   In the code above we select all the =id= and =name= columns of all
+   rows in the =films= table that have a =kind= column with the value
+   =Comedy=. The call to the =select= function returns and instance of
+   =sqlingvo.expr.Stmt=, which is bound to the =commendy-films-stmt=
+   var.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (copy db :country []
-          (from :stdin)))
+     (class commendy-films-stmt)
    #+END_SRC
 
    #+RESULTS:
-   : ["COPY \"country\" FROM STDIN"]
+   : sqlingvo.expr.Stmt
 
-   Copy data from a file into the country table.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (copy db :country [:id :name]
-          (from "/usr1/proj/bray/sql/country_data")))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
-
-   Copy data from a file into the country table with columns in the given order.
+   This instance can be compiled into /SQL/ with the =sql=
+   function. The result is a /Clojure/ vector with the first entry
+   being the compiled /SQL/ string and the remaining entries the
+   prepared statement parameters.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (copy db :country [:id :name]
-          (from "/usr1/proj/bray/sql/country_data")))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
-
-** [[http://www.postgresql.org/docs/9.5/static/sql-createtable.html][Create table]]
-
-   Define a new database table.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (create-table db :films
-          (column :code :char :length 5 :primary-key? true)
-          (column :title :varchar :length 40 :not-null? true)
-          (column :did :integer :not-null? true)
-          (column :date-prod :date)
-          (column :kind :varchar :length 10)
-          (column :len :interval)
-          (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
-          (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date-prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), \"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"())"]
-
-** SQL
-** [[http://www.postgresql.org/docs/9.5/static/sql-delete.html][Delete]]
-
-   Clear the table films.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (delete db :films))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["DELETE FROM \"films\""]
-
-   Delete all films but musicals.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (delete db :films
-          (where '(<> :kind "Musical"))))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["DELETE FROM \"films\" WHERE (\"kind\" <> ?)" "Musical"]
-
-   Delete completed tasks, returning full details of the deleted rows.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (delete db :tasks
-          (where '(= :status "DONE"))
-          (returning :*)))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
-
-** [[http://www.postgresql.org/docs/9.5/static/sql-insert.html][Insert]]
-
-   Insert a single row into the table films.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (insert db :films []
-          (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)" "T_601" "Yojimbo" "1961-06-16" "Drama"]
-
-   Insert a row into a table and return the inserted records.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (insert db :films []
-          (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})
-          (returning :*)))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?) RETURNING *" "T_601" "Yojimbo" "1961-06-16" "Drama"]
-
-   Insert multiple rows into the table films.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (insert db :films []
-          (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-                   {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10" :kind "Comedy"}])))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
-
-   Insert a row consisting entirely of default values.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (insert db :films []
-          (values :default)))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["INSERT INTO \"films\" DEFAULT VALUES"]
-
-   Insert some rows into table films from a table tmp-films with the same column layout as films.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (insert db :films []
-          (select db [:*]
-            (from :tmp-films)
-            (where '(< :date-prod "2004-05-07")))))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["INSERT INTO \"films\" SELECT * FROM \"tmp-films\" WHERE (\"date-prod\" < ?)" "2004-05-07"]
-
-** [[http://www.postgresql.org/docs/9.5/static/tutorial-join.html][Joins]]
-
-   Join the weathers table with the cities table.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (select db [:*]
-          (from :weather)
-          (join :cities '(on (= :weather.city :cities.name)))))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["SELECT * FROM \"weather\" JOIN \"cities\" ON (\"weather\".\"city\" = \"cities\".\"name\")"]
-
-   The type of join can be given as the last keyword argument.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (select db [:*]
-          (from :weather)
-          (join :cities '(on (= :weather.city :cities.name)) :type :inner)))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["SELECT * FROM \"weather\" INNER JOIN \"cities\" ON (\"weather\".\"city\" = \"cities\".\"name\")"]
-
-** [[http://www.postgresql.org/docs/9.5/static/sql-select.html][Select]]
-
-   Select all films.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (select db [:*] (from :films)))
-   #+END_SRC
-
-   #+RESULTS:
-   : ["SELECT * FROM \"films\""]
-
-   Select all Comedy films.
-
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (select db [:*]
-          (from :films)
-          (where '(= :kind "Comedy"))))
+     (sql commendy-films-stmt)
    #+END_SRC
 
    #+RESULTS:
    : ["SELECT * FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
 
-   Retrieve the most recent weather report for each location.
+   Those vectors could be fed to the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]] and
+   [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] libraries to actually execute a statement.
+
+** Printing in the REPL
+
+   There is a =print-method= defined for the =sqlingvo.expr.Stmt=
+   class, so instances of a statement are printed in their compiled
+   from. This is just for convenience and makes it easier to quickly
+   build up /SQL/ statements in the /REPL/. If you type the following
+   example directly into your /REPL/, it prints out the compiled form
+   of the statement.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (select db (distinct [:location :time :report] :on [:location])
-          (from :weather-reports)
-          (order-by :location (desc :time))))
+     (select db [:id :name]
+       (from :films)
+       (where '(= :kind "Comedy")))
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather-reports\" ORDER BY \"location\", \"time\" DESC"]
+   : ["SELECT \"id\", \"name\" FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
 
-** [[http://www.postgresql.org/docs/9.5/static/sql-update.html][Update]]
+** SQL expressions
 
-   Change the word Drama to Dramatic in the column kind of the table films.
+   /SQLingvo/ compiles /SQL/ expressions from /Clojure/ prefix
+   notation into /SQL/, and knows how to handle common special cases,
+   like =+=, =-=, =*=, =/= and similar operators.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (update db :films {:kind "Dramatic"}
-          (where '(= :kind "Drama"))))
+     (select db [1 '(+ 2 (abs 3)) '(upper "Hello")])
    #+END_SRC
 
    #+RESULTS:
-   : ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
+   : ["SELECT 1, (2 + \"abs\"(3)), \"upper\"(?)" "Hello"]
 
-** [[http://www.postgresql.org/docs/9.5/static/queries-order.html][Sorting Rows]]
-
-   The sort expression(s) can be any expression that would be valid in the query's select list.
+   You can influence the compilation of functions by extending the
+   =compile-fn= multi method. Just in case a function uses more
+   idiosyncratic compilation rules than the built in. Take a look at
+   the multi method implementation of =substring=, in case some
+   function is not covered yet (or even better send a PR).
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (select db [:a :b]
-          (from :table-1)
-          (order-by '(+ :a :b) :c)))
+     (select db ['(substring "Fusion" from 2 for 3)])
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT \"a\", \"b\" FROM \"table-1\" ORDER BY (\"a\" + \"b\"), \"c\""]
+   : ["SELECT substring(? from 2 for 3)" "Fusion"]
 
-   A sort expression can also be the column label
+** Syntax quoting
+
+   When using /SQLingvo/ to build parameterized /SQL/ statements, you
+   often want to use the parameters in a /SQL/ expression. This can be
+   accomplished with syntax quoting. Note the back tick character in
+   the =where= clause.
+
+   #+BEGIN_SRC clojure :exports code :results silent
+     (defn films-by-kind [db kind]
+       (select db [:id :name]
+         (from :films)
+         (where `(= :kind ~kind))))
+   #+END_SRC
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (select db [(as '(+ :a :b) :sum) :c]
-          (from :table-1)
-          (order-by :sum)))
+     (films-by-kind db "Action")
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table-1\" ORDER BY \"sum\""]
+   : ["SELECT \"id\", \"name\" FROM \"films\" WHERE (\"kind\" = ?)" "Action"]
 
-   or the number of an output column.
+** Examples
 
-   #+BEGIN_SRC clojure :exports both :results verbatim
-   (sql (select db [:a '(max :b)]
-          (from :table-1)
-          (group-by :a)
-          (order-by 1)))
-   #+END_SRC
+   The following examples show how to build /SQL/ statements found in
+   the /PostgreSQL/ [[https://www.postgresql.org/docs/9.5/interactive/index.html][documentation]] with /SQLingvo/. Note that we don't
+   call the =sql= function anymore, because we are only interested in
+   the printed result.
 
-   #+RESULTS:
-   : ["SELECT \"a\", \"max\"(\"b\") FROM \"table-1\" GROUP BY \"a\" ORDER BY 1"]
+*** Copy
 
-** [[http://www.postgresql.org/docs/9.5/static/queries-with.html][Common Table Expressions]]
+    Copy from standard input.
 
-   #+BEGIN_SRC clojure :exports both :results verbatim
-     (sql (with db [:regional-sales
-                    (select db [:region (as '(sum :amount) :total-sales)]
-                      (from :orders)
-                      (group-by :region))
-                    :top-regions
-                    (select db [:region]
-                      (from :regional-sales)
-                      (where `(> :total-sales
-                                 ~(select db ['(/ (sum :total-sales) 10)]
-                                    (from :regional-sales)))))]
-            (select db [:region :product
-                        (as '(sum :quantity) :product-units)
-                        (as '(sum :amount) :product-sales)]
-              (from :orders)
-              (where `(in :region ~(select db [:region]
-                                     (from :top-regions))))
-              (group-by :region :product))))
-   #+END_SRC
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (copy db :country []
+        (from :stdin))
+    #+END_SRC
 
-   #+RESULTS:
-   : ["WITH \"regional-sales\" AS (SELECT \"region\", \"sum\"(\"amount\") AS \"total-sales\" FROM \"orders\" GROUP BY \"region\"), \"top-regions\" AS (SELECT \"region\" FROM \"regional-sales\" WHERE (\"total-sales\" > (SELECT (\"sum\"(\"total-sales\") / 10) FROM \"regional-sales\"))) SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product-units\", \"sum\"(\"amount\") AS \"product-sales\" FROM \"orders\" WHERE \"region\" IN (SELECT \"region\" FROM \"top-regions\") GROUP BY \"region\", \"product\""]
+    #+RESULTS:
+    : ["COPY \"country\" FROM STDIN"]
 
-* Tips & Tricks
+    Copy data from a file into the country table.
 
-  For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (copy db :country []
+        (from "/usr1/proj/bray/sql/country_data"))
+    #+END_SRC
 
-* License
+    #+RESULTS:
+    : ["COPY \"country\" FROM ?" "/usr1/proj/bray/sql/country_data"]
 
-  Copyright © 2012-2015 r0man
+    Copy data from a file into the country table with columns in the given order.
 
-  Distributed under the Eclipse Public License, the same as Clojure.
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (copy db :country [:id :name]
+        (from "/usr1/proj/bray/sql/country_data"))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["COPY \"country\" (\"id\", \"name\") FROM ?" "/usr1/proj/bray/sql/country_data"]
+
+*** Create table
+
+    Define a new database table.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (create-table db :films
+        (column :code :char :length 5 :primary-key? true)
+        (column :title :varchar :length 40 :not-null? true)
+        (column :did :integer :not-null? true)
+        (column :date-prod :date)
+        (column :kind :varchar :length 10)
+        (column :len :interval)
+        (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
+        (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now)))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date-prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), \"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"())"]
+
+*** Delete
+
+    Clear the table films.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (delete db :films)
+    #+END_SRC
+
+    #+RESULTS:
+    : ["DELETE FROM \"films\""]
+
+    Delete all films but musicals.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (delete db :films
+        (where '(<> :kind "Musical")))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["DELETE FROM \"films\" WHERE (\"kind\" <> ?)" "Musical"]
+
+    Delete completed tasks, returning full details of the deleted rows.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (delete db :tasks
+        (where '(= :status "DONE"))
+        (returning :*))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["DELETE FROM \"tasks\" WHERE (\"status\" = ?) RETURNING *" "DONE"]
+
+*** Insert
+
+    Insert a single row into the table films.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :films []
+        (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)" "T_601" "Yojimbo" "1961-06-16" "Drama"]
+
+    Insert a row into a table and return the inserted records.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :films []
+        (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})
+        (returning :*))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?) RETURNING *" "T_601" "Yojimbo" "1961-06-16" "Drama"]
+
+    Insert multiple rows into the table films.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :films []
+        (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+                 {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10" :kind "Comedy"}]))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
+
+    Insert a row consisting entirely of default values.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :films []
+        (values :default))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"films\" DEFAULT VALUES"]
+
+    Insert some rows into table films from a table tmp-films with the same column layout as films.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :films []
+        (select db [:*]
+          (from :tmp-films)
+          (where '(< :date-prod "2004-05-07"))))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"films\" SELECT * FROM \"tmp-films\" WHERE (\"date-prod\" < ?)" "2004-05-07"]
+
+    Insert or update new distributors as appropriate. Assumes a unique
+    index has been defined that constrains values appearing in the did
+    column. Note that the special excluded table is used to reference
+    values originally proposed for insertion:
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :distributors [:did :dname]
+        (values [{:did 5 :dname "Gizmo Transglobal"}
+                 {:did 6 :dname "Associated Computing, Inc"}])
+        (on-conflict [:did]
+          (do-update {:dname :EXCLUDED.dname})))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (5, ?), (6, ?) ON CONFLICT (\"did\") DO UPDATE SET \"dname\" = EXCLUDED.\"dname\"" "Gizmo Transglobal" "Associated Computing, Inc"]
+
+    Insert a distributor, or do nothing for rows proposed for
+    insertion when an existing, excluded row (a row with a matching
+    constrained column or columns after before row insert triggers
+    fire) exists. Example assumes a unique index has been defined that
+    constrains values appearing in the did column:
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :distributors [:did :dname]
+        (values [{:did 7 :dname "Redline GmbH"}])
+        (on-conflict [:did]
+          (do-nothing)))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (7, ?) ON CONFLICT (\"did\") DO NOTHING" "Redline GmbH"]
+
+    Don't update existing distributors based in a certain ZIP code.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db (as :distributors :d) [:did :dname]
+        (values [{:did 8 :dname "Anvil Distribution"}])
+        (on-conflict [:did]
+          (do-update {:dname '(:|| :EXCLUDED.dname " (formerly " :d.dname ")")})
+          (where '(:<> :d.zipcode "21201"))))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"distributors\" AS \"d\" (\"did\", \"dname\") VALUES (8, ?) ON CONFLICT (\"did\") DO UPDATE SET \"dname\" = (EXCLUDED.\"dname\" || ? || \"d\".\"dname\" || ?) WHERE (\"d\".\"zipcode\" <> ?)" "Anvil Distribution" " (formerly " ")" "21201"]
+
+    Name a constraint directly in the statement. Uses associated index
+    to arbitrate taking the /DO NOTHING/ action.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :distributors [:did :dname]
+        (values [{:did 9 :dname "Antwerp Design"}])
+        (on-conflict-on-constraint :distributors_pkey
+          (do-nothing)))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (9, ?) ON CONFLICT ON CONSTRAINT \"distributors_pkey\" DO NOTHING" "Antwerp Design"]
+
+*** Join
+
+    Join the weathers table with the cities table.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:*]
+        (from :weather)
+        (join :cities '(on (= :weather.city :cities.name))))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"weather\" JOIN \"cities\" ON (\"weather\".\"city\" = \"cities\".\"name\")"]
+
+    The type of join can be given as the last keyword argument.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:*]
+        (from :weather)
+        (join :cities '(on (= :weather.city :cities.name)) :type :inner))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"weather\" INNER JOIN \"cities\" ON (\"weather\".\"city\" = \"cities\".\"name\")"]
+
+    The short hand version of the /JOIN/ statement above can also be
+    written like this. Note that the arguments are flipped here,
+    =:cities.name= comes first, because the table from the first
+    column is used as the /JOIN/ table.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:*]
+        (from :weather)
+        (join :cities.name :weather.city))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"weather\" JOIN \"cities\" ON (\"cities\".\"name\" = \"weather\".\"city\")"]
+
+*** Select
+
+    Select all films.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:*] (from :films))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"films\""]
+
+    Select all Comedy films.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:*]
+        (from :films)
+        (where '(= :kind "Comedy")))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
+
+    Retrieve the most recent weather report for each location.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db (distinct [:location :time :report] :on [:location])
+        (from :weather-reports)
+        (order-by :location (desc :time)))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT DISTINCT ON (\"location\") \"location\", \"time\", \"report\" FROM \"weather-reports\" ORDER BY \"location\", \"time\" DESC"]
+
+*** Update
+
+    Change the word Drama to Dramatic in the column kind of the table films.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (update db :films {:kind "Dramatic"}
+              (where '(= :kind "Drama")))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
+
+*** Order by
+
+    The sort expression(s) can be any expression that would be valid in the query's select list.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:a :b]
+        (from :table-1)
+        (order-by '(+ :a :b) :c))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT \"a\", \"b\" FROM \"table-1\" ORDER BY (\"a\" + \"b\"), \"c\""]
+
+    A sort expression can also be the column label
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [(as '(+ :a :b) :sum) :c]
+        (from :table-1)
+        (order-by :sum))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table-1\" ORDER BY \"sum\""]
+
+    or the number of an output column.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:a '(max :b)]
+        (from :table-1)
+        (group-by :a)
+        (order-by 1))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT \"a\", \"max\"(\"b\") FROM \"table-1\" GROUP BY \"a\" ORDER BY 1"]
+
+*** With Queries / Common table expressions
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (with db [:regional-sales
+                (select db [:region (as '(sum :amount) :total-sales)]
+                  (from :orders)
+                  (group-by :region))
+                :top-regions
+                (select db [:region]
+                  (from :regional-sales)
+                  (where `(> :total-sales
+                             ~(select db ['(/ (sum :total-sales) 10)]
+                                (from :regional-sales)))))]
+        (select db [:region :product
+                    (as '(sum :quantity) :product-units)
+                    (as '(sum :amount) :product-sales)]
+          (from :orders)
+          (where `(in :region ~(select db [:region]
+                                 (from :top-regions))))
+          (group-by :region :product)))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["WITH \"regional-sales\" AS (SELECT \"region\", \"sum\"(\"amount\") AS \"total-sales\" FROM \"orders\" GROUP BY \"region\"), \"top-regions\" AS (SELECT \"region\" FROM \"regional-sales\" WHERE (\"total-sales\" > (SELECT (\"sum\"(\"total-sales\") / 10) FROM \"regional-sales\"))) SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product-units\", \"sum\"(\"amount\") AS \"product-sales\" FROM \"orders\" WHERE \"region\" IN (SELECT \"region\" FROM \"top-regions\") GROUP BY \"region\", \"product\""]
+
+** Tips & Tricks
+
+   For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
+
+** License
+
+   Copyright © 2012-2015 r0man
+
+   Distributed under the Eclipse Public License, the same as Clojure.

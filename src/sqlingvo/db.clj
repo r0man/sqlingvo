@@ -15,48 +15,45 @@
                   db-spec)))
 
 (defmacro defdb
-  "Define a database vendor."
+  "Define a database specification."
   [db-name doc & {:as opts}]
   `(do
      (defmethod db ~(keyword db-name) [~'db-spec]
        (map->Database
-        (merge ~'db-spec
-               {:classname ~(:classname opts)
-                :doc ~doc
+        (merge {:doc ~doc
                 :eval-fn compiler/compile-stmt
-                :sql-keyword ~(:keyword opts)
-                :sql-name ~(:name opts)
-                :sql-quote ~(:quote opts)
-                :subprotocol ~(name db-name)})))
+                :subprotocol ~(name db-name)}
+               ~opts
+               ~'db-spec)))
      (defn ~(symbol db-name) [& [~'db-spec]]
        (db (assoc ~'db-spec :subprotocol ~(name db-name))))))
 
 (defdb mysql
   "The world's most popular open source database."
   :classname "com.mysql.jdbc.Driver"
-  :quote sql-quote-backtick)
+  :sql-quote sql-quote-backtick)
 
 (defdb postgresql
   "The world's most advanced open source database."
   :classname "org.postgresql.Driver"
-  :quote sql-quote-double-quote)
+  :sql-quote sql-quote-double-quote)
 
 (defdb oracle
   "Oracle Database."
   :classname "oracle.jdbc.driver.OracleDriver"
-  :quote sql-quote-double-quote)
+  :sql-quote sql-quote-double-quote)
 
 (defdb sqlite
   "The in-process SQL database engine."
   :classname "org.sqlite.JDBC"
-  :quote sql-quote-double-quote)
+  :sql-quote sql-quote-double-quote)
 
 (defdb sqlserver
   "Microsoft SQL server."
   :classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-  :quote sql-quote-double-quote)
+  :sql-quote sql-quote-double-quote)
 
 (defdb vertica
   "The Real-Time Analytics Platform."
   :classname "com.vertica.jdbc.Driver"
-  :quote sql-quote-double-quote)
+  :sql-quote sql-quote-double-quote)
