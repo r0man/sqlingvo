@@ -51,12 +51,12 @@
    specification =db= to build a simple /SELECT/ statement.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-     (sql (select db' [:first-name]
+     (sql (select db [:first-name]
             (from :people)))
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT \"first_name\" FROM \"people\""]
+   : ["SELECT \"first-name\" FROM \"people\""]
 
 *** Naming strategy
 
