@@ -592,12 +592,10 @@
     #+RESULTS:
     : ["WITH \"regional-sales\" AS (SELECT \"region\", \"sum\"(\"amount\") AS \"total-sales\" FROM \"orders\" GROUP BY \"region\"), \"top-regions\" AS (SELECT \"region\" FROM \"regional-sales\" WHERE (\"total-sales\" > (SELECT (\"sum\"(\"total-sales\") / 10) FROM \"regional-sales\"))) SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product-units\", \"sum\"(\"amount\") AS \"product-sales\" FROM \"orders\" WHERE \"region\" IN (SELECT \"region\" FROM \"top-regions\") GROUP BY \"region\", \"product\""]
 
-** Tips & Tricks
-
    For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
 
 ** License
 
-   Copyright © 2012-2015 r0man
+   Copyright © 2012-2016 [[https://github.com/r0man][r0man]]
 
    Distributed under the Eclipse Public License, the same as Clojure.
