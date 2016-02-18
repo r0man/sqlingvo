@@ -510,7 +510,7 @@
 
     #+BEGIN_SRC clojure :exports both :results verbatim
       (update db :films {:kind "Dramatic"}
-              (where '(= :kind "Drama")))
+        (where '(= :kind "Drama")))
     #+END_SRC
 
     #+RESULTS:
