@@ -104,7 +104,6 @@
 
     #+BEGIN_SRC clojure :exports code :results silent
       (require '[sqlingvo.util :refer [sql-quote-backtick]])
-
       (def db' (db/postgresql {:sql-quote sql-quote-backtick}))
     #+END_SRC
 
@@ -118,6 +117,36 @@
 
     #+RESULTS:
     : ["SELECT `first-name` FROM `people`"]
+
+*** Placeholder strategy
+
+    The placeholder strategy defines how placeholders for /SQL/
+    parameters are generated when building statements. The default
+    =sql-placeholder-constant= strategy always uses the string =?=,
+    the =sql-placeholder-count= strategy uses increasing values
+    starting from =$1=, =$2=, etc.
+
+    The strategy can be configured with the =:sql-placeholder= entry
+    in a database specification. 
+
+    #+BEGIN_SRC clojure :exports code :results silent
+      (require '[sqlingvo.util :refer [sql-placeholder-count]])
+      (def db' (db/postgresql {:sql-placeholder sql-placeholder-count}))
+    #+END_SRC
+
+    Now, the placeholders for /SQL/ parameters will contain the index
+    number of the parameter. Use this strategy if you are using
+    /SQLingvo/ with [[https://github.com/alaisi/postgres.async][postgres.async]] or the [[https://github.com/brianc/node-postgres][node-postgres]] libraries.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (sql (select db'  [:*]
+             (from :distributors)
+             (where '(and (= :dname "Anvil Distribution")
+                          (= :zipcode "21201")))))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"distributors\" WHERE ((\"dname\" = $1) and (\"zipcode\" = $2))" "Anvil Distribution" "21201"]
 
 ** SQL statement
 

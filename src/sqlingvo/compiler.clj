@@ -58,6 +58,12 @@
   (let [separater (str " " (upper-case (name op)) " " (if all "ALL "))]
     (compile-sql-join db separater (:stmts node))))
 
+(defn- placeholder
+  "Returns the next placeholder for an SQL parameter."
+  [db]
+  ((or (:sql-next-placeholder db)
+       (util/sql-placeholder-constant))))
+
 ;; COMPILE CONSTANTS
 
 (defn compile-inline [db node]
@@ -71,13 +77,13 @@
   (compile-inline db node))
 
 (defmethod compile-const :string [db node]
-  [(str "?" (compile-alias db (:as node))) (:val node)])
+  [(str (placeholder db) (compile-alias db (:as node))) (:val node)])
 
 (defmethod compile-const :symbol [db node]
   (compile-inline db node))
 
 (defmethod compile-const :default [db node]
-  [(str "?" (compile-alias db (:as node))) (:form node)])
+  [(str (placeholder db) (compile-alias db (:as node))) (:form node)])
 
 ;; COMPILE EXPRESSIONS
 
@@ -324,9 +330,9 @@
        (= :stdin from)
        "STDIN"))
    (if encoding
-     [" ENCODING ?" encoding])
+     [(str " ENCODING " (placeholder db)) encoding])
    (if delimiter
-     [" DELIMITER ?" delimiter])))
+     [(str " DELIMITER " (placeholder db)) delimiter])))
 
 (defmethod compile-sql :create-table [db {:keys [table if-not-exists inherits like primary-key temporary] :as node}]
   (let [columns (map (:column node) (:columns node))]
@@ -644,6 +650,8 @@
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
-  [stmt]
-  (assert (:db stmt) "No db given!")
-  (vec (compile-sql (:db stmt) stmt)))
+  [{:keys [db] :as stmt}]
+  (assert db "No db given!")
+  (let [placeholder ((or (:sql-placeholder db) util/sql-placeholder-constant))
+        db (assoc db :sql-next-placeholder placeholder)]
+    (vec (compile-sql db stmt))))

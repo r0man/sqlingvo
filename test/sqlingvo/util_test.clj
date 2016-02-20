@@ -56,3 +56,19 @@
     db/vertica"" "\"\""
     db/vertica :a "\"a\""
     db/vertica :a-1 "\"a-1\""))
+
+(deftest test-sql-placeholder-constant
+  (let [placeholder (sql-placeholder-constant)]
+    (is (= (placeholder) "?"))
+    (is (= (placeholder) "?")))
+  (let [placeholder (sql-placeholder-constant "$")]
+    (is (= (placeholder) "$"))
+    (is (= (placeholder) "$"))))
+
+(deftest test-sql-placeholder-count
+  (let [placeholder (sql-placeholder-count)]
+    (is (= (placeholder) "$1"))
+    (is (= (placeholder) "$2")))
+  (let [placeholder (sql-placeholder-count "?")]
+    (is (= (placeholder) "?1"))
+    (is (= (placeholder) "?2"))))

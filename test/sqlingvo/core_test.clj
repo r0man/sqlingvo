@@ -1891,3 +1891,27 @@
                "ON CONFLICT ON CONSTRAINT \"distributors_pkey\" "
                "DO NOTHING")
           "Antwerp Design"])))
+
+(deftest test-sql-placeholder-constant
+  (let [db (assoc db :sql-placeholder sql-placeholder-constant)]
+    (is (= (sql (select db  [:*]
+                  (from :distributors)
+                  (where '(and (= :dname "Anvil Distribution")
+                               (= :zipcode "21201")))))
+           ["SELECT * FROM \"distributors\" WHERE ((\"dname\" = ?) and (\"zipcode\" = ?))"
+            "Anvil Distribution" "21201"]))))
+
+(deftest test-sql-placeholder-count
+  (let [db (assoc db :sql-placeholder sql-placeholder-count)]
+    (is (= (sql (select db  [:*]
+                  (from :distributors)
+                  (where '(and (= :dname "Anvil Distribution")
+                               (= :zipcode "21201")))))
+           ["SELECT * FROM \"distributors\" WHERE ((\"dname\" = $1) and (\"zipcode\" = $2))"
+            "Anvil Distribution" "21201"]))))
+
+(deftest test-sql-placeholder-count-subselect
+  (let [db (assoc db :sql-placeholder sql-placeholder-count)]
+    (is (= (sql (select db ["a" "b" :*]
+                  (from (as (select db ["c" "d"]) :x))))
+           ["SELECT $1, $2, * FROM (SELECT $3, $4) AS \"x\"" "a" "b" "c" "d"]))))

@@ -103,3 +103,18 @@
   (when x
     ((or (:sql-quote db) sql-quote-backtick)
      (sql-name db x))))
+
+(defn sql-placeholder-constant
+  "Returns a fn that uses a constant strategy to produce
+  placeholders."
+  [& [placeholder]]
+  (let [placeholder (str (or placeholder "?"))]
+    (constantly placeholder)))
+
+(defn sql-placeholder-count
+  "Returns a fn that uses a counting strategy to produce
+  placeholders."
+  [& [prefix]]
+  (let [counter (atom 0)
+        prefix (str (or prefix "$"))]
+    #(str prefix (swap! counter inc))))
