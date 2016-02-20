@@ -136,7 +136,7 @@
 
     Now, the placeholders for /SQL/ parameters will contain the index
     number of the parameter. Use this strategy if you are using
-    /SQLingvo/ with [[https://github.com/alaisi/postgres.async][postgres.async]] or the [[https://github.com/brianc/node-postgres][node-postgres]] libraries.
+    /SQLingvo/ with [[https://github.com/alaisi/postgres.async][postgres.async]].
 
     #+BEGIN_SRC clojure :exports both :results verbatim
       (sql (select db'  [:*]
