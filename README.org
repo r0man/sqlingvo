@@ -541,7 +541,8 @@
 
 *** Update
 
-    Change the word Drama to Dramatic in the column kind of the table films.
+    Change the word =Drama= to =Dramatic= in the =kind= column of the
+    =films= table.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
       (update db :films {:kind "Dramatic"}
@@ -550,6 +551,16 @@
 
     #+RESULTS:
     : ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)" "Dramatic" "Drama"]
+
+    Change all the values in the =kind= column of the table =films= to
+    upper case.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (update db :films {:kind '(upper :kind)})
+    #+END_SRC
+
+    #+RESULTS:
+    : ["UPDATE \"films\" SET \"kind\" = \"upper\"(\"kind\")"]
 
 *** Order by
 
