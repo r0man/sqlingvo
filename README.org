@@ -13,7 +13,7 @@
   said, if you can avoid /PostgreSQL/ specific features you might be
   lucky and may be able to use it with other databases as well.
  
-  [[https://imgs.xkcd.com/comics/query.png]]
+  [[https://xkcd.com/1409][https://imgs.xkcd.com/comics/query.png]]
 
 ** Usage
 
