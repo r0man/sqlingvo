@@ -6,7 +6,8 @@
             [sqlingvo.core :refer :all]
             [sqlingvo.db :as db]
             [sqlingvo.expr :refer :all]
-            [sqlingvo.util :refer :all]))
+            [sqlingvo.util :refer :all]
+            [clojure.string :as str]))
 
 (def db (db/postgresql))
 
@@ -1915,3 +1916,37 @@
     (is (= (sql (select db ["a" "b" :*]
                   (from (as (select db ["c" "d"]) :x))))
            ["SELECT $1, $2, * FROM (SELECT $3, $4) AS \"x\"" "a" "b" "c" "d"]))))
+
+(deftest test-explain
+  (is (= (sql (explain db
+                (select db [:*]
+                  (from :foo))))
+         ["EXPLAIN SELECT * FROM \"foo\""])))
+
+(deftest test-explain-boolean-options
+  (doseq [option [:analyze :buffers :costs :timing :verbose]
+          value [true false]]
+    (is (= (sql (explain db
+                  (select db [:*]
+                    (from :foo))
+                  {option value}))
+           [(format "EXPLAIN (%s %s) SELECT * FROM \"foo\""
+                    (str/upper-case (name option))
+                    (str/upper-case (str value)))]))))
+
+(deftest test-explain-multiple-options
+  (is (= (sql (explain db
+                (select db [:*]
+                  (from :foo))
+                {:analyze true
+                 :verbose true}))
+         ["EXPLAIN (ANALYZE TRUE, VERBOSE TRUE) SELECT * FROM \"foo\""])))
+
+(deftest test-explain-format
+  (doseq [value [:text :xml :json :yaml]]
+    (is (= (sql (explain db
+                  (select db [:*]
+                    (from :foo))
+                  {:format value}))
+           [(format "EXPLAIN (FORMAT %s) SELECT * FROM \"foo\""
+                    (str/upper-case (name value)))]))))

@@ -388,6 +388,36 @@
   (concat-sql (compile-sql-join db " " children)
               (compile-alias db as)))
 
+(defmulti compile-explain-option
+  "Compile an EXPLAIN option."
+  (fn [db [option value]] option))
+
+(defmethod compile-explain-option :format
+  [db [option value]]
+  (assert (contains? #{:text :xml :json :yaml} value)
+          (str "Invalid EXPLAIN format: " (name value)))
+  (concat-sql "FORMAT " (upper-case (name value))))
+
+(defmethod compile-explain-option :default
+  [db [option value]]
+  (assert (contains? #{:analyze :buffers :costs :timing :verbose} option)
+          (str "Invalid EXPLAIN option: " (name option)))
+  (concat-sql (upper-case (name option)) " " (upper-case (str (true? value)))))
+
+(defn compile-explain-options
+  "Compile the EXPLAIN `options`."
+  [db options]
+  (when-not (empty? options)
+    (concat-sql
+     "(" (->> (map #(compile-explain-option db %) options)
+              (join-sql ", ")) ")")))
+
+(defmethod compile-sql :explain [db node]
+  (let [opts (compile-explain-options db (:opts node))]
+    (concat-sql "EXPLAIN "
+                (if opts (concat-sql opts " "))
+                (compile-sql db (:stmt node)))))
+
 (defmethod compile-sql :attr [db node]
   (concat-sql "(" (compile-sql db (:arg node)) ")." (sql-quote db (:name node))
               (if-let [as (:as node)]

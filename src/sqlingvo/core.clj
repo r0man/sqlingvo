@@ -114,6 +114,40 @@
   [encoding]
   (util/set-val :encoding encoding))
 
+(defn explain
+  "Return an EXPLAIN statement for `stmt`. `opts` can be a map with
+  the following key/value pairs:
+
+   - :analyze boolean
+   - :buffers boolean
+   - :costs   boolean
+   - :format  :json, :text, :yaml, :xml
+   - :timing  boolean
+   - :verbose boolean
+
+  Examples:
+
+  (explain db
+    (select db [:*]
+      (from :foo)))
+  ;=> [\"EXPLAIN SELECT * FROM \\\"foo\\\"\"]
+
+  (explain db
+    (select db [:*]
+      (from :foo))
+    {:analyze true})
+  ;=> [\"EXPLAIN (ANALYZE TRUE) SELECT * FROM \\\"foo\\\"\"]
+  "
+  {:style/indent 1}
+  [db stmt & [opts]]
+  (Stmt. (fn [_]
+           [_ (expr/make-node
+               :op :explain
+               :db db
+               :children [:stmt]
+               :stmt (ast stmt)
+               :opts opts)])))
+
 (defn copy
   "Returns a fn that builds a COPY statement.
 
