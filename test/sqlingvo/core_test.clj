@@ -7,7 +7,8 @@
             [sqlingvo.db :as db]
             [sqlingvo.expr :refer :all]
             [sqlingvo.util :refer :all]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [sqlingvo.test :refer [sql=]]))
 
 (def db (db/postgresql))
 
@@ -162,9 +163,9 @@
       (primary-key :user-id :spot-id :created-at))))
 
 (deftest test-create-table-array-column
-  (is (= (sql (create-table db :ratings
-                (column :x :text :array? true)))
-         ["CREATE TABLE \"ratings\" (\"x\" TEXT[])"])))
+  (sql= (create-table db :ratings
+          (column :x :text :array? true))
+        ["CREATE TABLE \"ratings\" (\"x\" TEXT[])"]))
 
 ;; COPY
 
@@ -445,34 +446,34 @@
                {:a 2 :b "b"}]))))
 
 (deftest test-insert-fixed-columns-mixed-values
-  (is (= (sql (insert db :table [:a :b]
-                (values [{:a 1 :b 2} {:b 3} {:c 3}])))
-         [(str "INSERT INTO \"table\" (\"a\", \"b\") VALUES (1, 2), "
-               "(NULL, 3), (NULL, NULL)")])))
+  (sql= (insert db :table [:a :b]
+          (values [{:a 1 :b 2} {:b 3} {:c 3}]))
+        [(str "INSERT INTO \"table\" (\"a\", \"b\") VALUES (1, 2), "
+              "(NULL, 3), (NULL, NULL)")]))
 
 (deftest test-insert-fixed-columns-mixed-values-2
-  (is (= (sql (insert db :quotes [:id :exchange-id :company-id
-                                  :symbol :created-at :updated-at]
-                (values [{:updated-at #inst "2012-11-02T18:22:59.688-00:00"
-                          :created-at #inst "2012-11-02T18:22:59.688-00:00"
-                          :symbol "MSFT"
-                          :exchange-id 2
-                          :company-id 5
-                          :id 5}
-                         {:updated-at #inst "2012-11-02T18:22:59.688-00:00"
-                          :created-at #inst "2012-11-02T18:22:59.688-00:00"
-                          :symbol "SPY"
-                          :exchange-id 2
-                          :id 6}])))
-         [(str "INSERT INTO \"quotes\" (\"id\", \"exchange-id\", "
-               "\"company-id\", \"symbol\", \"created-at\", \"updated-at\") "
-               "VALUES (5, 2, 5, ?, ?, ?), (6, 2, NULL, ?, ?, ?)")
-          "MSFT"
-          #inst "2012-11-02T18:22:59.688-00:00"
-          #inst "2012-11-02T18:22:59.688-00:00"
-          "SPY"
-          #inst "2012-11-02T18:22:59.688-00:00"
-          #inst "2012-11-02T18:22:59.688-00:00"])))
+  (sql= (insert db :quotes [:id :exchange-id :company-id
+                            :symbol :created-at :updated-at]
+          (values [{:updated-at #inst "2012-11-02T18:22:59.688-00:00"
+                    :created-at #inst "2012-11-02T18:22:59.688-00:00"
+                    :symbol "MSFT"
+                    :exchange-id 2
+                    :company-id 5
+                    :id 5}
+                   {:updated-at #inst "2012-11-02T18:22:59.688-00:00"
+                    :created-at #inst "2012-11-02T18:22:59.688-00:00"
+                    :symbol "SPY"
+                    :exchange-id 2
+                    :id 6}]))
+        [(str "INSERT INTO \"quotes\" (\"id\", \"exchange-id\", "
+              "\"company-id\", \"symbol\", \"created-at\", \"updated-at\") "
+              "VALUES (5, 2, 5, ?, ?, ?), (6, 2, NULL, ?, ?, ?)")
+         "MSFT"
+         #inst "2012-11-02T18:22:59.688-00:00"
+         #inst "2012-11-02T18:22:59.688-00:00"
+         "SPY"
+         #inst "2012-11-02T18:22:59.688-00:00"
+         #inst "2012-11-02T18:22:59.688-00:00"]))
 
 ;; SELECT
 
@@ -1504,8 +1505,8 @@
     (select db [`(~(keyword "<@") [1 2] [3 4])])))
 
 (deftest test-insert-array
-  (is (= (sql (insert db :test [:x] (values [{:x ["1" 2]}])))
-         ["INSERT INTO \"test\" (\"x\") VALUES (ARRAY[?, 2])" "1"])))
+  (sql= (insert db :test [:x] (values [{:x ["1" 2]}]))
+        ["INSERT INTO \"test\" (\"x\") VALUES (ARRAY[?, 2])" "1"]))
 
 ;; POSTGRESQL FULLTEXT
 
@@ -1680,38 +1681,38 @@
                 (as (select db ['(count :*)] (from :countries)) :countries)])))
 
 (deftest test-refresh-materialized-view
-  (is (= (sql (refresh-materialized-view db :order-summary))
-         ["REFRESH MATERIALIZED VIEW \"order-summary\""]))
-  (is (= (sql (refresh-materialized-view db :order-summary
-                                         (concurrently true)))
-         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\""]))
-  (is (= (sql (refresh-materialized-view db :order-summary
-                                         (with-data true)))
-         ["REFRESH MATERIALIZED VIEW \"order-summary\" WITH DATA"]))
-  (is (= (sql (refresh-materialized-view db :order-summary
-                                         (with-data false)))
-         ["REFRESH MATERIALIZED VIEW \"order-summary\" WITH NO DATA"]))
-  (is (= (sql (refresh-materialized-view db :order-summary
-                                         (concurrently true)
-                                         (with-data false)))
-         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\" WITH NO DATA"])))
+  (sql= (refresh-materialized-view db :order-summary)
+        ["REFRESH MATERIALIZED VIEW \"order-summary\""])
+  (sql= (refresh-materialized-view db :order-summary
+                                   (concurrently true))
+        ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\""])
+  (sql= (refresh-materialized-view db :order-summary
+                                   (with-data true))
+        ["REFRESH MATERIALIZED VIEW \"order-summary\" WITH DATA"])
+  (sql= (refresh-materialized-view db :order-summary
+                                   (with-data false))
+        ["REFRESH MATERIALIZED VIEW \"order-summary\" WITH NO DATA"])
+  (sql= (refresh-materialized-view db :order-summary
+                                   (concurrently true)
+                                   (with-data false))
+        ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\" WITH NO DATA"]))
 
 (deftest test-drop-materialized-view
-  (is (= (sql (drop-materialized-view db :order-summary))
-         ["DROP MATERIALIZED VIEW \"order-summary\""]))
-  (is (= (sql (drop-materialized-view db :order-summary
-                (if-exists true)))
-         ["DROP MATERIALIZED VIEW IF EXISTS \"order-summary\""]))
-  (is (= (sql (drop-materialized-view db :order-summary
-                (cascade true)))
-         ["DROP MATERIALIZED VIEW \"order-summary\" CASCADE"]))
-  (is (= (sql (drop-materialized-view db :order-summary
-                (restrict true)))
-         ["DROP MATERIALIZED VIEW \"order-summary\" RESTRICT"]))
-  (is (= (sql (drop-materialized-view db :order-summary
-                (if-exists true)
-                (cascade true)))
-         ["DROP MATERIALIZED VIEW IF EXISTS \"order-summary\" CASCADE"])))
+  (sql= (drop-materialized-view db :order-summary)
+        ["DROP MATERIALIZED VIEW \"order-summary\""])
+  (sql= (drop-materialized-view db :order-summary
+          (if-exists true))
+        ["DROP MATERIALIZED VIEW IF EXISTS \"order-summary\""])
+  (sql= (drop-materialized-view db :order-summary
+          (cascade true))
+        ["DROP MATERIALIZED VIEW \"order-summary\" CASCADE"])
+  (sql= (drop-materialized-view db :order-summary
+          (restrict true))
+        ["DROP MATERIALIZED VIEW \"order-summary\" RESTRICT"])
+  (sql= (drop-materialized-view db :order-summary
+          (if-exists true)
+          (cascade true))
+        ["DROP MATERIALIZED VIEW IF EXISTS \"order-summary\" CASCADE"]))
 
 (deftest test-case
   (with-stmt
@@ -1748,205 +1749,205 @@
 ;; Window functions: http://www.postgresql.org/docs/9.4/static/tutorial-window.html
 
 (deftest test-window-compare-salaries
-  (is (= (sql (select db [:depname :empno :salary '(over (avg :salary) (partition-by :depname))]
-                (from :empsalary)))
-         ["SELECT \"depname\", \"empno\", \"salary\", \"avg\"(\"salary\") OVER (PARTITION BY \"depname\") FROM \"empsalary\""])))
+  (sql= (select db [:depname :empno :salary '(over (avg :salary) (partition-by :depname))]
+          (from :empsalary))
+        ["SELECT \"depname\", \"empno\", \"salary\", \"avg\"(\"salary\") OVER (PARTITION BY \"depname\") FROM \"empsalary\""]))
 
 (deftest test-window-compare-salaries-by-year
-  (is (= (sql (select db [:year :depname :empno :salary '(over (avg :salary) (partition-by [:year :depname]))]
-                (from :empsalary)))
-         ["SELECT \"year\", \"depname\", \"empno\", \"salary\", \"avg\"(\"salary\") OVER (PARTITION BY \"year\", \"depname\") FROM \"empsalary\""])))
+  (sql= (select db [:year :depname :empno :salary '(over (avg :salary) (partition-by [:year :depname]))]
+          (from :empsalary))
+        ["SELECT \"year\", \"depname\", \"empno\", \"salary\", \"avg\"(\"salary\") OVER (PARTITION BY \"year\", \"depname\") FROM \"empsalary\""]))
 
 (deftest test-window-rank-over-order-by
-  (is (= (sql (select db [:depname :empno :salary '(over (rank) (partition-by :depname (order-by (desc :salary))))]
-                (from :empsalary)))
-         ["SELECT \"depname\", \"empno\", \"salary\", \"rank\"() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""])))
+  (sql= (select db [:depname :empno :salary '(over (rank) (partition-by :depname (order-by (desc :salary))))]
+          (from :empsalary))
+        ["SELECT \"depname\", \"empno\", \"salary\", \"rank\"() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""]))
 
 (deftest test-window-rank-over-multiple-cols-order-by
-  (is (= (sql (select db [:year :depname :empno :salary '(over (rank) (partition-by [:year :depname] (order-by (desc :salary))))]
-                (from :empsalary)))
-         ["SELECT \"year\", \"depname\", \"empno\", \"salary\", \"rank\"() OVER (PARTITION BY \"year\", \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""])))
+  (sql= (select db [:year :depname :empno :salary '(over (rank) (partition-by [:year :depname] (order-by (desc :salary))))]
+          (from :empsalary))
+        ["SELECT \"year\", \"depname\", \"empno\", \"salary\", \"rank\"() OVER (PARTITION BY \"year\", \"depname\" ORDER BY \"salary\" DESC) FROM \"empsalary\""]))
 
 (deftest test-window-over-empty
-  (is (= (sql (select db [:salary '(over (sum :salary))]
-                (from :empsalary)))
-         ["SELECT \"salary\", \"sum\"(\"salary\") OVER () FROM \"empsalary\""])))
+  (sql= (select db [:salary '(over (sum :salary))]
+          (from :empsalary))
+        ["SELECT \"salary\", \"sum\"(\"salary\") OVER () FROM \"empsalary\""]))
 
 (deftest test-window-sum-over-order-by
-  (is (= (sql (select db [:salary '(over (sum :salary) (order-by :salary))]
-                (from :empsalary)))
-         ["SELECT \"salary\", \"sum\"(\"salary\") OVER (ORDER BY \"salary\") FROM \"empsalary\""])))
+  (sql= (select db [:salary '(over (sum :salary) (order-by :salary))]
+          (from :empsalary))
+        ["SELECT \"salary\", \"sum\"(\"salary\") OVER (ORDER BY \"salary\") FROM \"empsalary\""]))
 
 (deftest test-window-rank-over-partition-by
-  (is (= (sql (select db [:depname :empno :salary :enroll-date]
-                (from (as (select db [:depname :empno :salary :enroll-date
-                                      (as '(over (rank) (partition-by :depname (order-by (desc :salary) :empno))) :pos)]
-                            (from :empsalary))
-                          :ss))
-                (where '(< pos 3))))
-         [(str "SELECT \"depname\", \"empno\", \"salary\", \"enroll-date\" "
-               "FROM (SELECT \"depname\", \"empno\", \"salary\", \"enroll-date\", "
-               "\"rank\"() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC, \"empno\") AS \"pos\" "
-               "FROM \"empsalary\") AS \"ss\" WHERE (pos < 3)")])))
+  (sql= (select db [:depname :empno :salary :enroll-date]
+          (from (as (select db [:depname :empno :salary :enroll-date
+                                (as '(over (rank) (partition-by :depname (order-by (desc :salary) :empno))) :pos)]
+                      (from :empsalary))
+                    :ss))
+          (where '(< pos 3)))
+        [(str "SELECT \"depname\", \"empno\", \"salary\", \"enroll-date\" "
+              "FROM (SELECT \"depname\", \"empno\", \"salary\", \"enroll-date\", "
+              "\"rank\"() OVER (PARTITION BY \"depname\" ORDER BY \"salary\" DESC, \"empno\") AS \"pos\" "
+              "FROM \"empsalary\") AS \"ss\" WHERE (pos < 3)")]))
 
 (deftest test-window-alias
-  (is (= (sql (select db ['(over (sum :salary) :w)
-                          '(over (avg :salary) :w)]
-                (from :empsalary)
-                (window (as '(partition-by
-                              :depname (order-by (desc salary))) :w))))
-         [(str "SELECT \"sum\"(\"salary\") OVER (\"w\"), "
-               "\"avg\"(\"salary\") OVER (\"w\") "
-               "FROM \"empsalary\" "
-               "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC)")])))
+  (sql= (select db ['(over (sum :salary) :w)
+                    '(over (avg :salary) :w)]
+          (from :empsalary)
+          (window (as '(partition-by
+                        :depname (order-by (desc salary))) :w)))
+        [(str "SELECT \"sum\"(\"salary\") OVER (\"w\"), "
+              "\"avg\"(\"salary\") OVER (\"w\") "
+              "FROM \"empsalary\" "
+              "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC)")]))
 
 (deftest test-window-alias-order-by
-  (is (= (sql (select db [(as '(over (sum :salary) :w) :sum)]
-                (from :empsalary)
-                (order-by :sum)
-                (window (as '(partition-by
-                              :depname (order-by (desc salary))) :w))))
-         [(str "SELECT \"sum\"(\"salary\") OVER (\"w\") AS \"sum\" "
-               "FROM \"empsalary\" "
-               "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC) "
-               "ORDER BY \"sum\"")])))
+  (sql= (select db [(as '(over (sum :salary) :w) :sum)]
+          (from :empsalary)
+          (order-by :sum)
+          (window (as '(partition-by
+                        :depname (order-by (desc salary))) :w)))
+        [(str "SELECT \"sum\"(\"salary\") OVER (\"w\") AS \"sum\" "
+              "FROM \"empsalary\" "
+              "WINDOW \"w\" AS (PARTITION BY \"depname\" ORDER BY salary DESC) "
+              "ORDER BY \"sum\"")]))
 
 (deftest test-not-expr
-  (is (= (sql (select db [:*]
-                (where `(not (= :id 1)))))
-         ["SELECT * WHERE (NOT (\"id\" = 1))"])))
+  (sql= (select db [:*]
+          (where `(not (= :id 1))))
+        ["SELECT * WHERE (NOT (\"id\" = 1))"]))
 
 (deftest test-slash-in-function-name
-  (is (= (sql (select db [`(~(symbol "m/s->km/h") 10)]))
-         ["SELECT \"m/s->km/h\"(10)"])))
+  (sql= (select db [`(~(symbol "m/s->km/h") 10)])
+        ["SELECT \"m/s->km/h\"(10)"]))
 
 (deftest test-upsert-on-conflict-do-update
-  (is (= (sql (insert db :distributors [:did :dname]
-                (values [{:did 5 :dname "Gizmo Transglobal"}
-                         {:did 6 :dname "Associated Computing, Inc"}])
-                (on-conflict [:did]
-                  (do-update {:dname :EXCLUDED.dname}))))
-         [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
-               "VALUES (5, ?), (6, ?) "
-               "ON CONFLICT (\"did\") "
-               "DO UPDATE SET \"dname\" = EXCLUDED.\"dname\"")
-          "Gizmo Transglobal"
-          "Associated Computing, Inc"])))
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 5 :dname "Gizmo Transglobal"}
+                   {:did 6 :dname "Associated Computing, Inc"}])
+          (on-conflict [:did]
+            (do-update {:dname :EXCLUDED.dname})))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (5, ?), (6, ?) "
+              "ON CONFLICT (\"did\") "
+              "DO UPDATE SET \"dname\" = EXCLUDED.\"dname\"")
+         "Gizmo Transglobal"
+         "Associated Computing, Inc"]))
 
 (deftest test-upsert-on-conflict-do-nothing
-  (is (= (sql (insert db :distributors [:did :dname]
-                (values [{:did 7 :dname "Redline GmbH"}])
-                (on-conflict [:did]
-                  (do-nothing))))
-         [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
-               "VALUES (7, ?) "
-               "ON CONFLICT (\"did\") "
-               "DO NOTHING")
-          "Redline GmbH"])))
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 7 :dname "Redline GmbH"}])
+          (on-conflict [:did]
+            (do-nothing)))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (7, ?) "
+              "ON CONFLICT (\"did\") "
+              "DO NOTHING")
+         "Redline GmbH"]))
 
 (deftest test-upsert-on-conflict-do-nothing-returning
-  (is (= (sql (insert db :distributors [:did :dname]
-                (values [{:did 7 :dname "Redline GmbH"}])
-                (on-conflict [:did]
-                  (do-nothing))
-                (returning :*)))
-         [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
-               "VALUES (7, ?) "
-               "ON CONFLICT (\"did\") "
-               "DO NOTHING "
-               "RETURNING *")
-          "Redline GmbH"])))
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 7 :dname "Redline GmbH"}])
+          (on-conflict [:did]
+            (do-nothing))
+          (returning :*))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (7, ?) "
+              "ON CONFLICT (\"did\") "
+              "DO NOTHING "
+              "RETURNING *")
+         "Redline GmbH"]))
 
 (deftest test-upsert-on-conflict-do-update-where
-  (is (= (sql (insert db (as :distributors :d) [:did :dname]
-                (values [{:did 8 :dname "Anvil Distribution"}])
-                (on-conflict [:did]
-                  (do-update {:dname '(:|| :EXCLUDED.dname " (formerly " :d.dname ")")})
-                  (where '(:<> :d.zipcode "21201")))))
-         [(str "INSERT INTO \"distributors\" AS \"d\" (\"did\", \"dname\") "
-               "VALUES (8, ?) "
-               "ON CONFLICT (\"did\") "
-               "DO UPDATE SET \"dname\" = (EXCLUDED.\"dname\" || ? || \"d\".\"dname\" || ?) "
-               "WHERE (\"d\".\"zipcode\" <> ?)")
-          "Anvil Distribution" " (formerly " ")" "21201"])))
+  (sql= (insert db (as :distributors :d) [:did :dname]
+          (values [{:did 8 :dname "Anvil Distribution"}])
+          (on-conflict [:did]
+            (do-update {:dname '(:|| :EXCLUDED.dname " (formerly " :d.dname ")")})
+            (where '(:<> :d.zipcode "21201"))))
+        [(str "INSERT INTO \"distributors\" AS \"d\" (\"did\", \"dname\") "
+              "VALUES (8, ?) "
+              "ON CONFLICT (\"did\") "
+              "DO UPDATE SET \"dname\" = (EXCLUDED.\"dname\" || ? || \"d\".\"dname\" || ?) "
+              "WHERE (\"d\".\"zipcode\" <> ?)")
+         "Anvil Distribution" " (formerly " ")" "21201"]))
 
 (deftest test-upsert-on-conflict-where-do-nothing
-  (is (= (sql (insert db :distributors [:did :dname]
-                (values [{:did 10 :dname "Conrad International"}])
-                (on-conflict [:did]
-                  (where '(= :is-active true))
-                  (do-nothing))))
-         [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
-               "VALUES (10, ?) "
-               "ON CONFLICT (\"did\") "
-               "WHERE (\"is-active\" = ?) DO NOTHING")
-          "Conrad International" true])))
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 10 :dname "Conrad International"}])
+          (on-conflict [:did]
+            (where '(= :is-active true))
+            (do-nothing)))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (10, ?) "
+              "ON CONFLICT (\"did\") "
+              "WHERE (\"is-active\" = ?) DO NOTHING")
+         "Conrad International" true]))
 
 (deftest test-upsert-on-conflict-on-constraint-do-nothing
-  (is (= (sql (insert db :distributors [:did :dname]
-                (values [{:did 9 :dname "Antwerp Design"}])
-                (on-conflict-on-constraint :distributors_pkey
-                  (do-nothing))))
-         [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
-               "VALUES (9, ?) "
-               "ON CONFLICT ON CONSTRAINT \"distributors_pkey\" "
-               "DO NOTHING")
-          "Antwerp Design"])))
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 9 :dname "Antwerp Design"}])
+          (on-conflict-on-constraint :distributors_pkey
+            (do-nothing)))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (9, ?) "
+              "ON CONFLICT ON CONSTRAINT \"distributors_pkey\" "
+              "DO NOTHING")
+         "Antwerp Design"]))
 
 (deftest test-sql-placeholder-constant
   (let [db (assoc db :sql-placeholder sql-placeholder-constant)]
-    (is (= (sql (select db  [:*]
-                  (from :distributors)
-                  (where '(and (= :dname "Anvil Distribution")
-                               (= :zipcode "21201")))))
-           ["SELECT * FROM \"distributors\" WHERE ((\"dname\" = ?) and (\"zipcode\" = ?))"
-            "Anvil Distribution" "21201"]))))
+    (sql= (select db  [:*]
+            (from :distributors)
+            (where '(and (= :dname "Anvil Distribution")
+                         (= :zipcode "21201"))))
+          ["SELECT * FROM \"distributors\" WHERE ((\"dname\" = ?) and (\"zipcode\" = ?))"
+           "Anvil Distribution" "21201"])))
 
 (deftest test-sql-placeholder-count
   (let [db (assoc db :sql-placeholder sql-placeholder-count)]
-    (is (= (sql (select db  [:*]
-                  (from :distributors)
-                  (where '(and (= :dname "Anvil Distribution")
-                               (= :zipcode "21201")))))
-           ["SELECT * FROM \"distributors\" WHERE ((\"dname\" = $1) and (\"zipcode\" = $2))"
-            "Anvil Distribution" "21201"]))))
+    (sql= (select db  [:*]
+            (from :distributors)
+            (where '(and (= :dname "Anvil Distribution")
+                         (= :zipcode "21201"))))
+          ["SELECT * FROM \"distributors\" WHERE ((\"dname\" = $1) and (\"zipcode\" = $2))"
+           "Anvil Distribution" "21201"])))
 
 (deftest test-sql-placeholder-count-subselect
   (let [db (assoc db :sql-placeholder sql-placeholder-count)]
-    (is (= (sql (select db ["a" "b" :*]
-                  (from (as (select db ["c" "d"]) :x))))
-           ["SELECT $1, $2, * FROM (SELECT $3, $4) AS \"x\"" "a" "b" "c" "d"]))))
+    (sql= (select db ["a" "b" :*]
+            (from (as (select db ["c" "d"]) :x)))
+          ["SELECT $1, $2, * FROM (SELECT $3, $4) AS \"x\"" "a" "b" "c" "d"])))
 
 (deftest test-explain
-  (is (= (sql (explain db
-                (select db [:*]
-                  (from :foo))))
-         ["EXPLAIN SELECT * FROM \"foo\""])))
+  (sql= (explain db
+          (select db [:*]
+            (from :foo)))
+        ["EXPLAIN SELECT * FROM \"foo\""]))
 
 (deftest test-explain-boolean-options
   (doseq [option [:analyze :buffers :costs :timing :verbose]
           value [true false]]
-    (is (= (sql (explain db
-                  (select db [:*]
-                    (from :foo))
-                  {option value}))
-           [(format "EXPLAIN (%s %s) SELECT * FROM \"foo\""
-                    (str/upper-case (name option))
-                    (str/upper-case (str value)))]))))
+    (sql= (explain db
+            (select db [:*]
+              (from :foo))
+            {option value})
+          [(format "EXPLAIN (%s %s) SELECT * FROM \"foo\""
+                   (str/upper-case (name option))
+                   (str/upper-case (str value)))])))
 
 (deftest test-explain-multiple-options
-  (is (= (sql (explain db
-                (select db [:*]
-                  (from :foo))
-                {:analyze true
-                 :verbose true}))
-         ["EXPLAIN (ANALYZE TRUE, VERBOSE TRUE) SELECT * FROM \"foo\""])))
+  (sql= (explain db
+          (select db [:*]
+            (from :foo))
+          {:analyze true
+           :verbose true})
+        ["EXPLAIN (ANALYZE TRUE, VERBOSE TRUE) SELECT * FROM \"foo\""]))
 
 (deftest test-explain-format
   (doseq [value [:text :xml :json :yaml]]
-    (is (= (sql (explain db
-                  (select db [:*]
-                    (from :foo))
-                  {:format value}))
-           [(format "EXPLAIN (FORMAT %s) SELECT * FROM \"foo\""
-                    (str/upper-case (name value)))]))))
+    (sql= (explain db
+            (select db [:*]
+              (from :foo))
+            {:format value})
+          [(format "EXPLAIN (FORMAT %s) SELECT * FROM \"foo\""
+                   (str/upper-case (name value)))])))
