@@ -141,3 +141,76 @@
 (deftest test-insert-array
   (sql= (insert db :test [:x] (values [{:x ["1" 2]}]))
         ["INSERT INTO \"test\" (\"x\") VALUES (ARRAY[?, 2])" "1"]))
+
+(deftest test-upsert-on-conflict-do-update
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 5 :dname "Gizmo Transglobal"}
+                   {:did 6 :dname "Associated Computing, Inc"}])
+          (on-conflict [:did]
+            (do-update {:dname :EXCLUDED.dname})))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (5, ?), (6, ?) "
+              "ON CONFLICT (\"did\") "
+              "DO UPDATE SET \"dname\" = EXCLUDED.\"dname\"")
+         "Gizmo Transglobal"
+         "Associated Computing, Inc"]))
+
+(deftest test-upsert-on-conflict-do-nothing
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 7 :dname "Redline GmbH"}])
+          (on-conflict [:did]
+            (do-nothing)))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (7, ?) "
+              "ON CONFLICT (\"did\") "
+              "DO NOTHING")
+         "Redline GmbH"]))
+
+(deftest test-upsert-on-conflict-do-nothing-returning
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 7 :dname "Redline GmbH"}])
+          (on-conflict [:did]
+            (do-nothing))
+          (returning :*))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (7, ?) "
+              "ON CONFLICT (\"did\") "
+              "DO NOTHING "
+              "RETURNING *")
+         "Redline GmbH"]))
+
+(deftest test-upsert-on-conflict-do-update-where
+  (sql= (insert db (as :distributors :d) [:did :dname]
+          (values [{:did 8 :dname "Anvil Distribution"}])
+          (on-conflict [:did]
+            (do-update {:dname '(:|| :EXCLUDED.dname " (formerly " :d.dname ")")})
+            (where '(:<> :d.zipcode "21201"))))
+        [(str "INSERT INTO \"distributors\" AS \"d\" (\"did\", \"dname\") "
+              "VALUES (8, ?) "
+              "ON CONFLICT (\"did\") "
+              "DO UPDATE SET \"dname\" = (EXCLUDED.\"dname\" || ? || \"d\".\"dname\" || ?) "
+              "WHERE (\"d\".\"zipcode\" <> ?)")
+         "Anvil Distribution" " (formerly " ")" "21201"]))
+
+(deftest test-upsert-on-conflict-where-do-nothing
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 10 :dname "Conrad International"}])
+          (on-conflict [:did]
+            (where '(= :is-active true))
+            (do-nothing)))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (10, ?) "
+              "ON CONFLICT (\"did\") "
+              "WHERE (\"is-active\" = ?) DO NOTHING")
+         "Conrad International" true]))
+
+(deftest test-upsert-on-conflict-on-constraint-do-nothing
+  (sql= (insert db :distributors [:did :dname]
+          (values [{:did 9 :dname "Antwerp Design"}])
+          (on-conflict-on-constraint :distributors_pkey
+            (do-nothing)))
+        [(str "INSERT INTO \"distributors\" (\"did\", \"dname\") "
+              "VALUES (9, ?) "
+              "ON CONFLICT ON CONSTRAINT \"distributors_pkey\" "
+              "DO NOTHING")
+         "Antwerp Design"]))
