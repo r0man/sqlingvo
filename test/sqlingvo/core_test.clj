@@ -115,40 +115,6 @@
   (is (= ["COPY \"country\" FROM ?" (.getAbsolutePath (file "country_data"))]
          (sql (copy db :country [] (from (file "country_data")))))))
 
-(deftest test-refresh-materialized-view
-  (sql= (refresh-materialized-view db :order-summary)
-        ["REFRESH MATERIALIZED VIEW \"order-summary\""])
-  (sql= (refresh-materialized-view db :order-summary
-                                   (concurrently true))
-        ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\""])
-  (sql= (refresh-materialized-view db :order-summary
-                                   (with-data true))
-        ["REFRESH MATERIALIZED VIEW \"order-summary\" WITH DATA"])
-  (sql= (refresh-materialized-view db :order-summary
-                                   (with-data false))
-        ["REFRESH MATERIALIZED VIEW \"order-summary\" WITH NO DATA"])
-  (sql= (refresh-materialized-view db :order-summary
-                                   (concurrently true)
-                                   (with-data false))
-        ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\" WITH NO DATA"]))
-
-(deftest test-drop-materialized-view
-  (sql= (drop-materialized-view db :order-summary)
-        ["DROP MATERIALIZED VIEW \"order-summary\""])
-  (sql= (drop-materialized-view db :order-summary
-          (if-exists true))
-        ["DROP MATERIALIZED VIEW IF EXISTS \"order-summary\""])
-  (sql= (drop-materialized-view db :order-summary
-          (cascade true))
-        ["DROP MATERIALIZED VIEW \"order-summary\" CASCADE"])
-  (sql= (drop-materialized-view db :order-summary
-          (restrict true))
-        ["DROP MATERIALIZED VIEW \"order-summary\" RESTRICT"])
-  (sql= (drop-materialized-view db :order-summary
-          (if-exists true)
-          (cascade true))
-        ["DROP MATERIALIZED VIEW IF EXISTS \"order-summary\" CASCADE"]))
-
 (deftest test-sql-placeholder-constant
   (let [db (assoc db :sql-placeholder sql-placeholder-constant)]
     (sql= (select db  [:*]

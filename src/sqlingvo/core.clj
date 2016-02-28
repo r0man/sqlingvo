@@ -457,6 +457,7 @@
 
 (defn refresh-materialized-view
   "Refresh a materialized view."
+  {:style/indent 2}
   [db view & body]
   (let [view (expr/parse-table view)]
     (Stmt. (fn [_]
