@@ -127,7 +127,7 @@
     starting from =$1=, =$2=, etc.
 
     The strategy can be configured with the =:sql-placeholder= entry
-    in a database specification. 
+    in a database specification.
 
     #+BEGIN_SRC clojure :exports code :results silent
       (require '[sqlingvo.util :refer [sql-placeholder-count]])
@@ -350,146 +350,128 @@
 
 *** Insert
 
-    Insert a single row into the table films.
+**** Insert rows
 
-    #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert db :films []
-        (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
-    #+END_SRC
+     Insert rows into the =films= table.
 
-    #+RESULTS:
-    : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)" "T_601" "Yojimbo" "1961-06-16" "Drama"]
-
-    Insert a row into a table and return the inserted records.
-
-    #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert db :films []
-        (values {:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})
-        (returning :*))
-    #+END_SRC
-
-    #+RESULTS:
-    : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?) RETURNING *" "T_601" "Yojimbo" "1961-06-16" "Drama"]
-
-    Insert multiple rows into the table films.
-
-    #+BEGIN_SRC clojure :exports both :results verbatim
+     #+BEGIN_SRC clojure :exports both :results verbatim
       (insert db :films []
         (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
                  {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10" :kind "Comedy"}]))
-    #+END_SRC
+     #+END_SRC
 
-    #+RESULTS:
-    : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
+     #+RESULTS:
+     : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
 
-    Insert a row consisting entirely of default values.
+**** Insert returning rows
 
-    #+BEGIN_SRC clojure :exports both :results verbatim
+     Insert a row into the =films= table and return the inserted records.
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
+       (insert db :films []
+         (values [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}])
+         (returning :*))
+     #+END_SRC
+
+     #+RESULTS:
+     : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?) RETURNING *" "T_601" "Yojimbo" "1961-06-16" "Drama"]
+
+**** Insert default values
+
+     Insert a row consisting entirely of default values.
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
       (insert db :films []
         (values :default))
-    #+END_SRC
+     #+END_SRC
 
-    #+RESULTS:
-    : ["INSERT INTO \"films\" DEFAULT VALUES"]
+     #+RESULTS:
+     : ["INSERT INTO \"films\" DEFAULT VALUES"]
 
-    Insert some rows into table films from a table tmp-films with the same column layout as films.
+**** Insert from a select statement
 
-    #+BEGIN_SRC clojure :exports both :results verbatim
+     Insert rows into the =films= table from the =tmp-films= table
+     with the same column layout as films.
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
       (insert db :films []
         (select db [:*]
           (from :tmp-films)
           (where '(< :date-prod "2004-05-07"))))
-    #+END_SRC
+     #+END_SRC
 
-    #+RESULTS:
-    : ["INSERT INTO \"films\" SELECT * FROM \"tmp-films\" WHERE (\"date-prod\" < ?)" "2004-05-07"]
+     #+RESULTS:
+     : ["INSERT INTO \"films\" SELECT * FROM \"tmp-films\" WHERE (\"date-prod\" < ?)" "2004-05-07"]
 
-    Insert or update new distributors as appropriate. Assumes a unique
-    index has been defined that constrains values appearing in the did
-    column. Note that the special excluded table is used to reference
-    values originally proposed for insertion:
+**** Insert or update rows on conflict
 
-    #+BEGIN_SRC clojure :exports both :results verbatim
+     Insert or update new distributors as appropriate. Assumes a unique
+     index has been defined that constrains values appearing in the did
+     column. Note that the special excluded table is used to reference
+     values originally proposed for insertion:
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
       (insert db :distributors [:did :dname]
         (values [{:did 5 :dname "Gizmo Transglobal"}
                  {:did 6 :dname "Associated Computing, Inc"}])
         (on-conflict [:did]
           (do-update {:dname :EXCLUDED.dname})))
-    #+END_SRC
+     #+END_SRC
 
-    #+RESULTS:
-    : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (5, ?), (6, ?) ON CONFLICT (\"did\") DO UPDATE SET \"dname\" = EXCLUDED.\"dname\"" "Gizmo Transglobal" "Associated Computing, Inc"]
+     #+RESULTS:
+     : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (5, ?), (6, ?) ON CONFLICT (\"did\") DO UPDATE SET \"dname\" = EXCLUDED.\"dname\"" "Gizmo Transglobal" "Associated Computing, Inc"]
 
-    Insert a distributor, or do nothing for rows proposed for
-    insertion when an existing, excluded row (a row with a matching
-    constrained column or columns after before row insert triggers
-    fire) exists. Example assumes a unique index has been defined that
-    constrains values appearing in the did column:
+**** Insert or do nothing on conflict
 
-    #+BEGIN_SRC clojure :exports both :results verbatim
+     Insert a distributor, or do nothing for rows proposed for
+     insertion when an existing, excluded row (a row with a matching
+     constrained column or columns after before row insert triggers
+     fire) exists. Example assumes a unique index has been defined that
+     constrains values appearing in the did column:
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
       (insert db :distributors [:did :dname]
         (values [{:did 7 :dname "Redline GmbH"}])
         (on-conflict [:did]
           (do-nothing)))
-    #+END_SRC
+     #+END_SRC
 
-    #+RESULTS:
-    : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (7, ?) ON CONFLICT (\"did\") DO NOTHING" "Redline GmbH"]
+     #+RESULTS:
+     : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (7, ?) ON CONFLICT (\"did\") DO NOTHING" "Redline GmbH"]
 
-    Don't update existing distributors based in a certain ZIP code.
+**** Insert or update rows on conflict with condition
 
-    #+BEGIN_SRC clojure :exports both :results verbatim
+     Don't update existing distributors based in a certain ZIP code.
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
       (insert db (as :distributors :d) [:did :dname]
         (values [{:did 8 :dname "Anvil Distribution"}])
         (on-conflict [:did]
           (do-update {:dname '(:|| :EXCLUDED.dname " (formerly " :d.dname ")")})
           (where '(:<> :d.zipcode "21201"))))
-    #+END_SRC
+     #+END_SRC
 
-    #+RESULTS:
-    : ["INSERT INTO \"distributors\" AS \"d\" (\"did\", \"dname\") VALUES (8, ?) ON CONFLICT (\"did\") DO UPDATE SET \"dname\" = (EXCLUDED.\"dname\" || ? || \"d\".\"dname\" || ?) WHERE (\"d\".\"zipcode\" <> ?)" "Anvil Distribution" " (formerly " ")" "21201"]
+     #+RESULTS:
+     : ["INSERT INTO \"distributors\" AS \"d\" (\"did\", \"dname\") VALUES (8, ?) ON CONFLICT (\"did\") DO UPDATE SET \"dname\" = (EXCLUDED.\"dname\" || ? || \"d\".\"dname\" || ?) WHERE (\"d\".\"zipcode\" <> ?)" "Anvil Distribution" " (formerly " ")" "21201"]
 
-    Name a constraint directly in the statement. Uses associated index
-    to arbitrate taking the /DO NOTHING/ action.
+**** Insert or do nothing by constraint
 
-    #+BEGIN_SRC clojure :exports both :results verbatim
+     Name a constraint directly in the statement. Uses associated index
+     to arbitrate taking the /DO NOTHING/ action.
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
       (insert db :distributors [:did :dname]
         (values [{:did 9 :dname "Antwerp Design"}])
         (on-conflict-on-constraint :distributors_pkey
           (do-nothing)))
-    #+END_SRC
+     #+END_SRC
 
-    #+RESULTS:
-    : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (9, ?) ON CONFLICT ON CONSTRAINT \"distributors_pkey\" DO NOTHING" "Antwerp Design"]
+     #+RESULTS:
+     : ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (9, ?) ON CONFLICT ON CONSTRAINT \"distributors_pkey\" DO NOTHING" "Antwerp Design"]
 
 *** Join
 
-    Join the weathers table with the cities table.
-
-    #+BEGIN_SRC clojure :exports both :results verbatim
-      (select db [:*]
-        (from :weather)
-        (join :cities '(on (= :weather.city :cities.name))))
-    #+END_SRC
-
-    #+RESULTS:
-    : ["SELECT * FROM \"weather\" JOIN \"cities\" ON (\"weather\".\"city\" = \"cities\".\"name\")"]
-
-    The type of join can be given as the last keyword argument.
-
-    #+BEGIN_SRC clojure :exports both :results verbatim
-      (select db [:*]
-        (from :weather)
-        (join :cities '(on (= :weather.city :cities.name)) :type :inner))
-    #+END_SRC
-
-    #+RESULTS:
-    : ["SELECT * FROM \"weather\" INNER JOIN \"cities\" ON (\"weather\".\"city\" = \"cities\".\"name\")"]
-
-    The short hand version of the /JOIN/ statement above can also be
-    written like this. Note that the arguments are flipped here,
-    =:cities.name= comes first, because the table from the first
-    column is used as the /JOIN/ table.
+    Join the =weathers= table with the =cities= table.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
       (select db [:*]
@@ -499,6 +481,30 @@
 
     #+RESULTS:
     : ["SELECT * FROM \"weather\" JOIN \"cities\" ON (\"cities\".\"name\" = \"weather\".\"city\")"]
+
+    The code above is a common use case and is syntactic sugar the
+    following code. Use this version if you want to join on an
+    arbitrary SQL expression.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:*]
+        (from :weather)
+        (join :cities '(on (= :cities.name :weather.city))))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"weather\" JOIN \"cities\" ON (\"cities\".\"name\" = \"weather\".\"city\")"]
+
+    The type of join can be given as a keyword argument.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:*]
+        (from :weather)
+        (join :cities '(on (= :cities.name :weather.city)) :type :inner))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"weather\" INNER JOIN \"cities\" ON (\"cities\".\"name\" = \"weather\".\"city\")"]
 
 *** Select
 
@@ -621,7 +627,7 @@
     #+RESULTS:
     : ["WITH \"regional-sales\" AS (SELECT \"region\", \"sum\"(\"amount\") AS \"total-sales\" FROM \"orders\" GROUP BY \"region\"), \"top-regions\" AS (SELECT \"region\" FROM \"regional-sales\" WHERE (\"total-sales\" > (SELECT (\"sum\"(\"total-sales\") / 10) FROM \"regional-sales\"))) SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product-units\", \"sum\"(\"amount\") AS \"product-sales\" FROM \"orders\" WHERE \"region\" IN (SELECT \"region\" FROM \"top-regions\") GROUP BY \"region\", \"product\""]
 
-   For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
+    For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
 
 ** License
 
