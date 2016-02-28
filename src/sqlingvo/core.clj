@@ -531,7 +531,7 @@
 
   (truncate db [:continents :countries])
   ;=> [\"TRUNCATE TABLE \\\"continents\\\", \\\"countries\\\"\"]"
-  {:style/indent 1}
+  {:style/indent 2}
   [db tables & body]
   (let [tables (map expr/parse-table tables)]
     (Stmt. (fn [_]

@@ -8,14 +8,7 @@
             [sqlingvo.expr :refer :all]
             [sqlingvo.util :refer :all]
             [clojure.string :as str]
-            [sqlingvo.test :refer [sql=]]))
-
-(def db (db/postgresql))
-
-(defmacro with-stmt [sql forms & body]
-  `(let [[result# ~'stmt] (~forms {})]
-     (is (= ~sql (sqlingvo.core/sql ~'stmt)))
-     ~@body))
+            [sqlingvo.test :refer [db sql= with-stmt]]))
 
 (deftest test-from
   (let [[from stmt] ((from :continents) {})]
@@ -1285,94 +1278,6 @@
   (with-stmt
     ["SELECT \"continents\".\"id\" FROM \"continents\""]
     (select db [:continents.id] (from :continents))))
-
-;; TRUNCATE
-
-(deftest test-truncate-continents
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\""]
-    (truncate db [:continents])
-    (is (= :truncate (:op stmt)))
-    (is (= [(parse-table :continents)] (:tables stmt)))
-    (is (= [:tables] (:children stmt)))))
-
-(deftest test-truncate-continents-and-countries
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\", \"countries\""]
-    (truncate db [:continents :countries])
-    (is (= :truncate (:op stmt)))
-    (is (= (map parse-table [:continents :countries]) (:tables stmt)))
-    (is (= [:tables] (:children stmt)))))
-
-(deftest test-truncate-continents-restart-restrict
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\" RESTART IDENTITY RESTRICT"]
-    (truncate db [:continents]
-              (restart-identity true)
-              (restrict true))
-    (is (= :truncate (:op stmt)))
-    (is (= [(parse-table :continents)] (:tables stmt)))
-    (is (= {:op :restrict} (:restrict stmt)))
-    (is (= {:op :restart-identity} (:restart-identity stmt)))))
-
-(deftest test-truncate-continents-continue-cascade
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\" CONTINUE IDENTITY CASCADE"]
-    (truncate db [:continents]
-              (continue-identity true)
-              (cascade true))
-    (is (= :truncate (:op stmt)))
-    (is (= [(parse-table :continents)] (:tables stmt)))
-    (is (= {:op :cascade} (:cascade stmt)))
-    (is (= {:op :continue-identity} (:continue-identity stmt)))))
-
-(deftest test-truncate-continue-identity
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\" CONTINUE IDENTITY"]
-    (truncate db [:continents]
-              (continue-identity true))))
-
-(deftest test-truncate-continue-identity-false
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\""]
-    (truncate db [:continents]
-              (continue-identity false))))
-
-(deftest test-truncate-cascade-true
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\" CASCADE"]
-    (truncate db [:continents]
-              (cascade true))))
-
-(deftest test-truncate-cascade-false
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\""]
-    (truncate db [:continents]
-              (cascade false))))
-
-(deftest test-truncate-restart-identity
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\" RESTART IDENTITY"]
-    (truncate db [:continents]
-              (restart-identity true))))
-
-(deftest test-truncate-restart-identity-false
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\""]
-    (truncate db [:continents]
-              (restart-identity false))))
-
-(deftest test-truncate-restrict
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\""]
-    (truncate db [:continents]
-              (restrict false))))
-
-(deftest test-truncate-restrict-false
-  (with-stmt
-    ["TRUNCATE TABLE \"continents\""]
-    (truncate db [:continents]
-              (restrict false))))
 
 ;; UPDATE
 
