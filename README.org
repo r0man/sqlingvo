@@ -3,19 +3,18 @@
   #+LANGUAGE: en
 
   A [[https://clojure.org][Clojure]] /DSL/ to build /SQL/ statements that are compatible with
-  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]] and [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] libraries.
+  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and [[https://github.com/alaisi/postgres.async][postgres.async]] libraries.
 
   [[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
   [[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
   [[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
   [[https://clojars.org/sqlingvo][https://img.shields.io/clojars/v/sqlingvo.svg]]
 
-  This library is designed to be used with
-  [[http://www.postgresql.org/][PostgreSQL]]. If you are not using
-  vendor specific features you might be lucky and be able to use it
-  with other databases as well.
-
   [[https://imgs.xkcd.com/comics/query.png]]
+
+  This library is designed to be used with [[http://www.postgresql.org/][PostgreSQL]]. If you are not
+  using vendor specific features you might be lucky and be able to use
+  it with other databases as well.
 
 ** Usage
 
