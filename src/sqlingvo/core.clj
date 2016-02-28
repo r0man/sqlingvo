@@ -44,7 +44,7 @@
   [expr] (assoc (expr/parse-expr expr) :direction :asc))
 
 (defn cascade
-  "Returns a fn that adds a CASCADE clause to an SQL statement."
+  "Add a CASCADE clause to an SQL statement."
   [condition]
   (util/conditional-clause :cascade condition))
 
@@ -61,7 +61,7 @@
                                 :table (:name stmt))))])))
 
 (defn continue-identity
-  "Returns a fn that adds a CONTINUE IDENTITY clause to an SQL statement."
+  "Add a CONTINUE IDENTITY clause to an SQL statement."
   [condition]
   (util/conditional-clause :continue-identity condition))
 
@@ -105,12 +105,12 @@
    :on (expr/parse-exprs on)))
 
 (defn delimiter
-  "Returns a fn that adds a DELIMITER clause to an SQL statement."
+  "Add a DELIMITER clause to an SQL statement."
   [delimiter]
   (util/set-val :delimiter delimiter))
 
 (defn encoding
-  "Returns a fn that adds a ENCODING clause to an SQL statement."
+  "Add a ENCODING clause to an SQL statement."
   [encoding]
   (util/set-val :encoding encoding))
 
@@ -130,13 +130,11 @@
   (explain db
     (select db [:*]
       (from :foo)))
-  ;=> [\"EXPLAIN SELECT * FROM \\\"foo\\\"\"]
-
+  
   (explain db
     (select db [:*]
       (from :foo))
     {:analyze true})
-  ;=> [\"EXPLAIN (ANALYZE TRUE) SELECT * FROM \\\"foo\\\"\"]
   "
   {:style/indent 1}
   [db stmt & [opts]]
@@ -149,17 +147,16 @@
                :opts opts)])))
 
 (defn copy
-  "Returns a fn that builds a COPY statement.
+  "Build a COPY statement.
 
   Examples:
 
   (copy db :country []
     (from :stdin))
-  ;=> [\"COPY \\\"country\\\" FROM STDIN\"]
 
   (copy db :country []
     (from \"/usr1/proj/bray/sql/country_data\"))
-  ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]"
+  "
   {:style/indent 3}
   [db table columns & body]
   (let [table (expr/parse-table table)
@@ -174,7 +171,7 @@
                :columns columns))))))
 
 (defn create-table
-  "Returns a fn that builds a CREATE TABLE statement."
+  "Build a CREATE TABLE statement."
   {:style/indent 2}
   [db table & body]
   (let [table (expr/parse-table table)]
@@ -187,16 +184,15 @@
                :table table))))))
 
 (defn delete
-  "Returns a fn that builds a DELETE statement.
+  "Build a DELETE statement.
 
   Examples:
 
   (delete db :continents)
-  ;=> [\"DELETE FROM \\\"continents\\\"\"]
 
   (delete db :continents
     (where '(= :id 1)))
-  ;=> [\"DELETE FROM \\\"continents\\\" WHERE (\\\"id\\\" = 1)\"]"
+  "
   {:style/indent 2}
   [db table & body]
   (let [table (expr/parse-table table)]
@@ -209,15 +205,14 @@
                :table table))))))
 
 (defn drop-table
-  "Returns a fn that builds a DROP TABLE statement.
+  "Build a DROP TABLE statement.
 
   Examples:
 
   (drop-table db [:continents])
-  ;=> [\"DROP TABLE TABLE \\\"continents\\\"\"]
 
   (drop-table db [:continents :countries])
-  ;=> [\"DROP TABLE TABLE \\\"continents\\\", \\\"countries\\\"\"]"
+  "
   {:style/indent 2}
   [db tables & body]
   (let [tables (map expr/parse-table tables)]
@@ -242,52 +237,44 @@
                    opts)]))))
 
 (defn except
-  "Returns a SQL EXCEPT statement.
+  "Build an EXCEPT statement.
 
    Examples:
 
    (except
     (select db [1])
     (select db [2]))
-   ;=> [\"SELECT 1 EXCEPT SELECT 2\"]
 
    (except
     {:all true}
     (select db [1])
     (select db [2]))
-   ;=> [\"SELECT 1 EXCEPT ALL SELECT 2\"]"
+"
   [& args]
   (make-set-op :except args))
 
 (defn from
-  "Returns a fn that adds a FROM clause to an SQL statement. The
-  `from` forms can be one or more tables, :stdin, a filename or an
-  other sub query.
+  "Add a FROM clause to an SQL statement. The `from` forms can be one
+  or more tables, :stdin, a filename or an other sub query.
 
   Examples:
 
   (select db [:*]
     (from :continents))
-  ;=> [\"SELECT * FROM \\\"continents\\\"\"]
 
   (select db [:*]
     (from :continents :countries)
     (where '(= :continents.id :continent-id)))
-  ;=> [\"SELECT * FROM \\\"continents\\\", \\\"countries\\\"
-  ;=>  WHERE (\\\"continents\\\".\\\"id\\\" = \\\"continent_id\\\")\"]
 
   (select db [:*]
     (from (as (select [1 2 3]) :x)))
-  ;=> [\"SELECT * FROM (SELECT 1, 2, 3) AS \\\"x\\\"\"]
 
   (copy db :country []
     (from :stdin))
-  ;=> [\"COPY \\\"country\\\" FROM STDIN\"]
 
   (copy db :country []
     (from \"/usr1/proj/bray/sql/country_data\"))
-  ;=> [\"COPY \\\"country\\\" FROM ?\" \"/usr1/proj/bray/sql/country_data\"]
-  "
+"
   [& from]
   (fn [stmt]
     (let [from (case (:op stmt)
@@ -296,29 +283,29 @@
       [from (update-in stmt [:from] #(concat %1 from))])))
 
 (defn group-by
-  "Returns a fn that adds a GROUP BY clause to an SQL statement."
+  "Add a GROUP BY clause to an SQL statement."
   [& exprs]
   (util/concat-in [:group-by] (expr/parse-exprs exprs)))
 
 (defn if-exists
-  "Returns a fn that adds a IF EXISTS clause to an SQL statement."
+  "Add a IF EXISTS clause to an SQL statement."
   [condition]
   (util/conditional-clause :if-exists condition))
 
 (defn if-not-exists
-  "Returns a fn that adds a IF EXISTS clause to an SQL statement."
+  "Add a IF EXISTS clause to an SQL statement."
   [condition]
   (util/conditional-clause :if-not-exists condition))
 
 (defn inherits
-  "Returns a fn that adds an INHERITS clause to an SQL statement."
+  "Add an INHERITS clause to an SQL statement."
   [& tables]
   (let [tables (map expr/parse-table tables)]
     (fn [stmt]
       [tables (assoc stmt :inherits tables)])))
 
 (defn insert
-  "Returns a fn that builds a INSERT statement."
+  "Build a INSERT statement."
   {:style/indent 3}
   [db table columns & body]
   (let [table (expr/parse-table table)
@@ -333,25 +320,39 @@
                :columns columns))))))
 
 (defn intersect
-  "Returns a SQL INTERSECT statement.
+  "Build an INTERSECT statement.
 
    Examples:
 
    (intersect
     (select db [1])
     (select db [2]))
-   ;=> [\"SELECT 1 INTERSECT SELECT 2\"]
 
    (intersect
     {:all true}
     (select db [1])
     (select db [2]))
-   ;=> [\"SELECT 1 INTERSECT ALL SELECT 2\"]"
+"
   [& args]
   (make-set-op :intersect args))
 
 (defn join
-  "Returns a fn that adds a JOIN clause to an SQL statement."
+  "Add a JOIN clause to a statement.
+
+  Examples:
+
+  (select db [:*]
+    (from :countries)
+    (join :continents '(using :id)))
+
+  (select db [:*]
+    (from :continents)
+    (join :countries.continent-id :continents.id))
+
+  (select db [:*]
+    (from :countries)
+    (join :continents '(on (= :continents.id :countries.continent-id))))
+  "
   [from condition & {:keys [type outer pk]}]
   (util/concat-in
    [:joins]
@@ -378,14 +379,14 @@
         :else (throw (ex-info "Invalid JOIN condition." {:condition condition}))))]))
 
 (defn like
-  "Returns a fn that adds a LIKE clause to an SQL statement."
+  "Add a LIKE clause to an SQL statement."
   [table & {:as opts}]
   (let [table (expr/parse-table table)
         like (assoc opts :op :like :table table)]
     (util/set-val :like like)))
 
 (defn limit
-  "Returns a fn that adds a LIMIT clause to an SQL statement."
+  "Add a LIMIT clause to an SQL statement."
   [count]
   (util/assoc-op :limit :count count))
 
@@ -422,28 +423,33 @@
              [_ (assoc stmt :on-conflict-on-constraint node)]))))
 
 (defn offset
-  "Returns a fn that adds a OFFSET clause to an SQL statement."
+  "Add a OFFSET clause to an SQL statement."
   [start]
   (util/assoc-op :offset :start start))
 
 (defn order-by
-  "Returns a fn that adds a ORDER BY clause to an SQL statement."
+  "Add a ORDER BY clause to an SQL statement."
   [& exprs]
   (util/concat-in [:order-by] (expr/parse-exprs exprs)))
 
 (defn window
-  "Returns a fn that adds a WINDOW clause to an SQL statement."
+  "Add a WINDOW clause to an SQL statement."
   [& exprs]
   (util/assoc-op :window :definitions (expr/parse-exprs exprs)))
 
 (defn primary-key
-  "Returns a fn that adds the primary key to a table."
+  "Add a PRIMARY KEY clause to a table."
   [& keys]
   (fn [stmt]
     [nil (assoc stmt :primary-key keys)]))
 
 (defn drop-materialized-view
-  "Drop a materialized view."
+  "Build a DROP MATERIALIZED VIEW statement.
+
+  Examples:
+
+  (drop-materialized-view db :order-summary)
+  "
   {:style/indent 2}
   [db view & body]
   (let [view (expr/parse-table view)]
@@ -456,7 +462,12 @@
                :view view))))))
 
 (defn refresh-materialized-view
-  "Refresh a materialized view."
+  "Build a REFRESH MATERIALIZED VIEW statement.
+
+  Examples:
+
+  (refresh-materialized-view db :order-summary)
+  "
   {:style/indent 2}
   [db view & body]
   (let [view (expr/parse-table view)]
@@ -469,35 +480,45 @@
                :view view))))))
 
 (defn restart-identity
-  "Returns a fn that adds a RESTART IDENTITY clause to an SQL statement."
+  "Add a RESTART IDENTITY clause to an SQL statement."
   [condition]
   (util/conditional-clause :restart-identity condition))
 
 (defn restrict
-  "Returns a fn that adds a RESTRICT clause to an SQL statement."
+  "Add a RESTRICT clause to an SQL statement."
   [condition]
   (util/conditional-clause :restrict condition))
 
 (defn returning
-  "Returns a fn that adds a RETURNING clause to an SQL statement."
+  "Add a RETURNING clause to an SQL statement.
+
+  Examples:
+
+  (insert db :distributors []
+    (values [{:did 106 :dname \"XYZ Widgets\"}])
+    (returning :*))
+
+  (update db :films
+    {:kind \"Dramatic\"}
+    (where '(= :kind \"Drama\"))
+    (returning :*))
+  "
   [& exprs]
   (util/concat-in [:returning] (expr/parse-exprs exprs)))
 
 (defn select
-  "Returns a fn that builds a SELECT statement.
+  "Build a SELECT statement.
 
   Examples:
 
   (select db [1])
-  ;=> [\"SELECT 1\"]
 
   (select db [:*]
     (from :continents))
-  ;=> [\"SELECT * FROM \\\"continents\\\"\"]
 
   (select db [:id :name]
     (from :continents))
-  ;=> [\"SELECT \\\"id\\\", \\\"name\\\" FROM \\\"continents\\\"\"]"
+  "
   {:style/indent 2}
   [db exprs & body]
   (let [[_ select]
@@ -518,20 +539,19 @@
                   (repeat 2))))))
 
 (defn temporary
-  "Returns a fn that adds a TEMPORARY clause to an SQL statement."
+  "Add a TEMPORARY clause to an SQL statement."
   [condition]
   (util/conditional-clause :temporary condition))
 
 (defn truncate
-  "Returns a fn that builds a TRUNCATE statement.
+  "Build a TRUNCATE statement.
 
   Examples:
 
   (truncate db [:continents])
-  ;=> [\"TRUNCATE TABLE \\\"continents\\\"\"]
 
   (truncate db [:continents :countries])
-  ;=> [\"TRUNCATE TABLE \\\"continents\\\", \\\"countries\\\"\"]"
+  "
   {:style/indent 2}
   [db tables & body]
   (let [tables (map expr/parse-table tables)]
@@ -544,32 +564,30 @@
                :tables tables))))))
 
 (defn union
-  "Returns a SQL UNION statement.
+  "Build a UNION statement.
 
    Examples:
 
    (union
     (select db [1])
     (select db [2]))
-   ;=> [\"SELECT 1 UNION SELECT 2\"]
 
    (union
     {:all true}
     (select db [1])
     (select db [2]))
-   ;=> [\"SELECT 1 UNION ALL SELECT 2\"]"
+"
   [& args]
   (make-set-op :union args))
 
 (defn update
-  "Returns a fn that builds a UPDATE statement.
+  "Build a UPDATE statement.
 
   Examples:
 
   (update db :films {:kind \"Dramatic\"}
     (where '(= :kind \"Drama\")))
-  ;=> [\"UPDATE \\\"films\\\" SET \\\"kind\\\" = ? WHERE (\\\"kind\\\" = ?)\"
-  ;=>  \"Dramatic\" \"Drama\"]"
+"
   {:style/indent 2}
   [db table row & body]
   (let [table (expr/parse-table table)
@@ -586,14 +604,33 @@
                :row row))))))
 
 (defn values
-  "Returns a fn that adds a VALUES clause to an SQL statement."
+  "Add a VALUES clause to an SQL statement.
+
+  Examples:
+
+  (insert db :distributors []
+    (values [{:did 106 :dname \"XYZ Widgets\"}]))
+"
   [values]
   (if (= :default values)
     (util/set-val :default-values true)
     (util/concat-in [:values] (map expr/parse-map-expr (util/sequential values)))))
 
 (defn where
-  "Returns a fn that adds a WHERE clause to an SQL statement."
+  "Add a WHERE clause to an SQL statement.
+
+  Examples:
+
+  (select db [1]
+    (where '(in 1 (1 2 3))))
+
+  (select db [*]
+    (from :continents)
+    (where '(= :name \"Europe\")))
+
+  (delete db :continents
+    (where '(= :id 1)))
+"
   [condition & [combine]]
   (let [condition (expr/parse-condition condition)]
     (fn [stmt]
@@ -615,7 +652,7 @@
                                   (:condition condition)])))]))))
 
 (defn with
-  "Returns a fn that builds a WITH (common table expressions) query."
+  "Build a WITH (common table expressions) query."
   {:style/indent 2}
   [db bindings query]
   (assert (even? (count bindings)) "The WITH bindings must be even.")
