@@ -8,16 +8,14 @@
   [[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
   [[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
   [[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
+  [[https://clojars.org/sqlingvo][https://img.shields.io/clojars/v/sqlingvo.svg]]
 
-  [[http://imgs.xkcd.com/comics/exploits_of_a_mom.png]]
+  This library is designed to be used with
+  [[http://www.postgresql.org/][PostgreSQL]]. If you are not using
+  vendor specific features you might be lucky and be able to use it
+  with other databases as well.
 
-  This library is designed to be used with [[http://www.postgresql.org/][PostgreSQL]]. If you are not
-  using vendor specific features you might be lucky and be able to use
-  it with other databases as well.
-
-** Installation
-
-   [[https://clojars.org/sqlingvo][https://clojars.org/sqlingvo/latest-version.svg]]
+  [[https://imgs.xkcd.com/comics/query.png]]
 
 ** Usage
 
