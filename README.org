@@ -2,13 +2,13 @@
   #+author: r0man
   #+LANGUAGE: en
 
-  A [[https://clojure.org][Clojure]] /DSL/ to build /SQL/ statements that are compatible with
-  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and [[https://github.com/alaisi/postgres.async][postgres.async]] libraries.
-
   [[https://clojars.org/sqlingvo][https://img.shields.io/clojars/v/sqlingvo.svg]]
   [[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
   [[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
   [[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
+
+  A [[https://clojure.org][Clojure]] /DSL/ to build /SQL/ statements that are compatible with
+  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and [[https://github.com/alaisi/postgres.async][postgres.async]] libraries.
 
   [[https://imgs.xkcd.com/comics/query.png]]
 
