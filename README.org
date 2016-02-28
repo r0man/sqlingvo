@@ -482,9 +482,9 @@
     #+RESULTS:
     : ["SELECT * FROM \"weather\" JOIN \"cities\" ON (\"cities\".\"name\" = \"weather\".\"city\")"]
 
-    The code above is a common use case and is syntactic sugar the
-    following code. Use this version if you want to join on an
-    arbitrary SQL expression.
+    The code above is a common use case and is syntactic sugar for the
+    following. Use this version if you want to join on an arbitrary
+    SQL expression.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
       (select db [:*]
