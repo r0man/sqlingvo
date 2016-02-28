@@ -8,13 +8,12 @@
   [[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
 
   A [[https://clojure.org][Clojure]] /DSL/ to build /SQL/ statements that are compatible with
-  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and [[https://github.com/alaisi/postgres.async][postgres.async]] libraries.
-
+  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and [[https://github.com/alaisi/postgres.async][postgres.async]]
+  libraries. This library is designed to be used with [[http://www.postgresql.org/][PostgreSQL]]. If
+  you are not using vendor specific features you might be lucky and be
+  able to use it with other databases as well.
+ 
   [[https://imgs.xkcd.com/comics/query.png]]
-
-  This library is designed to be used with [[http://www.postgresql.org/][PostgreSQL]]. If you are not
-  using vendor specific features you might be lucky and be able to use
-  it with other databases as well.
 
 ** Usage
 
