@@ -13,10 +13,11 @@
  [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]],
  [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and
  [[https://github.com/alaisi/postgres.async][postgres.async]]
- libraries. This library is designed to be used with
- [[http://www.postgresql.org/][PostgreSQL]]. That said, if you can
- avoid /PostgreSQL/ specific features you might be lucky and may be
- able to use it with other databases as well.
+ libraries. /SQLingvo/ is designed for the
+ [[http://www.postgresql.org/][PostgreSQL]] database management
+ system. That said, if you can avoid /PostgreSQL/ specific features
+ you might be lucky and may be able to use it with other databases as
+ well.
  
   [[https://xkcd.com/1409][https://imgs.xkcd.com/comics/query.png]]
 
