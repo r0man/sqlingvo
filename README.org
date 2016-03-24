@@ -7,18 +7,14 @@
   [[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
   [[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
 
-  /SQLingvo/ is a [[https://clojure.org][Clojure]] /DSL/ that can help
- you build /SQL/ statements programmatically. The resulting /SQL/
- statements are compatible with the
- [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]],
- [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and
- [[https://github.com/alaisi/postgres.async][postgres.async]]
- libraries. /SQLingvo/ is designed for the
- [[http://www.postgresql.org/][PostgreSQL]] database management
- system. That said, if you can avoid /PostgreSQL/ specific features
- you might be lucky and may be able to use it with other databases as
- well.
- 
+  /SQLingvo/ is a [[https://clojure.org][Clojure]] /DSL/ that can help you build /SQL/
+  statements programmatically. The resulting /SQL/ statements are
+  compatible with the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and
+  [[https://github.com/alaisi/postgres.async][postgres.async]] libraries. /SQLingvo/ is designed for the [[http://www.postgresql.org/][PostgreSQL]]
+  database management system. That said, if you can avoid /PostgreSQL/
+  specific features you might be lucky and may be able to use it with
+  other databases as well.
+
   [[https://xkcd.com/1409][https://imgs.xkcd.com/comics/query.png]]
 
 ** Usage
@@ -190,7 +186,7 @@
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT * FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
+   : ["SELECT \"id\", \"name\" FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
 
    Those vectors could be fed to the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]] and
    [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] libraries to actually execute a statement.
