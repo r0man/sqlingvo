@@ -6,6 +6,21 @@
             [sqlingvo.util :refer :all]
             [sqlingvo.test :refer [db sql= with-stmt]]))
 
+(deftest test-column
+  (are [column expected]
+      (= (ast column) expected)
+    (column :id :serial :primary-key? true)
+    {:columns [:id]
+     :column
+     {:id
+      {:schema nil
+       :table nil
+       :primary-key? true
+       :default nil
+       :name :id
+       :type :serial
+       :op :column}}}))
+
 (deftest test-from
   (let [[from stmt] ((from :continents) {})]
     (is (= [{:op :table :children [:name] :name :continents}] from))

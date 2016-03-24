@@ -54,7 +54,7 @@
   (let [column (assoc options :op :column :name name :type type)
         column (update-in column [:default] #(if %1 (expr/parse-expr %1)))]
     (fn [stmt]
-      [nil (-> (update-in stmt [:columns] #(concat %1 [(:name column)]))
+      [nil (-> (update-in stmt [:columns] #(vec (concat %1 [(:name column)])))
                (assoc-in [:column (:name column)]
                          (assoc column
                                 :schema (:schema stmt)
