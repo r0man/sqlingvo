@@ -600,6 +600,8 @@
         (concat-sql " WHERE " (compile-sql db where)))
       (if-not (empty? group-by)
         (concat-sql " GROUP BY " (compile-sql-join db ", " group-by)))
+      (when-let [having (:having node)]
+        (concat-sql " HAVING " (compile-sql db having)))
       (when-let [window (:window node)]
         (concat-sql " " (compile-sql db window)))
       (if-not (empty? order-by)

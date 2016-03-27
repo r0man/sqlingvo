@@ -130,12 +130,11 @@
   (explain db
     (select db [:*]
       (from :foo)))
-  
+
   (explain db
     (select db [:*]
       (from :foo))
-    {:analyze true})
-  "
+    {:analyze true})"
   {:style/indent 1}
   [db stmt & [opts]]
   (Stmt. (fn [_]
@@ -155,8 +154,7 @@
     (from :stdin))
 
   (copy db :country []
-    (from \"/usr1/proj/bray/sql/country_data\"))
-  "
+    (from \"/usr1/proj/bray/sql/country_data\"))"
   {:style/indent 3}
   [db table columns & body]
   (let [table (expr/parse-table table)
@@ -191,8 +189,7 @@
   (delete db :continents)
 
   (delete db :continents
-    (where '(= :id 1)))
-  "
+    (where '(= :id 1)))"
   {:style/indent 2}
   [db table & body]
   (let [table (expr/parse-table table)]
@@ -211,8 +208,7 @@
 
   (drop-table db [:continents])
 
-  (drop-table db [:continents :countries])
-  "
+  (drop-table db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
   (let [tables (map expr/parse-table tables)]
@@ -248,8 +244,7 @@
    (except
     {:all true}
     (select db [1])
-    (select db [2]))
-"
+    (select db [2]))"
   [& args]
   (make-set-op :except args))
 
@@ -273,8 +268,7 @@
     (from :stdin))
 
   (copy db :country []
-    (from \"/usr1/proj/bray/sql/country_data\"))
-"
+    (from \"/usr1/proj/bray/sql/country_data\"))"
   [& from]
   (fn [stmt]
     (let [from (case (:op stmt)
@@ -286,6 +280,18 @@
   "Add a GROUP BY clause to an SQL statement."
   [& exprs]
   (util/concat-in [:group-by] (expr/parse-exprs exprs)))
+
+(defn having
+  "Add a HAVING clause to an SQL statement.
+
+  Examples:
+
+  (select db [:city '(max :temp-lo)]
+    (from :weather)
+    (group-by :city)
+    (having '(< (max :temp-lo) 40)))"
+  [condition & [combine]]
+  (util/build-condition :having condition combine))
 
 (defn if-exists
   "Add a IF EXISTS clause to an SQL statement."
@@ -331,8 +337,7 @@
    (intersect
     {:all true}
     (select db [1])
-    (select db [2]))
-"
+    (select db [2]))"
   [& args]
   (make-set-op :intersect args))
 
@@ -351,8 +356,7 @@
 
   (select db [:*]
     (from :countries)
-    (join :continents '(on (= :continents.id :countries.continent-id))))
-  "
+    (join :continents '(on (= :continents.id :countries.continent-id))))"
   [from condition & {:keys [type outer pk]}]
   (util/concat-in
    [:joins]
@@ -448,8 +452,7 @@
 
   Examples:
 
-  (drop-materialized-view db :order-summary)
-  "
+  (drop-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
   (let [view (expr/parse-table view)]
@@ -466,8 +469,7 @@
 
   Examples:
 
-  (refresh-materialized-view db :order-summary)
-  "
+  (refresh-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
   (let [view (expr/parse-table view)]
@@ -501,8 +503,7 @@
   (update db :films
     {:kind \"Dramatic\"}
     (where '(= :kind \"Drama\"))
-    (returning :*))
-  "
+    (returning :*))"
   [& exprs]
   (util/concat-in [:returning] (expr/parse-exprs exprs)))
 
@@ -517,8 +518,7 @@
     (from :continents))
 
   (select db [:id :name]
-    (from :continents))
-  "
+    (from :continents))"
   {:style/indent 2}
   [db exprs & body]
   (let [[_ select]
@@ -550,8 +550,7 @@
 
   (truncate db [:continents])
 
-  (truncate db [:continents :countries])
-  "
+  (truncate db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
   (let [tables (map expr/parse-table tables)]
@@ -575,8 +574,7 @@
    (union
     {:all true}
     (select db [1])
-    (select db [2]))
-"
+    (select db [2]))"
   [& args]
   (make-set-op :union args))
 
@@ -586,8 +584,7 @@
   Examples:
 
   (update db :films {:kind \"Dramatic\"}
-    (where '(= :kind \"Drama\")))
-"
+    (where '(= :kind \"Drama\")))"
   {:style/indent 2}
   [db table row & body]
   (let [table (expr/parse-table table)
@@ -609,8 +606,7 @@
   Examples:
 
   (insert db :distributors []
-    (values [{:did 106 :dname \"XYZ Widgets\"}]))
-"
+    (values [{:did 106 :dname \"XYZ Widgets\"}]))"
   [values]
   (if (= :default values)
     (util/set-val :default-values true)
@@ -629,27 +625,9 @@
     (where '(= :name \"Europe\")))
 
   (delete db :continents
-    (where '(= :id 1)))
-"
+    (where '(= :id 1)))"
   [condition & [combine]]
-  (let [condition (expr/parse-condition condition)]
-    (fn [stmt]
-      (cond
-        (or (nil? combine)
-            (nil? (:condition (:where stmt))))
-        [nil (assoc stmt :where condition)]
-        :else
-        [nil (assoc-in
-              stmt [:where :condition]
-              (expr/make-node
-               :op :condition
-               :children [:condition]
-               :condition (expr/make-node
-                           :op :fn
-                           :children [:name :args]
-                           :name combine
-                           :args [(:condition (:where stmt))
-                                  (:condition condition)])))]))))
+  (util/build-condition :where condition combine))
 
 (defn with
   "Build a WITH (common table expressions) query."
