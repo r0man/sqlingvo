@@ -1,5 +1,6 @@
 (ns sqlingvo.util
-  (:require [clojure.string :refer [join replace split]])
+  (:require [clojure.string :refer [join replace split]]
+            [sqlingvo.expr :as expr])
   (:refer-clojure :exclude [replace]))
 
 (def ^:dynamic *reserved*
@@ -33,6 +34,29 @@
 
 (defn assoc-op [op & {:as opts}]
   (set-val op (assoc opts :op op)))
+
+(defn build-condition
+  "Helper to build WHERE and HAVING conditions."
+  [condition-type condition & [combine]]
+  (let [condition (expr/parse-condition condition)]
+    (fn [stmt]
+      (cond
+        (or (nil? combine)
+            (nil? (:condition (condition-type stmt))))
+        [nil (assoc stmt condition-type condition)]
+        :else
+        [nil (assoc-in
+              stmt [condition-type :condition]
+              (expr/make-node
+               :op :condition
+               :children [:condition]
+               :condition
+               (expr/make-node
+                :op :fn
+                :children [:name :args]
+                :name combine
+                :args [(:condition (condition-type stmt))
+                       (:condition condition)])))]))))
 
 (defn concat-in [ks coll]
   (fn [stmt]

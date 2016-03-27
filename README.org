@@ -596,6 +596,20 @@
     #+RESULTS:
     : ["SELECT \"a\", \"max\"(\"b\") FROM \"table-1\" GROUP BY \"a\" ORDER BY 1"]
 
+*** Having clause
+
+    Groups can be restricted via a /HAVING/ clause.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:city '(max :temp-lo)]
+        (from :weather)
+        (group-by :city)
+        (having '(< (max :temp-lo) 40)))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT \"city\", \"max\"(\"temp-lo\") FROM \"weather\" GROUP BY \"city\" HAVING (\"max\"(\"temp-lo\") < 40)"]
+
 *** With Queries / Common table expressions
 
     You can compose more complex /SQL/ statements with common table
