@@ -50,8 +50,8 @@
 
 (deftest test-delete-quotes
   (with-stmt
-    [(str "DELETE FROM \"quotes\" WHERE ((\"company-id\" = 1) and (\"date\" > (SELECT \"min\"(\"date\") FROM \"import\")) and "
-          "(\"date\" > (SELECT \"max\"(\"date\") FROM \"import\")))")]
+    [(str "DELETE FROM \"quotes\" WHERE ((\"company-id\" = 1) and (\"date\" > (SELECT min(\"date\") FROM \"import\")) and "
+          "(\"date\" > (SELECT max(\"date\") FROM \"import\")))")]
     (delete db :quotes
       (where `(and (= :company-id 1)
                    (> :date ~(select db ['(min :date)] (from :import)))

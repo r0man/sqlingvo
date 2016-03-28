@@ -63,8 +63,8 @@
               "\"date-prod\" DATE, "
               "\"kind\" VARCHAR(10), "
               "\"len\" INTERVAL, "
-              "\"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
-              "\"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"())")]))
+              "\"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
+              "\"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())")]))
 
 (deftest test-create-table-compound-primary-key
   (sql= (create-table db :ratings
@@ -80,9 +80,9 @@
               "\"user-id\" INTEGER NOT NULL, "
               "\"spot-id\" INTEGER NOT NULL, "
               "\"rating\" INTEGER NOT NULL, "
-              "\"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), "
+              "\"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "
               "\"updated-at\" TIMESTAMP WITH "
-              "TIME ZONE NOT NULL DEFAULT \"now\"(), "
+              "TIME ZONE NOT NULL DEFAULT now(), "
               "PRIMARY KEY(\"user-id\", \"spot-id\", \"created-at\"))")]))
 
 (deftest test-create-table-array-column
