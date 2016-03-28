@@ -23,13 +23,13 @@
                                    (from :top-regions))))
             (group-by :region :product)))
         [(str "WITH \"regional-sales\" AS ("
-              "SELECT \"region\", \"sum\"(\"amount\") AS \"total-sales\" "
+              "SELECT \"region\", sum(\"amount\") AS \"total-sales\" "
               "FROM \"orders\" GROUP BY \"region\"), "
               "\"top-regions\" AS ("
               "SELECT \"region\" "
               "FROM \"regional-sales\" "
-              "WHERE (\"total-sales\" > (SELECT (\"sum\"(\"total-sales\") / 10) FROM \"regional-sales\"))) "
-              "SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product-units\", \"sum\"(\"amount\") AS \"product-sales\" "
+              "WHERE (\"total-sales\" > (SELECT (sum(\"total-sales\") / 10) FROM \"regional-sales\"))) "
+              "SELECT \"region\", \"product\", sum(\"quantity\") AS \"product-units\", sum(\"amount\") AS \"product-sales\" "
               "FROM \"orders\" "
               "WHERE \"region\" IN (SELECT \"region\" "
               "FROM \"top-regions\") "

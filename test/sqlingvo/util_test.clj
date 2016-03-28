@@ -1,6 +1,7 @@
 (ns sqlingvo.util-test
   (:require [clojure.test :refer :all]
             [sqlingvo.db :as db]
+            [sqlingvo.test :refer [db]]
             [sqlingvo.util :refer :all]))
 
 (deftest test-sql-quote-backtick
@@ -72,3 +73,12 @@
   (let [placeholder (sql-placeholder-count "?")]
     (is (= (placeholder) "?1"))
     (is (= (placeholder) "?2"))))
+
+(deftest test-sql-quote-fn
+  (are [x expected]
+      (= (sql-quote-fn db x) expected)
+    "" "\"\""
+    "_" "_"
+    "x" "x"
+    "1" "\"1\""
+    "a b" "\"a b\""))

@@ -128,6 +128,14 @@
     ((or (:sql-quote db) sql-quote-backtick)
      (sql-name db x))))
 
+(defn sql-quote-fn
+  "Quote an SQL identifier only if needed."
+  [db x]
+  (when x
+    (if (re-matches #"[a-z_][a-z0-9_]*" (name x))
+      (sql-name db x)
+      (sql-quote db x))))
+
 (defn sql-placeholder-constant
   "Returns a fn that uses a constant strategy to produce
   placeholders."

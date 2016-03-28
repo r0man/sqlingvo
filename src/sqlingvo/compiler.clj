@@ -4,7 +4,7 @@
   (:require [clojure.core :as core]
             [clojure.java.io :refer [file]]
             [clojure.string :refer [blank? join replace upper-case]]
-            [sqlingvo.util :as util :refer [sql-quote]]))
+            [sqlingvo.util :as util :refer [sql-quote sql-quote-fn]]))
 
 (defmulti compile-sql
   "Compile the `ast` into SQL."
@@ -235,7 +235,7 @@
   (compile-direction db node))
 
 (defmethod compile-fn :default [db {:keys [as args name]}]
-  (concat-sql (sql-quote db name) "("
+  (concat-sql (sql-quote-fn db name) "("
               (join-sql ", " (compile-exprs db args))
               ")" (compile-alias db as)))
 

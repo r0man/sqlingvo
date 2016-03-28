@@ -33,7 +33,7 @@
 
 (deftest test-update-daily-return
   (with-stmt
-    ["UPDATE \"quotes\" SET \"daily-return\" = \"u\".\"daily-return\" FROM (SELECT \"id\", \"lag\"(\"close\") over (partition by \"company-id\" order by \"date\" desc) AS \"daily-return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
+    ["UPDATE \"quotes\" SET \"daily-return\" = \"u\".\"daily-return\" FROM (SELECT \"id\", lag(\"close\") over (partition by \"company-id\" order by \"date\" desc) AS \"daily-return\" FROM \"quotes\") AS \"u\" WHERE (\"quotes\".\"id\" = \"u\".\"id\")"]
     (update db :quotes
       '((= :daily-return :u.daily-return))
       (where '(= :quotes.id :u.id))
@@ -44,7 +44,7 @@
 (deftest test-update-prices
   (with-stmt
     [(str "UPDATE \"prices\" SET \"daily-return\" = \"u\".\"daily-return\" "
-          "FROM (SELECT \"id\", ((\"close\" / \"lag\"(\"close\") over (partition by \"quote-id\" order by \"date\" desc)) - 1) AS \"daily-return\" "
+          "FROM (SELECT \"id\", ((\"close\" / lag(\"close\") over (partition by \"quote-id\" order by \"date\" desc)) - 1) AS \"daily-return\" "
           "FROM \"prices\" WHERE (\"prices\".\"quote-id\" = 1)) AS \"u\" WHERE ((\"prices\".\"id\" = \"u\".\"id\") and (\"prices\".\"quote-id\" = 1))")]
     (let [quote {:id 1}]
       (update db :prices
@@ -61,7 +61,7 @@
     [(str "UPDATE \"airports\" SET \"country-id\" = \"u\".\"id\", \"gps-code\" = \"u\".\"gps-code\", \"wikipedia-url\" = \"u\".\"wikipedia\", \"location\" = \"u\".\"geom\" "
           "FROM (SELECT DISTINCT ON (\"a\".\"iata-code\") \"c\".\"id\", \"a\".\"name\", \"a\".\"gps-code\", \"a\".\"iata-code\", \"a\".\"wikipedia\", \"a\".\"geom\" "
           "FROM \"natural-earth\".\"airports\" \"a\" JOIN \"countries\" \"c\" ON (\"c\".\"geography\" && \"a\".\"geom\") "
-          "LEFT JOIN \"airports\" ON (\"lower\"(\"airports\".\"iata-code\") = \"lower\"(\"a\".\"iata-code\")) "
+          "LEFT JOIN \"airports\" ON (lower(\"airports\".\"iata-code\") = lower(\"a\".\"iata-code\")) "
           "WHERE ((\"a\".\"gps-code\" IS NOT NULL) and (\"a\".\"iata-code\" IS NOT NULL) and (\"airports\".\"iata-code\" IS NOT NULL))) AS \"u\" "
           "WHERE (\"airports\".\"iata-code\" = \"u\".\"iata-code\")")]
     (update db :airports
@@ -82,7 +82,7 @@
 (deftest test-update-countries
   (with-stmt
     [(str "UPDATE \"countries\" SET \"geom\" = \"u\".\"geom\" FROM (SELECT \"iso-a2\", \"iso-a3\", \"iso-n3\", \"geom\" FROM \"natural-earth\".\"countries\") AS \"u\" "
-          "WHERE ((\"lower\"(\"countries\".\"iso-3166-1-alpha-2\") = \"lower\"(\"u\".\"iso-a2\")) or (\"lower\"(\"countries\".\"iso-3166-1-alpha-3\") = \"lower\"(\"u\".\"iso-a3\")))")]
+          "WHERE ((lower(\"countries\".\"iso-3166-1-alpha-2\") = lower(\"u\".\"iso-a2\")) or (lower(\"countries\".\"iso-3166-1-alpha-3\") = lower(\"u\".\"iso-a3\")))")]
     (update db :countries
       '((= :geom :u.geom))
       (from (as (select db [:iso-a2 :iso-a3 :iso-n3 :geom]
@@ -92,7 +92,7 @@
 
 (deftest test-update-with-fn-call
   (with-stmt
-    ["UPDATE \"films\" SET \"name\" = \"lower\"(\"name\") WHERE (\"id\" = 1)"]
+    ["UPDATE \"films\" SET \"name\" = lower(\"name\") WHERE (\"id\" = 1)"]
     (update db :films
       {:name '(lower :name)}
       (where `(= :id 1)))))

@@ -103,7 +103,7 @@
 
 (deftest test-insert-values-with-fn-call
   (with-stmt
-    ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, \"lower\"(?)), (2, ?)" "B" "b"]
+    ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, lower(?)), (2, ?)" "B" "b"]
     (insert db :x [:a :b]
       (values [{:a 1 :b '(lower "B")}
                {:a 2 :b "b"}]))))
