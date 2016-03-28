@@ -220,7 +220,7 @@
    #+END_SRC
 
    #+RESULTS:
-   : ["SELECT 1, (2 + \"abs\"(3)), \"upper\"(?)" "Hello"]
+   : ["SELECT 1, (2 + abs(3)), upper(?)" "Hello"]
 
    You can influence the compilation of functions by extending the
    =compile-fn= multi method. Just in case a function uses more
@@ -312,7 +312,7 @@
     #+END_SRC
 
     #+RESULTS:
-    : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date-prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"(), \"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT \"now\"())"]
+    : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date-prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), \"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())"]
 
 *** Delete
 
@@ -558,7 +558,7 @@
     #+END_SRC
 
     #+RESULTS:
-    : ["UPDATE \"films\" SET \"kind\" = \"upper\"(\"kind\")"]
+    : ["UPDATE \"films\" SET \"kind\" = upper(\"kind\")"]
 
 *** Order by
 
@@ -594,7 +594,7 @@
     #+END_SRC
 
     #+RESULTS:
-    : ["SELECT \"a\", \"max\"(\"b\") FROM \"table-1\" GROUP BY \"a\" ORDER BY 1"]
+    : ["SELECT \"a\", max(\"b\") FROM \"table-1\" GROUP BY \"a\" ORDER BY 1"]
 
 *** Having clause
 
@@ -608,7 +608,7 @@
     #+END_SRC
 
     #+RESULTS:
-    : ["SELECT \"city\", \"max\"(\"temp-lo\") FROM \"weather\" GROUP BY \"city\" HAVING (\"max\"(\"temp-lo\") < 40)"]
+    : ["SELECT \"city\", max(\"temp-lo\") FROM \"weather\" GROUP BY \"city\" HAVING (max(\"temp-lo\") < 40)"]
 
 *** With Queries / Common table expressions
 
@@ -648,7 +648,7 @@
     #+END_SRC
 
     #+RESULTS:
-    : ["WITH \"regional-sales\" AS (SELECT \"region\", \"sum\"(\"amount\") AS \"total-sales\" FROM \"orders\" GROUP BY \"region\"), \"top-regions\" AS (SELECT \"region\" FROM \"regional-sales\" WHERE (\"total-sales\" > (SELECT (\"sum\"(\"total-sales\") / 10) FROM \"regional-sales\"))) SELECT \"region\", \"product\", \"sum\"(\"quantity\") AS \"product-units\", \"sum\"(\"amount\") AS \"product-sales\" FROM \"orders\" WHERE \"region\" IN (SELECT \"region\" FROM \"top-regions\") GROUP BY \"region\", \"product\""]
+    : ["WITH \"regional-sales\" AS (SELECT \"region\", sum(\"amount\") AS \"total-sales\" FROM \"orders\" GROUP BY \"region\"), \"top-regions\" AS (SELECT \"region\" FROM \"regional-sales\" WHERE (\"total-sales\" > (SELECT (sum(\"total-sales\") / 10) FROM \"regional-sales\"))) SELECT \"region\", \"product\", sum(\"quantity\") AS \"product-units\", sum(\"amount\") AS \"product-sales\" FROM \"orders\" WHERE \"region\" IN (SELECT \"region\" FROM \"top-regions\") GROUP BY \"region\", \"product\""]
 
     For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
 
