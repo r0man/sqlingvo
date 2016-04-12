@@ -5,7 +5,13 @@
             [sqlingvo.db :as db]
             [sqlingvo.expr :as expr]
             [sqlingvo.util :as util])
-  (:import [sqlingvo.expr Stmt]))
+  (:import [sqlingvo.db Database]
+           [sqlingvo.expr Stmt]))
+
+(defn db?
+  "Return true if `x` is a database, otherwise false."
+  [x]
+  (instance? Database x))
 
 (defn chain-state [body]
   (util/m-seq (remove nil? body)))
@@ -137,6 +143,7 @@
     {:analyze true})"
   {:style/indent 1}
   [db stmt & [opts]]
+  {:pre [(db? db)]}
   (Stmt. (fn [_]
            [_ (expr/make-node
                :op :explain
@@ -157,6 +164,7 @@
     (from \"/usr1/proj/bray/sql/country_data\"))"
   {:style/indent 3}
   [db table columns & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         columns (map expr/parse-column columns)]
     (Stmt. (fn [_]
@@ -172,6 +180,7 @@
   "Build a CREATE TABLE statement."
   {:style/indent 2}
   [db table & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)]
     (Stmt. (fn [_]
              ((chain-state body)
@@ -192,6 +201,7 @@
     (where '(= :id 1)))"
   {:style/indent 2}
   [db table & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)]
     (Stmt. (fn [_]
              ((chain-state body)
@@ -211,6 +221,7 @@
   (drop-table db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
+  {:pre [(db? db)]}
   (let [tables (map expr/parse-table tables)]
     (Stmt. (fn [stmt]
              ((chain-state body)
@@ -314,6 +325,7 @@
   "Build a INSERT statement."
   {:style/indent 3}
   [db table columns & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         columns (map expr/parse-column columns)]
     (Stmt. (fn [_]
@@ -455,6 +467,7 @@
   (drop-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
+  {:pre [(db? db)]}
   (let [view (expr/parse-table view)]
     (Stmt. (fn [_]
              ((chain-state body)
@@ -472,6 +485,7 @@
   (refresh-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
+  {:pre [(db? db)]}
   (let [view (expr/parse-table view)]
     (Stmt. (fn [_]
              ((chain-state body)
@@ -521,6 +535,7 @@
     (from :continents))"
   {:style/indent 2}
   [db exprs & body]
+  {:pre [(db? db)]}
   (let [[_ select]
         ((chain-state body)
          (expr/make-node
@@ -553,6 +568,7 @@
   (truncate db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
+  {:pre [(db? db)]}
   (let [tables (map expr/parse-table tables)]
     (Stmt. (fn [_]
              ((chain-state body)
@@ -587,6 +603,7 @@
     (where '(= :kind \"Drama\")))"
   {:style/indent 2}
   [db table row & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         exprs (if (sequential? row) (expr/parse-exprs row))
         row (if (map? row) (expr/parse-map-expr row))]
@@ -633,6 +650,7 @@
   "Build a WITH (common table expressions) query."
   {:style/indent 2}
   [db bindings query]
+  {:pre [(db? db)]}
   (assert (even? (count bindings)) "The WITH bindings must be even.")
   (let [bindings (map (fn [[name stmt]]
                         (vector (keyword name)
