@@ -195,10 +195,9 @@
 
    There is a =print-method= defined for the =sqlingvo.expr.Stmt=
    class, so instances of a statement are printed in their compiled
-   from. This is just for convenience and makes it easier to quickly
-   build up /SQL/ statements in the /REPL/. If you type the following
-   example directly into your /REPL/, it prints out the compiled form
-   of the statement.
+   from. This is convenient when building /SQL/ statements in the
+   /REPL/. If you type the following example directly into your
+   /REPL/, it prints out the compiled form of the statement.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
      (select db [:id :name]
@@ -208,6 +207,16 @@
 
    #+RESULTS:
    : ["SELECT \"id\", \"name\" FROM \"films\" WHERE (\"kind\" = ?)" "Comedy"]
+
+   But the return value of the call to the =select= function above is
+   still an instance of =sqlingvo.expr.Stmt=.
+
+   #+BEGIN_SRC clojure :exports both :results verbatim
+     (class *1)
+   #+END_SRC
+
+   #+RESULTS:
+   : sqlingvo.expr.Stmt
 
 ** SQL expressions
 
