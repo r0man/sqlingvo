@@ -632,7 +632,7 @@
     (let [node (cond
                  (= values :default)
                  {:op :values
-                  :default true}
+                  :type :default}
                  (every? map? values)
                  {:op :values
                   :columns (if (not-empty (:columns stmt))
@@ -640,11 +640,13 @@
                              (->> (mapcat keys values)
                                   (apply sorted-set)
                                   (mapv expr/parse-column)))
-                  :records (mapv expr/parse-map-expr values)}
+                  :type :records
+                  :values (mapv expr/parse-map-expr values)}
                  :else
                  {:op :values
                   :columns (:columns stmt)
-                  :exprs (mapv expr/parse-expr values)})]
+                  :type :exprs
+                  :values (mapv expr/parse-exprs values)})]
       [node (assoc stmt :values node)])))
 
 (defn where
