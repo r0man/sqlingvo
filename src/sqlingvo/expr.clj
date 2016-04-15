@@ -90,7 +90,7 @@
    :op :fn
    :children [:args]
    :name (unintern-name (first expr))
-   :args (map parse-expr (rest expr))))
+   :args (mapv parse-expr (rest expr))))
 
 (defn- parse-attr-expr [expr]
   (make-node
@@ -114,14 +114,14 @@
     (parse-fn-expr expr)
     (or (list? (first expr))
         (instance? clojure.lang.Cons (first expr)))
-    {:op :expr-list :children (map parse-expr expr) :as (:as expr)}
-    :else {:op :list :children (map parse-expr expr) :as (:as expr)}))
+    {:op :expr-list :children (mapv parse-expr expr) :as (:as expr)}
+    :else {:op :list :children (mapv parse-expr expr) :as (:as expr)}))
 
 (defmethod parse-expr clojure.lang.IPersistentMap [expr]
   expr)
 
 (defmethod parse-expr clojure.lang.IPersistentVector [expr]
-  {:op :array :children (map parse-expr expr)})
+  {:op :array :children (mapv parse-expr expr)})
 
 (defmethod parse-expr clojure.lang.Keyword [expr]
   (parse-column expr))
@@ -150,7 +150,7 @@
      :val expr)))
 
 (defn parse-exprs [exprs]
-  (map parse-expr (remove nil? exprs)))
+  (mapv parse-expr (remove nil? exprs)))
 
 (defn parse-map-expr [m]
   (into {} (for [[k v] m] [k (parse-expr v) ])))

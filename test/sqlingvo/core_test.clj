@@ -4,7 +4,7 @@
             [sqlingvo.core :refer :all]
             [sqlingvo.expr :refer :all]
             [sqlingvo.util :refer :all]
-            [sqlingvo.test :refer [db sql= with-stmt]]))
+            [sqlingvo.test :refer :all]))
 
 (deftest test-column
   (are [column expected]
@@ -105,3 +105,74 @@
     (sql= (select db ["a" "b" :*]
             (from (as (select db ["c" "d"]) :x)))
           ["SELECT $1, $2, * FROM (SELECT $3, $4) AS \"x\"" "a" "b" "c" "d"])))
+
+(deftest test-values-with-default
+  (ast= (values :default)
+        {:values
+         {:default true
+          :op :values}}))
+
+(deftest test-values-with-maps
+  (ast= (values [{:code "B6717"
+                  :title "Tampopo"}
+                 {:code "HG120"
+                  :title "The Dinner Game"}])
+        {:values
+         {:op :values,
+          :columns
+          [{:children [:name], :name :code, :op :column}
+           {:children [:name], :name :title, :op :column}],
+          :records
+          [{:code
+            {:val "B6717",
+             :type :string,
+             :op :constant,
+             :literal? true,
+             :form "B6717"},
+            :title
+            {:val "Tampopo",
+             :type :string,
+             :op :constant,
+             :literal? true,
+             :form "Tampopo"}}
+           {:code
+            {:val "HG120",
+             :type :string,
+             :op :constant,
+             :literal? true,
+             :form "HG120"},
+            :title
+            {:val "The Dinner Game",
+             :type :string,
+             :op :constant,
+             :literal? true,
+             :form "The Dinner Game"}}]}}))
+
+(deftest test-values-with-exprs
+  (ast= (values ['(cast "192.168.0.1" :inet)
+                 "192.168.0.10"
+                 "192.168.1.43"])
+        {:values
+         {:op :values,
+          :columns nil,
+          :exprs
+          [{:args
+            [{:val "192.168.0.1",
+              :type :string,
+              :op :constant,
+              :literal? true,
+              :form "192.168.0.1"}
+             {:children [:name], :name :inet, :op :column}],
+            :children [:args],
+            :name "cast",
+            :op :fn}
+           {:val "192.168.0.10",
+            :type :string,
+            :op :constant,
+            :literal? true,
+            :form "192.168.0.10"}
+           {:val "192.168.1.43",
+            :type :string,
+            :op :constant,
+            :literal? true,
+            :form "192.168.1.43"}]}}))

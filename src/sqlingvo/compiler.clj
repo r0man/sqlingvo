@@ -440,14 +440,27 @@
   ["IF EXISTS"])
 
 (defn- compile-value [db columns value]
-  (let [columns (map :name columns)
-        values (map #(or (get value %) {:op :nil}) columns)
+  (let [values (map #(or (get value %) {:op :nil}) (map :name columns))
         values (map #(compile-sql db %) values)]
     (concat-sql "(" (join-sql ", " values ) ")")))
 
-(defn- compile-values [db columns values]
-  (let [values (map #(compile-value db columns %) values)]
-    (concat-sql ["VALUES "] (join-sql ", " values))))
+(defn- compile-values-maps [db {:keys [columns records]}]
+  (let [records (map #(compile-value db columns %) records)]
+    (concat-sql ["VALUES "] (join-sql ", " records))))
+
+(defn- compile-values-exprs [db {:keys [exprs]}]
+  (let [exprs (map #(compile-sql db %) exprs)
+        exprs (map #(concat-sql "(" % ")") exprs)]
+    (concat-sql ["VALUES "] (join-sql ", " exprs))))
+
+(defmethod compile-sql :values [db node]
+  (cond
+    (:default node)
+    ["DEFAULT VALUES"]
+    (not-empty (:records node))
+    (compile-values-maps db node)
+    (not-empty (:exprs node))
+    (compile-values-exprs db node)))
 
 (defn compile-row [db row]
   (join-sql
@@ -484,29 +497,23 @@
    (compile-sql db (:do-nothing node))))
 
 (defmethod compile-sql :insert [db node]
-  (let [{:keys [table columns rows default-values values returning select where]} node
-        columns (if (and (empty? columns)
-                         (not (empty? values)))
-                  (map (fn [k] {:op :column :name k})
-                       (keys (first values)))
-                  columns)]
+  (let [{:keys [columns table rows values returning select where]} node
+        columns (if (not-empty columns) columns (:columns values))]
     (compile-with
      db (:with node)
      (concat-sql
       "INSERT INTO " (compile-sql db table)
-      (if-not (empty? columns)
+      (when (not-empty columns)
         (concat-sql " (" (compile-sql-join db ", " columns) ")"))
-      (if-not (empty? values)
-        (concat-sql " " (compile-values db columns values)))
-      (if select
+      (when values
+        (concat-sql " " (compile-sql db values)))
+      (when select
         (concat-sql " " (compile-sql db select)))
-      (if default-values
-        " DEFAULT VALUES")
-      (if-not (empty? where)
+      (when (not-empty where)
         (concat-sql " WHERE " (compile-sql db where)))
       (compile-sql db (:on-conflict node))
       (compile-sql db (:on-conflict-on-constraint node))
-      (if-not (empty? returning)
+      (when (not-empty returning)
         (concat-sql " RETURNING " (compile-sql-join db ", " returning)))))))
 
 (defmethod compile-sql :intersect [db node]

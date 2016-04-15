@@ -6,79 +6,37 @@
             [sqlingvo.test :refer [db sql= with-stmt]]))
 
 (deftest test-insert-default-values
-  (with-stmt
-    ["INSERT INTO \"films\" DEFAULT VALUES"]
-    (insert db :films []
-      (values :default))
-    (is (= :insert (:op stmt)))
-    (is (= [] (:columns stmt)))
-    (is (= true (:default-values stmt)))
-    (is (= (parse-table :films) (:table stmt)))))
-
-(deftest test-insert-single-row-as-map
-  (with-stmt
-    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)"
-     "T-601" "Yojimbo" "1961-06-16" "Drama"]
-    (insert db :films []
-      (values {:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}))
-    (is (= :insert (:op stmt)))
-    (is (= [] (:columns stmt)))
-    (is (= [(parse-map-expr {:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})]
-           (:values stmt)))
-    (is (= (parse-table :films) (:table stmt)))))
+  (sql= (insert db :films []
+          (values :default))
+        ["INSERT INTO \"films\" DEFAULT VALUES"]))
 
 (deftest test-insert-single-row-as-seq
-  (with-stmt
-    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)"
-     "T-601" "Yojimbo" "1961-06-16" "Drama"]
-    (insert db :films []
-      (values [{:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
-    (is (= :insert (:op stmt)))
-    (is (= [] (:columns stmt)))
-    (is (= [(parse-map-expr {:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"})]
-           (:values stmt)))
-    (is (= (parse-table :films) (:table stmt)))))
+  (sql= (insert db :films []
+          (values [{:code "T-601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}]))
+        ["INSERT INTO \"films\" (\"code\", \"date-prod\", \"did\", \"kind\", \"title\") VALUES (?, ?, 106, ?, ?)"
+         "T-601" "1961-06-16" "Drama" "Yojimbo"]))
 
 (deftest test-insert-multi-row
-  (with-stmt
-    ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)"
-     "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
-    (insert db :films []
-      (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-               {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
-    (is (= :insert (:op stmt)))
-    (is (= [] (:columns stmt)))
-    (is (= (map parse-map-expr
-                [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-                 {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}])
-           (:values stmt)))
-    (is (= (parse-table :films) (:table stmt)))))
+  (sql= (insert db :films []
+          (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+                   {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10":kind "Comedy"}]))
+
+        ["INSERT INTO \"films\" (\"code\", \"date-prod\", \"did\", \"kind\", \"title\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)"
+         "B6717" "1985-02-10" "Comedy" "Tampopo"
+         "HG120" "1985-02-10" "Comedy" "The Dinner Game"]))
 
 (deftest test-insert-returning
-  (with-stmt
-    ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (106, ?) RETURNING *" "XYZ Widgets"]
-    (insert db :distributors []
-      (values [{:did 106 :dname "XYZ Widgets"}])
-      (returning *))
-    (is (= :insert (:op stmt)))
-    (is (= [] (:columns stmt)))
-    (is (= (parse-table :distributors) (:table stmt)))
-    (is (= [(parse-expr *)] (:returning stmt)))))
+  (sql= (insert db :distributors []
+          (values [{:did 106 :dname "XYZ Widgets"}])
+          (returning :*))
+        ["INSERT INTO \"distributors\" (\"did\", \"dname\") VALUES (106, ?) RETURNING *" "XYZ Widgets"]))
 
 (deftest test-insert-subselect
-  (with-stmt
-    ["INSERT INTO \"films\" SELECT * FROM \"tmp-films\" WHERE (\"date-prod\" < ?)" "2004-05-07"]
-    (insert db :films []
-      (select db [*]
-        (from :tmp-films)
-        (where '(< :date-prod "2004-05-07"))))
-    (is (= :insert (:op stmt)))
-    (is (= [] (:columns stmt)))
-    (is (= (parse-table :films) (:table stmt)))
-    (is (= (ast (select db [*]
-                  (from :tmp-films)
-                  (where '(< :date-prod "2004-05-07"))))
-           (:select stmt)))))
+  (sql= (insert db :films []
+          (select db [*]
+            (from :tmp-films)
+            (where '(< :date-prod "2004-05-07"))))
+        ["INSERT INTO \"films\" SELECT * FROM \"tmp-films\" WHERE (\"date-prod\" < ?)" "2004-05-07"]))
 
 (deftest test-insert-airports
   (with-stmt
@@ -97,16 +55,14 @@
                      (is-null :airports.iata-code)))))))
 
 (deftest test-insert-only-columns
-  (with-stmt
-    ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, 2)"]
-    (insert db :x [:a :b] (values [{:a 1 :b 2 :c 3}]))))
+  (sql= (insert db :x [:a :b] (values [{:a 1 :b 2 :c 3}]))
+        ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, 2)"]))
 
 (deftest test-insert-values-with-fn-call
-  (with-stmt
-    ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, lower(?)), (2, ?)" "B" "b"]
-    (insert db :x [:a :b]
-      (values [{:a 1 :b '(lower "B")}
-               {:a 2 :b "b"}]))))
+  (sql= (insert db :x [:a :b]
+          (values [{:a 1 :b '(lower "B")}
+                   {:a 2 :b "b"}]))
+        ["INSERT INTO \"x\" (\"a\", \"b\") VALUES (1, lower(?)), (2, ?)" "B" "b"]))
 
 (deftest test-insert-fixed-columns-mixed-values
   (sql= (insert db :table [:a :b]
@@ -142,7 +98,7 @@
   (sql= (insert db :test [:x] (values [{:x ["1" 2]}]))
         ["INSERT INTO \"test\" (\"x\") VALUES (ARRAY[?, 2])" "1"]))
 
-(deftest test-upsert-on-conflict-do-update
+(deftest test-insert-on-conflict-do-update
   (sql= (insert db :distributors [:did :dname]
           (values [{:did 5 :dname "Gizmo Transglobal"}
                    {:did 6 :dname "Associated Computing, Inc"}])
@@ -155,7 +111,7 @@
          "Gizmo Transglobal"
          "Associated Computing, Inc"]))
 
-(deftest test-upsert-on-conflict-do-nothing
+(deftest test-insert-on-conflict-do-nothing
   (sql= (insert db :distributors [:did :dname]
           (values [{:did 7 :dname "Redline GmbH"}])
           (on-conflict [:did]
@@ -166,7 +122,7 @@
               "DO NOTHING")
          "Redline GmbH"]))
 
-(deftest test-upsert-on-conflict-do-nothing-returning
+(deftest test-insert-on-conflict-do-nothing-returning
   (sql= (insert db :distributors [:did :dname]
           (values [{:did 7 :dname "Redline GmbH"}])
           (on-conflict [:did]
@@ -179,7 +135,7 @@
               "RETURNING *")
          "Redline GmbH"]))
 
-(deftest test-upsert-on-conflict-do-update-where
+(deftest test-insert-on-conflict-do-update-where
   (sql= (insert db (as :distributors :d) [:did :dname]
           (values [{:did 8 :dname "Anvil Distribution"}])
           (on-conflict [:did]
@@ -192,7 +148,7 @@
               "WHERE (\"d\".\"zipcode\" <> ?)")
          "Anvil Distribution" " (formerly " ")" "21201"]))
 
-(deftest test-upsert-on-conflict-where-do-nothing
+(deftest test-insert-on-conflict-where-do-nothing
   (sql= (insert db :distributors [:did :dname]
           (values [{:did 10 :dname "Conrad International"}])
           (on-conflict [:did]
@@ -204,7 +160,7 @@
               "WHERE (\"is-active\" = ?) DO NOTHING")
          "Conrad International" true]))
 
-(deftest test-upsert-on-conflict-on-constraint-do-nothing
+(deftest test-insert-on-conflict-on-constraint-do-nothing
   (sql= (insert db :distributors [:did :dname]
           (values [{:did 9 :dname "Antwerp Design"}])
           (on-conflict-on-constraint :distributors_pkey
@@ -214,3 +170,10 @@
               "ON CONFLICT ON CONSTRAINT \"distributors_pkey\" "
               "DO NOTHING")
          "Antwerp Design"]))
+
+(deftest test-insert-expressions
+  (sql= (insert db :films [:code :title :did :date-prod :kind]
+          (values ["T_601" "Yojimbo" 106 "1961-06-16" "Drama"]))
+        [(str "INSERT INTO \"films\" (\"code\", \"title\", \"did\", "
+              "\"date-prod\", \"kind\") VALUES (?), (?), (106), (?), (?)")
+         "T_601" "Yojimbo" "1961-06-16" "Drama"]))

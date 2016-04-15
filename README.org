@@ -348,9 +348,21 @@
 
 *** Insert
 
-**** Insert rows
+**** Insert expressions
 
-     Insert rows into the =films= table.
+     Insert arbitrary expressions into a table.
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
+       (insert db :films [:code :title :did :date-prod :kind]
+         (values ['(upper "t_601") "Yojimbo" 106 "1961-06-16" "Drama"]))
+     #+END_SRC
+
+     #+RESULTS:
+     : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (upper(?)), (?), (106), (?), (?)" "t_601" "Yojimbo" "1961-06-16" "Drama"]
+
+**** Insert records
+
+     Insert records into the =films= table.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
       (insert db :films []
@@ -361,7 +373,7 @@
      #+RESULTS:
      : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
 
-**** Insert returning rows
+**** Insert returning records
 
      Insert a row into the =films= table and return the inserted records.
 
