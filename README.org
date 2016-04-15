@@ -221,8 +221,8 @@
 ** SQL expressions
 
    /SQLingvo/ compiles /SQL/ expressions from /Clojure/ prefix
-   notation into /SQL/, and knows how to handle common special cases,
-   like =+=, =-=, =*=, =/= and similar operators.
+   notation into /SQL/. There's built-in support for special
+   operators, such as =+=, =-=, =*=, =/= and many others.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
      (select db [1 '(+ 2 (abs 3)) '(upper "Hello")])
@@ -232,10 +232,10 @@
    : ["SELECT 1, (2 + abs(3)), upper(?)" "Hello"]
 
    You can influence the compilation of functions by extending the
-   =compile-fn= multi method. Just in case a function uses more
-   idiosyncratic compilation rules than the built in. Take a look at
-   the multi method implementation of =substring=, in case some
-   function is not covered yet (or even better send a PR).
+   =compile-fn= multi method. In case a function uses a special
+   compilation rule that is not built in, take a look at the multi
+   method implementation of =substring= to see how to create your own
+   compilation rule. And even better, send a PR ...
 
    #+BEGIN_SRC clojure :exports both :results verbatim
      (select db ['(substring "Fusion" from 2 for 3)])
