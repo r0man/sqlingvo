@@ -181,6 +181,16 @@
                 "(NULL)"
                 (compile-expr db expr))))
 
+(defmethod compile-fn :in [db {[member expr] :args}]
+  (concat-sql (compile-expr db member) " IN "
+              (cond
+                (and (= :list (:op expr))
+                     (empty? (:children expr)))
+                "(NULL)"
+                (= (:op expr) :values)
+                (concat-sql "(" (compile-expr db expr) ")")
+                :else (compile-expr db expr))))
+
 (defmethod compile-fn :exists [db {:keys [args]}]
   (concat-sql "(EXISTS " (compile-expr db (first args)) ")"))
 
