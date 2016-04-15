@@ -1075,9 +1075,7 @@
 
 (deftest test-having
   (sql= (select db [:city '(max :temp-lo)]
-           (from :weather)
-           (group-by :city)
-           (having '(< (max :temp-lo) 40)))
+          (from :weather)
+          (group-by :city)
+          (having '(< (max :temp-lo) 40)))
         ["SELECT \"city\", max(\"temp-lo\") FROM \"weather\" GROUP BY \"city\" HAVING (max(\"temp-lo\") < 40)"]))
-
-

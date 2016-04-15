@@ -1,7 +1,8 @@
 (ns sqlingvo.compiler-test
+  (:refer-clojure :exclude [distinct group-by update])
   (:require [clojure.test :refer :all]
             [sqlingvo.compiler :refer :all]
-            [sqlingvo.core :refer [ast select]]
+            [sqlingvo.core :refer :all]
             [sqlingvo.db :as db]))
 
 (def db (db/postgresql))
@@ -138,3 +139,43 @@
   (let [sql (compile-stmt (ast (select db [1])))]
     (is (vector? sql))
     (is (= sql ["SELECT 1"]))))
+
+(deftest test-compile-values-maps
+  (let [{:keys [values]}
+        (ast (values
+              [{:code "B6717"
+                :title "Tampopo"
+                :did 110
+                :date-prod "1985-02-10"
+                :kind "Comedy"}
+               {:code "HG120"
+                :title "The Dinner Game"
+                :did 140
+                :date-prod "1985-02-10"
+                :kind "Comedy"}]))]
+    (is (= (compile-sql db values)
+           ["VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)"
+            "B6717"
+            "1985-02-10"
+            "Comedy"
+            "Tampopo"
+            "HG120"
+            "1985-02-10"
+            "Comedy"
+            "The Dinner Game"]))))
+
+(deftest test-compile-values-with-default
+  (let [{:keys [values]} (ast (values :default))]
+    (is (= (compile-sql db values)
+           ["DEFAULT VALUES"]))))
+
+(deftest test-compile-values-with-exprs
+  (let [{:keys [values]}
+        (ast (values ['(cast "192.168.0.1" :inet)
+                      "192.168.0.10"
+                      "192.168.1.43"]))]
+    (is (= (compile-sql db values)
+           ["VALUES (CAST(? AS inet)), (?), (?)"
+            "192.168.0.1"
+            "192.168.0.10"
+            "192.168.1.43"]))))

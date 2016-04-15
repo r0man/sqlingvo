@@ -60,11 +60,12 @@
   (let [column (assoc options :op :column :name name :type type)
         column (update-in column [:default] #(if %1 (expr/parse-expr %1)))]
     (fn [stmt]
-      [nil (-> (update-in stmt [:columns] #(vec (concat %1 [(:name column)])))
-               (assoc-in [:column (:name column)]
-                         (assoc column
-                                :schema (:schema stmt)
-                                :table (:name stmt))))])))
+      (let [column (-> (update-in stmt [:columns] #(vec (concat %1 [(:name column)])))
+                       (assoc-in [:column (:name column)]
+                                 (assoc column
+                                        :schema (:schema stmt)
+                                        :table (:name stmt))))]
+        [column column]))))
 
 (defn continue-identity
   "Add a CONTINUE IDENTITY clause to an SQL statement."
@@ -335,7 +336,9 @@
                :db db
                :children [:table :columns]
                :table table
-               :columns columns))))))
+               :columns
+               (when (not-empty columns)
+                 columns)))))))
 
 (defn intersect
   "Build an INTERSECT statement.
@@ -625,9 +628,24 @@
   (insert db :distributors []
     (values [{:did 106 :dname \"XYZ Widgets\"}]))"
   [values]
-  (if (= :default values)
-    (util/set-val :default-values true)
-    (util/concat-in [:values] (map expr/parse-map-expr (util/sequential values)))))
+  (fn [stmt]
+    (let [node (cond
+                 (= values :default)
+                 {:op :values
+                  :default true}
+                 (every? map? values)
+                 {:op :values
+                  :columns (if (not-empty (:columns stmt))
+                             (:columns stmt)
+                             (->> (mapcat keys values)
+                                  (apply sorted-set)
+                                  (mapv expr/parse-column)))
+                  :records (mapv expr/parse-map-expr values)}
+                 :else
+                 {:op :values
+                  :columns (:columns stmt)
+                  :exprs (mapv expr/parse-expr values)})]
+      [node (assoc stmt :values node)])))
 
 (defn where
   "Add a WHERE clause to an SQL statement.
