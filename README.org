@@ -235,7 +235,7 @@
    =compile-fn= multi method. In case a function uses a special
    compilation rule that is not built in, take a look at the multi
    method implementation of =substring= to see how to create your own
-   compilation rule. And even better, send a PR ...
+   compilation rule. Or even better, send a PR ...
 
    #+BEGIN_SRC clojure :exports both :results verbatim
      (select db ['(substring "Fusion" from 2 for 3)])
