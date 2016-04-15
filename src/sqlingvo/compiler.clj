@@ -444,23 +444,25 @@
         values (map #(compile-sql db %) values)]
     (concat-sql "(" (join-sql ", " values ) ")")))
 
-(defn- compile-values-maps [db {:keys [columns records]}]
-  (let [records (map #(compile-value db columns %) records)]
-    (concat-sql ["VALUES "] (join-sql ", " records))))
+(defn- compile-values-maps [db {:keys [columns values]}]
+  (let [values (map #(compile-value db columns %) values)]
+    (concat-sql ["VALUES "] (join-sql ", " values))))
 
-(defn- compile-values-exprs [db {:keys [exprs]}]
-  (let [exprs (map #(compile-sql db %) exprs)
-        exprs (map #(concat-sql "(" % ")") exprs)]
-    (concat-sql ["VALUES "] (join-sql ", " exprs))))
+(defn- compile-values-exprs [db node]
+  (concat-sql
+   ["VALUES "]
+   (->> (for [exprs (:values node)]
+          (concat-sql
+           "(" (->> exprs
+                    (map #(compile-sql db %))
+                    (join-sql ", ")) ")"))
+        (join-sql ", "))))
 
 (defmethod compile-sql :values [db node]
-  (cond
-    (:default node)
-    ["DEFAULT VALUES"]
-    (not-empty (:records node))
-    (compile-values-maps db node)
-    (not-empty (:exprs node))
-    (compile-values-exprs db node)))
+  (case (:type node)
+    :default ["DEFAULT VALUES"]
+    :exprs (compile-values-exprs db node)
+    :records (compile-values-maps db node)))
 
 (defn compile-row [db row]
   (join-sql

@@ -171,9 +171,19 @@
               "DO NOTHING")
          "Antwerp Design"]))
 
-(deftest test-insert-expressions
+(deftest test-insert-expression-row
   (sql= (insert db :films [:code :title :did :date-prod :kind]
-          (values ["T_601" "Yojimbo" 106 "1961-06-16" "Drama"]))
+          (values [["T_601" "Yojimbo" 106 "1961-06-16" "Drama"]]))
         [(str "INSERT INTO \"films\" (\"code\", \"title\", \"did\", "
-              "\"date-prod\", \"kind\") VALUES (?), (?), (106), (?), (?)")
+              "\"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?)")
          "T_601" "Yojimbo" "1961-06-16" "Drama"]))
+
+(deftest test-insert-expression-rows
+  (sql= (insert db :films []
+          (values [["UA502" "Bananas" 105 :DEFAULT "Comedy" "82 minutes"]
+                   ["T_601" "Yojimbo" 106 :DEFAULT "Drama" :DEFAULT]]))
+        [(str "INSERT INTO \"films\" VALUES "
+              "(?, ?, 105, DEFAULT, ?, ?), "
+              "(?, ?, 106, DEFAULT, ?, DEFAULT)")
+         "UA502" "Bananas" "Comedy" "82 minutes"
+         "T_601" "Yojimbo" "Drama"]))

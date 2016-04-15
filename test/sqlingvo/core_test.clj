@@ -109,7 +109,7 @@
 (deftest test-values-with-default
   (ast= (values :default)
         {:values
-         {:default true
+         {:type :default
           :op :values}}))
 
 (deftest test-values-with-maps
@@ -122,7 +122,8 @@
           :columns
           [{:children [:name], :name :code, :op :column}
            {:children [:name], :name :title, :op :column}],
-          :records
+          :type :records
+          :values
           [{:code
             {:val "B6717",
              :type :string,
@@ -149,30 +150,31 @@
              :form "The Dinner Game"}}]}}))
 
 (deftest test-values-with-exprs
-  (ast= (values ['(cast "192.168.0.1" :inet)
-                 "192.168.0.10"
-                 "192.168.1.43"])
+  (ast= (values [['(cast "192.168.0.1" :inet)
+                  "192.168.0.10"
+                  "192.168.1.43"]])
         {:values
          {:op :values,
           :columns nil,
-          :exprs
-          [{:args
-            [{:val "192.168.0.1",
-              :type :string,
-              :op :constant,
-              :literal? true,
-              :form "192.168.0.1"}
-             {:children [:name], :name :inet, :op :column}],
-            :children [:args],
-            :name "cast",
-            :op :fn}
-           {:val "192.168.0.10",
-            :type :string,
-            :op :constant,
-            :literal? true,
-            :form "192.168.0.10"}
-           {:val "192.168.1.43",
-            :type :string,
-            :op :constant,
-            :literal? true,
-            :form "192.168.1.43"}]}}))
+          :type :exprs
+          :values
+          [[{:args
+             [{:val "192.168.0.1",
+               :type :string,
+               :op :constant,
+               :literal? true,
+               :form "192.168.0.1"}
+              {:children [:name], :name :inet, :op :column}],
+             :children [:args],
+             :name "cast",
+             :op :fn}
+            {:val "192.168.0.10",
+             :type :string,
+             :op :constant,
+             :literal? true,
+             :form "192.168.0.10"}
+            {:val "192.168.1.43",
+             :type :string,
+             :op :constant,
+             :literal? true,
+             :form "192.168.1.43"}]]}}))

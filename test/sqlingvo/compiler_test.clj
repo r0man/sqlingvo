@@ -171,11 +171,11 @@
 
 (deftest test-compile-values-with-exprs
   (let [{:keys [values]}
-        (ast (values ['(cast "192.168.0.1" :inet)
-                      "192.168.0.10"
-                      "192.168.1.43"]))]
+        (ast (values [['(cast "192.168.0.1" :inet)
+                        "192.168.0.10"
+                        "192.168.1.43"]]))]
     (is (= (compile-sql db values)
-           ["VALUES (CAST(? AS inet)), (?), (?)"
+           ["VALUES (CAST(? AS inet), ?, ?)"
             "192.168.0.1"
             "192.168.0.10"
             "192.168.1.43"]))))

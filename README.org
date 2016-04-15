@@ -350,15 +350,26 @@
 
 **** Insert expressions
 
-     Insert arbitrary expressions into a table.
+     Insert expressions into the =films= table.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
        (insert db :films [:code :title :did :date-prod :kind]
-         (values ['(upper "t_601") "Yojimbo" 106 "1961-06-16" "Drama"]))
+         (values [['(upper "t_601") "Yojimbo" 106 "1961-06-16" "Drama"]]))
      #+END_SRC
 
      #+RESULTS:
-     : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (upper(?)), (?), (106), (?), (?)" "t_601" "Yojimbo" "1961-06-16" "Drama"]
+     : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (upper(?), ?, 106, ?, ?)" "t_601" "Yojimbo" "1961-06-16" "Drama"]
+
+     Insert expressions and default values into the =films= table.
+
+     #+BEGIN_SRC clojure :exports both :results verbatim
+       (insert db :films []
+         (values [["UA502" "Bananas" 105 :DEFAULT "Comedy" "82 minutes"]
+                  ["T_601" "Yojimbo" 106 :DEFAULT "Drama" :DEFAULT]]))
+     #+END_SRC
+
+     #+RESULTS:
+     : ["INSERT INTO \"films\" VALUES (?, ?, 105, DEFAULT, ?, ?), (?, ?, 106, DEFAULT, ?, DEFAULT)" "UA502" "Bananas" "Comedy" "82 minutes" "T_601" "Yojimbo" "Drama"]
 
 **** Insert records
 

@@ -5,7 +5,7 @@
 
 (def ^:dynamic *reserved*
   "A set of reserved words that should not be quoted."
-  #{"EXCLUDED"})
+  #{"EXCLUDED" "DEFAULT"})
 
 (defn m-bind [mv mf]
   (fn [state]
