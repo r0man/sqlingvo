@@ -621,33 +621,43 @@
                :row row))))))
 
 (defn values
-  "Add a VALUES clause to an SQL statement.
+  "Return a VALUES statement or clause.
 
   Examples:
+  
+  (values db [[1 \"one\"] [2 \"two\"] [3 \"three\"]])
 
   (insert db :distributors []
     (values [{:did 106 :dname \"XYZ Widgets\"}]))"
-  [values]
-  (fn [stmt]
-    (let [node (cond
-                 (= values :default)
-                 {:op :values
-                  :type :default}
-                 (every? map? values)
-                 {:op :values
-                  :columns (if (not-empty (:columns stmt))
-                             (:columns stmt)
-                             (->> (mapcat keys values)
-                                  (apply sorted-set)
-                                  (mapv expr/parse-column)))
-                  :type :records
-                  :values (mapv expr/parse-map-expr values)}
-                 :else
-                 {:op :values
-                  :columns (:columns stmt)
-                  :type :exprs
-                  :values (mapv expr/parse-exprs values)})]
-      [node (assoc stmt :values node)])))
+  ([vals]
+   (values nil vals))
+  ([db vals]
+   (Stmt. (fn [stmt]
+            (let [node (cond
+                         (= vals :default)
+                         {:op :values
+                          :db db
+                          :type :default}
+                         (every? map? vals)
+                         {:op :values
+                          :db db
+                          :columns (if (not-empty (:columns stmt))
+                                     (:columns stmt)
+                                     (->> (mapcat keys vals)
+                                          (apply sorted-set)
+                                          (mapv expr/parse-column)))
+                          :type :records
+                          :values (mapv expr/parse-map-expr vals)}
+                         :else
+                         {:op :values
+                          :db db
+                          :columns (:columns stmt)
+                          :type :exprs
+                          :values (mapv expr/parse-exprs vals)})]
+              (->> (case (:op stmt)
+                     :insert (assoc stmt :values node)
+                     node)
+                   (repeat 2)))))))
 
 (defn where
   "Add a WHERE clause to an SQL statement.

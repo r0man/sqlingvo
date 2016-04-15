@@ -633,6 +633,78 @@
     #+RESULTS:
     : ["SELECT \"city\", max(\"temp-lo\") FROM \"weather\" GROUP BY \"city\" HAVING (max(\"temp-lo\") < 40)"]
 
+*** Values
+
+    A bare /VALUES/ command.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (values db [[1 "one"] [2 "two"] [3 "three"]])
+    #+END_SRC
+
+    #+RESULTS:
+    : ["VALUES (1, ?), (2, ?), (3, ?)" "one" "two" "three"]
+
+    This will return a table of two columns and three rows. It's
+    effectively equivalent to.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (union
+       {:all true}
+       (select db [(as 1 :column1) (as "one" :column2)])
+       (select db [(as 2 :column1) (as "two" :column2)])
+       (select db [(as 3 :column1) (as "three" :column2)]))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT 1 AS \"column1\", ? AS \"column2\" UNION ALL SELECT 2 AS \"column1\", ? AS \"column2\" UNION ALL SELECT 3 AS \"column1\", ? AS \"column2\"" "one" "two" "three"]
+
+    More usually, /VALUES/ is used within a larger SQL command. The most
+    common use is in /INSERT/.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :films []
+        (values [{:code "T-601"
+                  :title "Yojimbo"
+                  :did 106
+                  :date-prod "1961-06-16"
+                  :kind "Drama"}]))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"films\" (\"code\", \"date-prod\", \"did\", \"kind\", \"title\") VALUES (?, ?, 106, ?, ?)" "T-601" "1961-06-16" "Drama" "Yojimbo"]
+
+    In the context of /INSERT/, entries of a /VALUES/ list can be
+    /DEFAULT/ to indicate that the column default should be used here
+    instead of specifying a value.
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (insert db :films []
+        (values [["UA502" "Bananas" 105 :DEFAULT "Comedy" "82 minutes"]
+                 ["T_601" "Yojimbo" 106 :DEFAULT "Drama" :DEFAULT]]))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["INSERT INTO \"films\" VALUES (?, ?, 105, DEFAULT, ?, ?), (?, ?, 106, DEFAULT, ?, DEFAULT)" "UA502" "Bananas" "Comedy" "82 minutes" "T_601" "Yojimbo" "Drama"]
+
+    When /VALUES/ is used in /INSERT/, the values are all
+    automatically coerced to the data type of the corresponding
+    destination column. When it's used in other contexts, it might be
+    necessary to specify the correct data type. If the entries are all
+    quoted literal constants, coercing the first is sufficient to
+    determine the assumed type for all:
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:*]
+        (from :machines)
+        (where `(in :ip-address
+                    ~(values [['(cast "192.168.0.1" :inet)]
+                              ["192.168.0.10"]
+                              ["192.168.1.43"]]))))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT * FROM \"machines\" WHERE \"ip-address\" IN (VALUES (CAST(? AS inet)), (?), (?))" "192.168.0.1" "192.168.0.10" "192.168.1.43"]
+
 *** With Queries / Common table expressions
 
     You can compose more complex /SQL/ statements with common table
