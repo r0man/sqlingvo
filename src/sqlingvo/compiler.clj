@@ -33,16 +33,6 @@
 (defn compile-sql-join [db separator args]
   (join-sql separator (map #(compile-sql db %) args)))
 
-(defn compile-alias
-  "Compile a SQL alias expression."
-  ([db alias]
-   (compile-alias db alias true))
-  ([db alias include-as?]
-   (when alias
-     (if include-as?
-       (str " AS " (sql-quote db alias))
-       (str " " (sql-quote db alias))))))
-
 (defn keyword-sql [k]
   (replace (upper-case (name k)) #"-" " "))
 
@@ -67,7 +57,7 @@
 ;; COMPILE CONSTANTS
 
 (defn compile-inline [db node]
-  [(str (:val node) (compile-alias db (:as node)))])
+  [(str (:val node))])
 
 (defmulti compile-const
   "Compile a SQL constant into a SQL statement."
@@ -77,13 +67,13 @@
   (compile-inline db node))
 
 (defmethod compile-const :string [db node]
-  [(str (placeholder db) (compile-alias db (:as node))) (:val node)])
+  [(str (placeholder db)) (:val node)])
 
 (defmethod compile-const :symbol [db node]
   (compile-inline db node))
 
 (defmethod compile-const :default [db node]
-  [(str (placeholder db) (compile-alias db (:as node))) (:form node)])
+  [(str (placeholder db)) (:form node)])
 
 ;; COMPILE EXPRESSIONS
 
@@ -97,9 +87,8 @@
 (defmethod compile-expr :array [db node]
   (compile-array db node))
 
-(defmethod compile-expr :select [db {:keys [as] :as expr}]
-  (concat-sql (wrap-stmt (compile-sql db expr))
-              (if as (compile-alias db as))))
+(defmethod compile-expr :select [db expr]
+  (concat-sql (wrap-stmt (compile-sql db expr))))
 
 (defmethod compile-expr :default [db node]
   (compile-sql db node))
@@ -111,14 +100,13 @@
 
 (defn compile-2-ary
   "Compile a 2-arity SQL function node into a SQL statement."
-  [db {:keys [as args name] :as node}]
+  [db {:keys [args name] :as node}]
   (cond
     (> 2 (count args))
     (throw (ex-info "More than 1 arg needed." node))
     (= 2 (count args))
     (let [[[s1 & a1] [s2 & a2]] (compile-exprs db args)]
-      (cons (str "(" s1 " " (core/name name) " " s2 ")"
-                 (compile-alias db as))
+      (cons (str "(" s1 " " (core/name name) " " s2 ")")
             (concat a1 a2)))
     :else
     (join-sql " AND "
@@ -127,25 +115,26 @@
 
 (defn compile-infix
   "Compile a SQL infix function node into a SQL statement."
-  [db {:keys [as args name]}]
+  [db {:keys [args name]}]
   (cond
     (= 1 (count args))
     (compile-expr db (first args))
     :else
     (let [args (compile-exprs db args)]
-      (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")"
-                 (compile-alias db as))
+      (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")")
             (apply concat (map rest args))))))
 
 (defn compile-complex-args [db node]
-  (concat-sql "(" (name (:name node)) " "
-              (compile-sql-join db " " (:args node))
-              ")" (compile-alias db (:as node))))
+  (concat-sql
+   "(" (name (:name node)) " "
+   (compile-sql-join db " " (:args node))
+   ")"))
 
 (defn compile-whitespace-args [db node]
-  (concat-sql (name (:name node)) "("
-              (compile-sql-join db " " (:args node))
-              ")" (compile-alias db (:as node))))
+  (concat-sql
+   (name (:name node)) "("
+   (compile-sql-join db " " (:args node))
+   ")"))
 
 (defmulti compile-fn
   "Compile a SQL function node into a SQL statement."
@@ -160,19 +149,16 @@
                                              (compile-sql db then)))
                                (for [[else] (filter #(= 1 (count %1)) parts)]
                                  (concat-sql " ELSE " (compile-sql db else)))
-                               [" END"]))
-                (compile-alias db (:as node)))))
+                               [" END"])))))
 
 (defmethod compile-fn :cast [db {[expr type] :args as :as}]
-  (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"
-              (compile-alias db as)))
+  (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"))
 
 (defmethod compile-fn :count [db {:keys [args as]}]
   (concat-sql "count("
               (if (= 'distinct (:form (first args))) "DISTINCT ")
               (join-sql ", " (map #(compile-sql db %1)
-                                  (remove #(= 'distinct (:form %1)) args))) ")"
-              (compile-alias db as)))
+                                  (remove #(= 'distinct (:form %1)) args))) ")"))
 
 (defmethod compile-fn :in [db {[member expr] :args}]
   (concat-sql (compile-expr db member) " IN "
@@ -219,8 +205,7 @@
 (defmethod compile-fn :over [db node]
   (let [args (map #(compile-sql db %) (:args node))]
     (concat-sql (first args) " OVER ("
-                (join-sql " " (rest args))
-                ")" (compile-alias db (:as node)))))
+                (join-sql " " (rest args)) ")")))
 
 (defmethod compile-fn :partition-by [db node]
   (let [[expr & more-args] (:args node)]
@@ -246,8 +231,7 @@
 
 (defmethod compile-fn :default [db {:keys [as args name]}]
   (concat-sql (sql-quote-fn db name) "("
-              (join-sql ", " (compile-exprs db args))
-              ")" (compile-alias db as)))
+              (join-sql ", " (compile-exprs db args)) ")"))
 
 ;;  WITH Queries (Common Table Expressions)
 
@@ -277,6 +261,9 @@
 (defmethod compile-from :table [db node]
   (compile-sql db node))
 
+(defmethod compile-from :alias [db node]
+  (compile-sql db node))
+
 (defn compile-column [db column]
   (concat-sql
    (sql-quote db (:name column))
@@ -295,6 +282,19 @@
 
 ;; COMPILE SQL
 
+(defmethod compile-sql :alias
+  [db {:keys [columns expr name]}]
+  (concat-sql
+   (if (contains? #{:select :values} (:op expr))
+     (wrap-stmt (compile-sql db expr))
+     (compile-sql db expr))
+   (if (= :table (:op expr))
+     " " " AS ")
+   (sql-quote db name)
+   (when (not-empty columns)
+     (concat-sql
+      " (" (join-sql ", " (map #(compile-sql db %) columns)) ")"))))
+
 (defmethod compile-sql :array [db node]
   (compile-array db node))
 
@@ -307,14 +307,13 @@
 (defmethod compile-sql :condition [db {:keys [condition]}]
   (compile-sql db condition))
 
-(defmethod compile-sql :column [db {:keys [as schema name table direction nulls]}]
+(defmethod compile-sql :column [db {:keys [schema name table direction nulls]}]
   (concat-sql
    (->> [(if schema (sql-quote db schema))
          (if table (sql-quote db table))
          (if name (if (= :* name) "*" (sql-quote db name)))]
         (remove nil?)
         (join "."))
-   (compile-alias db as)
    (if direction (str " " (upper-case (core/name direction))))
    (if nulls (str " NULLS " (keyword-sql nulls)))))
 
@@ -395,8 +394,7 @@
   (compile-set-op db :except node))
 
 (defmethod compile-sql :expr-list [db {:keys [as children]}]
-  (concat-sql (compile-sql-join db " " children)
-              (compile-alias db as)))
+  (concat-sql (compile-sql-join db " " children)))
 
 (defmulti compile-explain-option
   "Compile an EXPLAIN option."
@@ -429,9 +427,9 @@
                 (compile-sql db (:stmt node)))))
 
 (defmethod compile-sql :attr [db node]
-  (concat-sql "(" (compile-sql db (:arg node)) ")." (sql-quote db (:name node))
-              (if-let [as (:as node)]
-                (compile-alias db as))))
+  (concat-sql
+   "(" (compile-sql db (:arg node)) ")."
+   (sql-quote db (:name node))))
 
 (defmethod compile-sql :fn [db node]
   (concat-sql (if-let [dir (:direction node)]
@@ -573,9 +571,8 @@
 (defmethod compile-sql :order-by [db {:keys [exprs direction nulls using]}]
   (concat-sql "ORDER BY " (compile-sql db exprs)))
 
-(defmethod compile-sql :table [db {:keys [as schema name]}]
-  [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name])))
-        (compile-alias db as false))])
+(defmethod compile-sql :table [db {:keys [schema name]}]
+  [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name]))))])
 
 (defmethod compile-sql :drop-materialized-view [db node]
   (let [{:keys [cascade if-exists restrict view]} node]
@@ -661,10 +658,10 @@
         (concat-sql " RETURNING " (compile-sql-join db ", " returning)))))))
 
 (defmethod compile-sql :window [db node]
-  (->> (for [definition (:definitions node)]
+  (->> (for [alias (:definitions node)]
          (concat-sql
-          (sql-quote db (:as definition))
-          " AS (" (compile-sql db definition) ")"))
+          (sql-quote db (:name alias))
+          " AS (" (compile-sql db (:expr alias)) ")"))
        (join-sql ", ")
        (concat-sql "WINDOW " )))
 

@@ -12,15 +12,29 @@
       (= expected (compile-sql db ast))
     {:op :column :name :*}
     ["*"]
-    {:op :column :table :continents :name :*}
+    {:op :column
+     :table :continents
+     :name :*}
     ["\"continents\".*"]
-    {:op :column :name :created-at}
+    {:op :column
+     :name :created-at}
     ["\"created-at\""]
-    {:op :column :table :continents :name :created-at}
+    {:op :column
+     :table :continents
+     :name :created-at}
     ["\"continents\".\"created-at\""]
-    {:op :column :schema :public :table :continents :name :created-at}
+    {:op :column
+     :schema :public
+     :table :continents
+     :name :created-at}
     ["\"public\".\"continents\".\"created-at\""]
-    {:op :column :schema :public :table :continents :name :created-at :as :c}
+    {:op :alias
+     :name :c
+     :expr
+     {:op :column
+      :schema :public
+      :table :continents
+      :name :created-at}}
     ["\"public\".\"continents\".\"created-at\" AS \"c\""]))
 
 (deftest test-compile-constant
@@ -114,9 +128,13 @@
       (= expected (compile-sql db ast))
     {:op :table :name :continents}
     ["\"continents\""]
-    {:op :table :schema :public :name :continents}
+    {:op :table
+     :schema :public
+     :name :continents}
     ["\"public\".\"continents\""]
-    {:op :table :schema :public :name :continents :as :c}
+    {:op :alias
+     :expr {:op :table :schema :public :name :continents}
+     :name :c}
     ["\"public\".\"continents\" \"c\""]))
 
 (deftest test-wrap-stmt

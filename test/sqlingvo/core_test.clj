@@ -23,8 +23,16 @@
 
 (deftest test-from
   (let [[from stmt] ((from :continents) {})]
-    (is (= [{:op :table :children [:name] :name :continents}] from))
-    (is (= {:from [{:op :table, :children [:name] :name :continents}]} stmt))))
+    (is (= [{:op :table
+             :children [:name]
+             :name :continents
+             :form :continents}]
+           from))
+    (is (= {:from [{:op :table
+                    :children [:name]
+                    :name :continents
+                    :form :continents}]}
+           stmt))))
 
 ;; COMPOSE
 
@@ -52,18 +60,52 @@
 ;; AS
 
 (deftest test-as
-  (are [args expected]
-      (is (= expected (apply as args)))
+  (are [args expected] (= (apply as args) expected)
     [:id :other]
-    (assoc (parse-expr :id) :as :other)
+    {:op :alias
+     :children [:expr :name]
+     :expr {:children [:name]
+            :name :id
+            :op :column
+            :form :id}
+     :name :other
+     :columns []}
     [:continents [:id :name]]
-    [(assoc (parse-expr :continents.id) :as :continents-id)
-     (assoc (parse-expr :continents.name) :as :continents-name)]
+    {:op :alias
+     :children [:expr :name]
+     :expr
+     {:children [:name]
+      :name :continents
+      :op :column
+      :form :continents}
+     :name [:id :name]
+     :columns []}
     [:public.continents [:id :name]]
-    [(assoc (parse-expr :public.continents.id) :as :public-continents-id)
-     (assoc (parse-expr :public.continents.name) :as :public-continents-name)]
+    {:op :alias
+     :children [:expr :name]
+     :expr
+     {:children [:table :name]
+      :table :public
+      :name :continents
+      :op :column
+      :form :public.continents}
+     :name [:id :name]
+     :columns []}
     ['(count *) :count]
-    (assoc (parse-expr '(count *)) :as :count)))
+    {:op :alias
+     :children [:expr :name]
+     :expr
+     {:args
+      [{:val '*
+        :type :symbol
+        :op :constant
+        :literal? true
+        :form '*}]
+      :children [:args]
+      :name "count"
+      :op :fn}
+     :name :count
+     :columns []}))
 
 ;; CAST
 
