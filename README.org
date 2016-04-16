@@ -695,6 +695,40 @@
     #+RESULTS:
     : ["INSERT INTO \"films\" VALUES (?, ?, 105, DEFAULT, ?, ?), (?, ?, 106, DEFAULT, ?, DEFAULT)" "UA502" "Bananas" "Comedy" "82 minutes" "T_601" "Yojimbo" "Drama"]
 
+    /VALUES/ can also be used where a sub /SELECT/ might be written,
+    for example in a /FROM/ clause:
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (select db [:f.*]
+        (from (as :films :f)
+              (as (values [["MGM" "Horror"] ["UA" "Sci-Fi"]])
+                  :t [:studio :kind]))
+        (where '(and (= :f.studio :t.studio)
+                     (= :f.kind :t.kind))))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["SELECT \"f\".* FROM \"films\" \"f\", (VALUES (?, ?), (?, ?)) AS \"t\" (\"studio\", \"kind\") WHERE ((\"f\".\"studio\" = \"t\".\"studio\") and (\"f\".\"kind\" = \"t\".\"kind\"))" "MGM" "Horror" "UA" "Sci-Fi"]
+
+    Note that an /AS/ clause is required when /VALUES/ is used in a
+    /FROM/ clause, just as is true for /SELECT/. It is not required
+    that the /AS/ clause specify names for all the columns, but it's
+    good practice to do so. (The default column names for /VALUES/ are
+    column1, column2, etc in PostgreSQL, but these names might be
+    different in other database systems.)
+
+    #+BEGIN_SRC clojure :exports both :results verbatim
+      (update db :employees
+        {:salary '(* :salary :v.increase)}
+        (from (as (values [[1 200000 1.2] [2 400000 1.4]])
+                  :v [:depno :target :increase]))
+        (where '(and (= :employees.depno :v.depno)
+                     (>= :employees.sales :v.target))))
+    #+END_SRC
+
+    #+RESULTS:
+    : ["UPDATE \"employees\" SET \"salary\" = (\"salary\" * \"v\".\"increase\") FROM (VALUES (1, 200000, 1.2), (2, 400000, 1.4)) AS \"v\" (\"depno\", \"target\", \"increase\") WHERE ((\"employees\".\"depno\" = \"v\".\"depno\") and (\"employees\".\"sales\" >= \"v\".\"target\"))"]
+
     When /VALUES/ is used in /INSERT/, the values are all
     automatically coerced to the data type of the corresponding
     destination column. When it's used in other contexts, it might be

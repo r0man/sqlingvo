@@ -59,6 +59,7 @@
           (make-node
            :op :column
            :children [:schema :table :name :as]
+           :form s
            :schema (if (and schema table) (keyword schema))
            :table (keyword (or table schema))
            :name (keyword name)
@@ -73,6 +74,7 @@
         (make-node
          :op :table
          :children [:schema :name :as]
+         :form s
          :schema (keyword (nth matches 2))
          :name (keyword (nth matches 3))
          :as (keyword (nth matches 5))))))
@@ -163,6 +165,12 @@
     (or (string? forms)
         (keyword? forms))
     (parse-table forms)
+    (and (map? forms)
+         (= :alias (:op forms))
+         (= :column (-> forms :expr :op)))
+    (assoc forms :expr (parse-table (-> forms :expr :form)))
+    (and (map? forms) (= :alias (:op forms)))
+    forms
     (and (map? forms) (= :fn (:op forms)))
     forms
     (and (map? forms) (= :select (:op forms)))

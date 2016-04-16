@@ -339,34 +339,16 @@
     (is (= [(parse-table :continents)] (:from stmt)))))
 
 (deftest test-select-distinct-subquery-alias
-  (with-stmt
-    ["SELECT DISTINCT \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
-    (select db (distinct [:x.a :x.b])
-      (from (as (select db [(as 1 :a) (as 2 :b)]) :x)))
-    (is (= :select (:op stmt)))
-    (let [distinct (:distinct stmt)]
-      (is (= :distinct (:op distinct)))
-      (is (= (map parse-expr [:x.a :x.b]) (:exprs distinct)))
-      (is (= [] (:on distinct))))
-    (let [from (first (:from stmt))]
-      (is (= :select (:op from)))
-      (is (= :x (:as from)))
-      (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from))))))
+  (sql= (select db (distinct [:x.a :x.b])
+          (from (as (select db [(as 1 :a) (as 2 :b)]) :x)))
+        [(str "SELECT DISTINCT \"x\".\"a\", \"x\".\"b\" "
+              "FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\"")]))
 
 (deftest test-select-distinct-on-subquery-alias
-  (with-stmt
-    ["SELECT DISTINCT ON (\"x\".\"a\", \"x\".\"b\") \"x\".\"a\", \"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\""]
-    (select db (distinct [:x.a :x.b] :on [:x.a :x.b])
-      (from (as (select db [(as 1 :a) (as 2 :b)]) :x)))
-    (is (= :select (:op stmt)))
-    (let [distinct (:distinct stmt)]
-      (is (= :distinct (:op distinct)))
-      (is (= (map parse-expr [:x.a :x.b]) (:exprs distinct)))
-      (is (= (map parse-expr [:x.a :x.b]) (:on distinct))))
-    (let [from (first (:from stmt))]
-      (is (= :select (:op from)))
-      (is (= :x (:as from)))
-      (is (= (map parse-expr [(as 1 :a) (as 2 :b)]) (:exprs from))))))
+  (sql= (select db (distinct [:x.a :x.b] :on [:x.a :x.b])
+          (from (as (select db [(as 1 :a) (as 2 :b)]) :x)))
+        [(str "SELECT DISTINCT ON (\"x\".\"a\", \"x\".\"b\") \"x\".\"a\", "
+              "\"x\".\"b\" FROM (SELECT 1 AS \"a\", 2 AS \"b\") AS \"x\"")]))
 
 (deftest test-select-most-recent-weather-report
   (with-stmt
@@ -489,33 +471,15 @@
     (is (= (parse-condition '(= 1 2 3)) (:where stmt)))))
 
 (deftest test-select-subquery-alias
-  (with-stmt
-    ["SELECT * FROM (SELECT 1, 2, 3) AS \"x\""]
-    (select db [*]
-      (from (as (select db [1 2 3]) :x)))
-    (is (= :select (:op stmt)))
-    (is (= [(parse-expr *)] (:exprs stmt)))
-    (let [from (first (:from stmt))]
-      (is (= :select (:op from)))
-      (is (= :x (:as from)))
-      (is (= (map parse-expr [1 2 3]) (:exprs from))))))
+  (sql= (select db [*]
+          (from (as (select db [1 2 3]) :x)))
+        ["SELECT * FROM (SELECT 1, 2, 3) AS \"x\""]))
 
 (deftest test-select-subqueries-alias
-  (with-stmt
-    ["SELECT * FROM (SELECT 1) AS \"x\", (SELECT 2) AS \"y\""]
-    (select db [*]
-      (from (as (select db [1]) :x)
-            (as (select db [2]) :y)))
-    (is (= :select (:op stmt)))
-    (is (= [(parse-expr *)] (:exprs stmt)))
-    (let [from (first (:from stmt))]
-      (is (= :select (:op from)))
-      (is (= :x (:as from)))
-      (is (= [(parse-expr 1)] (:exprs from))))
-    (let [from (second (:from stmt))]
-      (is (= :select (:op from)))
-      (is (= :y (:as from)))
-      (is (= [(parse-expr 2)] (:exprs from))))))
+  (sql= (select db [*]
+          (from (as (select db [1]) :x)
+                (as (select db [2]) :y)))
+        ["SELECT * FROM (SELECT 1) AS \"x\", (SELECT 2) AS \"y\""]))
 
 (deftest test-select-parition-by
   (with-stmt
@@ -615,32 +579,18 @@
       (is (= (parse-expr '(= :continents.id :countries.continent-id)) (:on join))))))
 
 (deftest test-select-join-with-keywords
-  (with-stmt
-    ["SELECT * FROM \"continents\" JOIN \"countries\" ON (\"countries\".\"continent-id\" = \"continents\".\"id\")"]
-    (select db [*]
-      (from :continents)
-      (join :countries.continent-id :continents.id))
-    (is (= :select (:op stmt)))
-    (is (= [(parse-from :continents)] (:from stmt)))
-    (is (= [(parse-expr *)] (:exprs stmt)))
-    (let [join (first (:joins stmt))]
-      (is (= :join (:op join)))
-      (is (= (parse-from :countries) (:from join)))
-      (is (= (parse-expr '(= :countries.continent-id :continents.id)) (:on join))))))
+  (sql= (select db [*]
+          (from :continents)
+          (join :countries.continent-id :continents.id))
+        [(str "SELECT * FROM \"continents\" "
+              "JOIN \"countries\" "
+              "ON (\"countries\".\"continent-id\" = \"continents\".\"id\")")]))
 
 (deftest test-select-join-on-columns-alias
-  (with-stmt
-    ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent-id\")"]
-    (select db [*]
-      (from (as :countries :c))
-      (join :continents '(on (= :continents.id :c.continent-id))))
-    (is (= :select (:op stmt)))
-    (is (= [(parse-from (as :countries :c))] (:from stmt)))
-    (is (= [(parse-expr *)] (:exprs stmt)))
-    (let [join (first (:joins stmt))]
-      (is (= :join (:op join)))
-      (is (= (parse-from :continents) (:from join)))
-      (is (= (parse-expr '(= :continents.id :c.continent-id)) (:on join))))))
+  (sql= (select db [*]
+          (from (as :countries :c))
+          (join :continents '(on (= :continents.id :c.continent-id))))
+        ["SELECT * FROM \"countries\" \"c\" JOIN \"continents\" ON (\"continents\".\"id\" = \"c\".\"continent-id\")"]))
 
 (deftest test-select-join-using-column
   (with-stmt

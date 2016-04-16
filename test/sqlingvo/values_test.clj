@@ -12,11 +12,7 @@
 
 (deftest test-values-with-default
   (sql= (values db :default)
-        ["DEFAULT VALUES"])
-  (ast= (values :default)
-        {:type :default
-         :db nil
-         :op :values}))
+        ["DEFAULT VALUES"]))
 
 (deftest test-values-with-maps
   (sql= (values db [{:code "B6717"
@@ -25,42 +21,7 @@
                      :title "The Dinner Game"}])
         ["VALUES (?, ?), (?, ?)"
          "B6717" "Tampopo"
-         "HG120" "The Dinner Game"])
-  (ast= (values [{:code "B6717"
-                  :title "Tampopo"}
-                 {:code "HG120"
-                  :title "The Dinner Game"}])
-        {:op :values,
-         :db nil
-         :columns
-         [{:children [:name], :name :code, :op :column}
-          {:children [:name], :name :title, :op :column}],
-         :type :records
-         :values
-         [{:code
-           {:val "B6717",
-            :type :string,
-            :op :constant,
-            :literal? true,
-            :form "B6717"},
-           :title
-           {:val "Tampopo",
-            :type :string,
-            :op :constant,
-            :literal? true,
-            :form "Tampopo"}}
-          {:code
-           {:val "HG120",
-            :type :string,
-            :op :constant,
-            :literal? true,
-            :form "HG120"},
-           :title
-           {:val "The Dinner Game",
-            :type :string,
-            :op :constant,
-            :literal? true,
-            :form "The Dinner Game"}}]}))
+         "HG120" "The Dinner Game"]))
 
 (deftest test-values-with-exprs
   (sql= (values db [['(cast "192.168.0.1" :inet)
@@ -69,35 +30,7 @@
         ["VALUES (CAST(? AS inet), ?, ?)"
          "192.168.0.1"
          "192.168.0.10"
-         "192.168.1.43"])
-  (ast= (values [['(cast "192.168.0.1" :inet)
-                  "192.168.0.10"
-                  "192.168.1.43"]])
-        {:op :values,
-         :db nil
-         :columns nil,
-         :type :exprs
-         :values
-         [[{:args
-            [{:val "192.168.0.1",
-              :type :string,
-              :op :constant,
-              :literal? true,
-              :form "192.168.0.1"}
-             {:children [:name], :name :inet, :op :column}],
-            :children [:args],
-            :name "cast",
-            :op :fn}
-           {:val "192.168.0.10",
-            :type :string,
-            :op :constant,
-            :literal? true,
-            :form "192.168.0.10"}
-           {:val "192.168.1.43",
-            :type :string,
-            :op :constant,
-            :literal? true,
-            :form "192.168.1.43"}]]}))
+         "192.168.1.43"]))
 
 (deftest test-select-in-values
   (sql= (select db [:*]
@@ -111,3 +44,33 @@
          "192.168.0.1"
          "192.168.0.10"
          "192.168.1.43"]))
+
+(deftest test-select-from-values
+  (sql= (select db [:f.*]
+          (from (as :films :f)
+                (as (values [["MGM" "Horror"]
+                             ["UA" "Sci-Fi"]])
+                    :t [:studio :kind]))
+          (where '(and (= :f.studio :t.studio)
+                       (= :f.kind :t.kind))))
+        [(str "SELECT \"f\".* FROM \"films\" \"f\", "
+              "(VALUES (?, ?), (?, ?)) "
+              "AS \"t\" (\"studio\", \"kind\") "
+              "WHERE ((\"f\".\"studio\" = \"t\".\"studio\") "
+              "and (\"f\".\"kind\" = \"t\".\"kind\"))")
+         "MGM" "Horror" "UA" "Sci-Fi"]))
+
+(deftest test-update-from-values
+  (sql= (update db :employees
+          {:salary '(* :salary :v.increase)}
+          (from (as (values [[1 200000 1.2]
+                             [2 400000 1.4]])
+                    :v [:depno :target :increase]))
+          (where '(and (= :employees.depno :v.depno)
+                       (>= :employees.sales :v.target))))
+        [(str "UPDATE \"employees\" "
+              "SET \"salary\" = (\"salary\" * \"v\".\"increase\") "
+              "FROM (VALUES (1, 200000, 1.2), (2, 400000, 1.4)) "
+              "AS \"v\" (\"depno\", \"target\", \"increase\") "
+              "WHERE ((\"employees\".\"depno\" = \"v\".\"depno\") "
+              "and (\"employees\".\"sales\" >= \"v\".\"target\"))")]))

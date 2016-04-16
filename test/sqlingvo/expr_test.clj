@@ -1,50 +1,102 @@
 (ns sqlingvo.expr-test
+  (:refer-clojure :exclude [distinct group-by update])
   (:require [sqlingvo.expr :refer :all]
+            [sqlingvo.core :refer :all]
+            [sqlingvo.test :refer :all]
             [clojure.test :refer :all]))
 
 (deftest test-parse-column
-  (are [table expected]
-    (do (is (= expected (parse-column table)))
-        (is (= expected (parse-column table))))
+  (are [table expected] (= (parse-column table) expected)
     :id
-    {:op :column :children [:name] :name :id}
+    {:op :column
+     :children [:name]
+     :name :id
+     :form :id}
     :continents.id
-    {:op :column :children [:table :name] :table :continents :name :id}
+    {:op :column
+     :children [:table :name]
+     :table :continents
+     :name :id
+     :form :continents.id}
     :continents.id/i
-    {:op :column :children [:table :name :as] :table :continents :name :id :as :i}
+    {:op :column
+     :children [:table :name :as]
+     :table :continents
+     :name :id
+     :as :i
+     :form :continents.id/i}
     :public.continents.id
-    {:op :column :children [:schema :table :name] :schema :public :table :continents :name :id}
+    {:op :column
+     :children [:schema :table :name]
+     :schema :public
+     :table :continents
+     :name :id
+     :form :public.continents.id}
     :public.continents.id/i
-    {:op :column :children [:schema :table :name :as] :schema :public :table :continents :name :id :as :i})
+    {:op :column
+     :children [:schema :table :name :as]
+     :schema :public
+     :table :continents
+     :name :id
+     :as :i
+     :form :public.continents.id/i})
   (is (= (parse-column :continents.id)
          (parse-column (parse-column :continents.id)))))
 
 (deftest test-parse-table
-  (are [table expected]
-    (do (is (= expected (parse-table table)))
-        (is (= expected (parse-table (qualified-name table)))))
+  (are [table expected] (= (parse-table table) expected)
     :continents
-    {:op :table :children [:name] :name :continents}
+    {:op :table
+     :children [:name]
+     :name :continents
+     :form :continents}
     :continents/c
-    {:op :table :children [:name :as] :name :continents :as :c}
+    {:op :table
+     :children [:name :as]
+     :name :continents
+     :as :c
+     :form :continents/c}
     :public.continents
-    {:op :table :children [:schema :name] :schema :public :name :continents}
+    {:op :table
+     :children [:schema :name]
+     :schema :public
+     :name :continents
+     :form :public.continents}
     :public.continents/c
-    {:op :table :children [:schema :name :as] :schema :public :name :continents :as :c})
+    {:op :table
+     :children [:schema :name :as]
+     :schema :public
+     :name :continents
+     :as :c
+     :form :public.continents/c})
   (is (= (parse-table :public.continents/c)
          (parse-table (parse-table :public.continents/c)))))
 
 (deftest test-parse-expr
-  (are [expr expected]
-    (is (= expected (parse-expr expr)))
+  (are [expr expected] (= (parse-expr expr) expected)
     *
-    {:children [:name] :name :* :op :column}
+    {:children [:name]
+     :name :*
+     :op :column
+     :form :*}
     1
-    {:op :constant, :form 1, :literal? true, :type :number, :val 1}
+    {:op :constant
+     :form 1
+     :literal? true
+     :type :number
+     :val 1}
     1.0
-    {:op :constant, :form 1.0, :literal? true, :type :number, :val 1.0}
+    {:op :constant
+     :form 1.0
+     :literal? true
+     :type :number
+     :val 1.0}
     "x"
-    {:op :constant, :form "x", :literal? true, :type :string, :val "x"}
+    {:op :constant
+     :form "x"
+     :literal? true
+     :type :string
+     :val "x"}
     `(= 1 1)
     {:op :fn
      :children [:args]
@@ -93,16 +145,62 @@
     {:op :attr
      :children [:arg]
      :name :val
-     :arg {:op :fn,
+     :arg {:op :fn
            :children [:args]
            :name "new-emp"
            :args []}}))
 
+(deftest test-parse-expr-select
+  (is (= (parse-expr (select db [1]))
+         {:op :select
+          :children [:exprs]
+          :db db
+          :exprs
+          [{:val 1
+            :type :number
+            :op :constant
+            :literal? true
+            :form 1}]})))
+
+(deftest test-parse-expr-values
+  (is (= (parse-expr
+          (values db [["MGM" "Horror"]
+                      ["UA" "Sci-Fi"]]))
+         {:op :values
+          :db db
+          :columns nil
+          :type :exprs
+          :values
+          [[{:val "MGM"
+             :type :string
+             :op :constant
+             :literal? true
+             :form "MGM"}
+            {:val "Horror"
+             :type :string
+             :op :constant
+             :literal? true
+             :form "Horror"}]
+           [{:val "UA"
+             :type :string
+             :op :constant
+             :literal? true
+             :form "UA"}
+            {:val "Sci-Fi"
+             :type :string
+             :op :constant
+             :literal? true
+             :form "Sci-Fi"}]]})))
+
 (deftest test-parse-expr-list
   (is (= (parse-expr '((lag :close) over (partition by :company-id order by :date desc)))
          '{:op :expr-list
+           :as nil
            :children
-           [{:args [{:children [:name] :name :close :op :column}]
+           [{:args [{:children [:name]
+                     :name :close
+                     :op :column
+                     :form :close}]
              :children [:args]
              :name "lag"
              :op :fn}
@@ -112,14 +210,37 @@
              :literal? true
              :form over}
             {:args
-             [{:val by :type :symbol :op :constant :literal? true :form by}
-              {:children [:name] :name :company-id :op :column}
-              {:val order :type :symbol :op :constant :literal? true :form order}
-              {:val by :type :symbol :op :constant :literal? true :form by}
-              {:children [:name] :name :date :op :column}
-              {:val desc :type :symbol :op :constant :literal? true :form desc}]
-             :children [:args] :name "partition" :op :fn}]
-           :as nil})))
+             [{:val by
+               :type :symbol
+               :op :constant
+               :literal? true
+               :form by}
+              {:children [:name]
+               :name :company-id
+               :op :column
+               :form :company-id}
+              {:val order
+               :type :symbol
+               :op :constant
+               :literal? true
+               :form order}
+              {:val by
+               :type :symbol
+               :op :constant
+               :literal? true
+               :form by}
+              {:children [:name]
+               :name :date
+               :op :column
+               :form :date}
+              {:val desc
+               :type :symbol
+               :op :constant
+               :literal? true
+               :form desc}]
+             :children [:args]
+             :name "partition"
+             :op :fn}]})))
 
 (deftest test-parse-expr-backquote
   (is (= (parse-expr `(count :*))
@@ -135,24 +256,36 @@
 
 (deftest test-parse-from
   (are [from expected]
-    (is (= expected (parse-from from)))
+      (is (= expected (parse-from from)))
     "continents"
     {:op :table
      :children [:name]
+     :form "continents"
      :name :continents}
     :continents
     {:op :table
      :children [:name]
+     :form :continents
      :name :continents}
     '(generate_series 0 10)
     {:op :fn
      :children [:args]
      :name "generate_series"
-     :args [(parse-expr 0) (parse-expr 10)]}))
+     :args [(parse-expr 0) (parse-expr 10)]}
+    (as :countries :c)
+    {:op :alias,
+     :children [:expr :name],
+     :expr
+     {:children [:name]
+      :name :countries
+      :op :table
+      :form :countries},
+     :name :c
+     :columns []}))
 
 (deftest test-qualified-name
   (are [arg expected]
-    (is (= expected (qualified-name arg)))
+      (is (= expected (qualified-name arg)))
     nil ""
     "" ""
     "continents" "continents"
@@ -161,14 +294,14 @@
 
 (deftest test-type-keyword
   (are [x expected]
-    (= expected (type-keyword x))
+      (= expected (type-keyword x))
     1 :number
     "1" :string
     ))
 
 (deftest test-unintern-name
   (are [k expected]
-    (= (unintern-name k) expected)
+      (= (unintern-name k) expected)
     :x "x"
     (keyword "m/s->km/h") "m/s->km/h"
     (keyword "sqlingvo.expr-test/m/s->km/h") "m/s->km/h"))

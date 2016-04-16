@@ -33,17 +33,12 @@
 
 (defn as
   "Parse `expr` and return an expr with and AS clause using `alias`."
-  [expr alias]
-  (if (sequential? alias)
-    (for [alias alias]
-      (let [column (expr/parse-column (str expr "." (name alias)))]
-        (assoc column
-               :as (->> (map column [:schema :table :name])
-                        (remove nil?)
-                        (map name)
-                        (str/join "-")
-                        (keyword)))))
-    (assoc (expr/parse-expr expr) :as alias)))
+  [expr alias & [columns]]
+  {:op :alias
+   :children [:expr :name]
+   :columns (mapv expr/parse-column columns)
+   :expr (expr/parse-expr expr)
+   :name alias})
 
 (defn asc
   "Parse `expr` and return an ORDER BY expr using ascending order."
@@ -624,7 +619,7 @@
   "Return a VALUES statement or clause.
 
   Examples:
-  
+
   (values db [[1 \"one\"] [2 \"two\"] [3 \"three\"]])
 
   (insert db :distributors []
