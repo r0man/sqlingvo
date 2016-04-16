@@ -25,7 +25,7 @@
    =group-by= and =update= functions.
 
    #+BEGIN_SRC clojure :exports code :results silent
-     (refer-clojure :exclude '[distinct group-by uypdate])
+     (refer-clojure :exclude '[distinct group-by update])
      (require '[sqlingvo.core :refer :all])
    #+END_SRC
 
