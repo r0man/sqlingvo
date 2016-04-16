@@ -327,7 +327,7 @@
   (concat-sql
    "COPY "
    (compile-sql db table)
-   (if-not (empty? columns)
+   (when (not-empty columns)
      (concat-sql " (" (compile-sql-join db ", " columns) ")"))
    " FROM "
    (let [from (first from)]
@@ -359,7 +359,7 @@
        (join-sql ", " (map #(compile-column db %1) columns))
        like
        (compile-sql db like))
-     (if-not (empty? primary-key)
+     (when (not-empty primary-key)
        (concat-sql ", PRIMARY KEY(" (join ", " (map #(sql-quote db %1) primary-key)) ")"))
      ")"
      (if inherits
@@ -371,15 +371,15 @@
      db (:with node)
      (concat-sql
       "DELETE FROM " (compile-sql db table)
-      (if-not (empty? where)
+      (when (not-empty where)
         (concat-sql " WHERE " (compile-sql db where)))
-      (if-not (empty? returning)
+      (when (not-empty returning)
         (concat-sql " RETURNING " (compile-sql-join db ", " returning))) ))))
 
 (defmethod compile-sql :distinct [db {:keys [exprs on]}]
   (concat-sql
    "DISTINCT "
-   (if-not (empty? on)
+   (when (not-empty on)
      (concat-sql "ON (" (compile-sql-join db ", " on) ") "))
    (compile-sql-join db ", " exprs)))
 
@@ -438,7 +438,7 @@
 
 (defmethod compile-sql :from [db {:keys [clause joins]}]
   (concat-sql "FROM " (join-sql ", " (map #(compile-from db %1) clause))
-              (if-not (empty? joins)
+              (when (not-empty joins)
                 (compile-sql-join db " " joins))))
 
 (defmethod compile-sql :group-by [db {:keys [exprs]}]
@@ -542,7 +542,7 @@
    "JOIN " (compile-from db from)
    (if on
      (concat-sql " ON " (compile-sql db on)))
-   (if-not (empty? using)
+   (when (not-empty using)
      (concat-sql " USING (" (compile-sql-join db ", " using) ")"))))
 
 (defmethod compile-sql :keyword [db {:keys [form]}]
@@ -555,9 +555,9 @@
   (concat-sql
    "LIKE "
    (compile-sql db table)
-   (if-not (empty? including)
+   (when (not-empty including)
      (str " INCLUDING " (join " " (map keyword-sql including))))
-   (if-not (empty? excluding)
+   (when (not-empty excluding)
      (str " EXCLUDING " (join " " (map keyword-sql excluding))))))
 
 (defmethod compile-sql :list [db {:keys [children]}]
@@ -608,25 +608,25 @@
       "SELECT " (join-sql ", " (map #(compile-expr db %1) exprs))
       (if distinct
         (compile-sql db distinct))
-      (if-not (empty? from)
+      (when (not-empty from)
         (concat-sql " FROM " (join-sql ", " (map #(compile-from db %1) from))))
-      (if-not (empty? joins)
+      (when (not-empty joins)
         (concat-sql " " (compile-sql-join db " " joins)))
-      (if-not (empty? where)
+      (when (not-empty where)
         (concat-sql " WHERE " (compile-sql db where)))
-      (if-not (empty? group-by)
+      (when (not-empty group-by)
         (concat-sql " GROUP BY " (compile-sql-join db ", " group-by)))
       (when-let [having (:having node)]
         (concat-sql " HAVING " (compile-sql db having)))
       (when-let [window (:window node)]
         (concat-sql " " (compile-sql db window)))
-      (if-not (empty? order-by)
+      (when (not-empty order-by)
         (concat-sql " ORDER BY " (compile-sql-join db ", " order-by)))
       (when-let [limit-sql (and limit (seq (compile-sql db limit)))]
         (concat-sql " " limit-sql))
       (if offset
         (concat-sql " " (compile-sql db offset)))
-      (if-not (empty? set)
+      (when (not-empty set)
         (concat-sql " " (compile-sql-join db ", " set)))))))
 
 (defmethod compile-sql :truncate [db {:keys [tables continue-identity restart-identity cascade restrict]}]
@@ -650,11 +650,11 @@
       (if row
         (compile-row db row)
         (join-sql ", "(map unwrap-stmt (compile-exprs db exprs))))
-      (if-not (empty? from)
+      (when (not-empty from)
         (concat-sql " FROM " (join-sql " " (map #(compile-from db %1) from))))
-      (if-not (empty? where)
+      (when (not-empty where)
         (concat-sql " WHERE " (compile-sql db where)))
-      (if-not (empty? returning)
+      (when (not-empty returning)
         (concat-sql " RETURNING " (compile-sql-join db ", " returning)))))))
 
 (defmethod compile-sql :window [db node]
