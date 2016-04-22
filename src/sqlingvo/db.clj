@@ -7,7 +7,9 @@
 (defmulti db
   "Return the `Database` record for :adapter or :subprotocol in
   `db-spec`."
-  (fn [db-spec] (keyword (:subprotocol db-spec))))
+  (fn [db-spec]
+    (keyword (:scheme db-spec)
+             (:subprotocol db-spec))))
 
 (defmethod db :default [{:keys [subprotocol] :as db-spec}]
   (throw (ex-info (format "Unknown database subprotocol: %s"
