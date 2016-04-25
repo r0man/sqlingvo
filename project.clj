@@ -8,4 +8,5 @@
   :profiles {:provided {:plugins [[jonase/eastwood "0.2.3"]
                                   [lein-difftest "2.0.0"]]}}
   :aliases {"lint" ["do" ["eastwood"]]
-            "ci" ["do" ["difftest"] ["lint"]]})
+            "ci" ["do" ["difftest"] ["lint"]]}
+  :pedantic? :abort)
