@@ -455,7 +455,7 @@
   "Add a PRIMARY KEY clause to a table."
   [& keys]
   (fn [stmt]
-    [nil (assoc stmt :primary-key keys)]))
+    [nil (assoc stmt :primary-key (vec keys))]))
 
 (defn drop-materialized-view
   "Build a DROP MATERIALIZED VIEW statement.
