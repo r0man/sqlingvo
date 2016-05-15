@@ -1,6 +1,7 @@
 (ns sqlingvo.core-test
   (:refer-clojure :exclude [distinct group-by update])
   (:require [clojure.test :refer :all]
+            [clojure.pprint :refer [pprint]]
             [sqlingvo.core :refer :all]
             [sqlingvo.expr :refer :all]
             [sqlingvo.util :refer :all]
@@ -147,3 +148,7 @@
     (sql= (select db ["a" "b" :*]
             (from (as (select db ["c" "d"]) :x)))
           ["SELECT $1, $2, * FROM (SELECT $3, $4) AS \"x\"" "a" "b" "c" "d"])))
+
+(deftest test-pprint
+  (is (= (with-out-str (pprint (select db [1])))
+         "[\"SELECT 1\"]\n")))

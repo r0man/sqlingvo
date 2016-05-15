@@ -1,6 +1,7 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by replace update])
   (:require [clojure.string :as str]
+            [clojure.pprint :refer [simple-dispatch]]
             [sqlingvo.compiler :as compiler]
             [sqlingvo.db :as db]
             [sqlingvo.expr :as expr]
@@ -698,3 +699,7 @@
 (defmethod print-method Stmt
   [stmt writer]
   (print-method (sql stmt) writer))
+
+;; Override deref in pprint
+(defmethod simple-dispatch Stmt [stmt]
+  (pr (sql stmt)))
