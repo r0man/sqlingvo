@@ -1,18 +1,16 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by replace update])
   (:require [clojure.string :as str]
-            [clojure.pprint :refer [simple-dispatch]]
+            [#?(:clj clojure.pprint :cljs cljs.pprint) :refer [simple-dispatch]]
             [sqlingvo.compiler :as compiler]
             [sqlingvo.db :as db]
             [sqlingvo.expr :as expr]
-            [sqlingvo.util :as util])
-  (:import [sqlingvo.db Database]
-           [sqlingvo.expr Stmt]))
+            [sqlingvo.util :as util]))
 
 (defn db?
   "Return true if `x` is a database, otherwise false."
   [x]
-  (instance? Database x))
+  (instance? sqlingvo.db.Database x))
 
 (defn chain-state [body]
   (util/m-seq (remove nil? body)))
@@ -20,17 +18,12 @@
 (defn compose
   "Compose multiple SQL statements."
   [stmt & body]
-  (Stmt. (chain-state (cons stmt body))))
+  (expr/stmt (chain-state (cons stmt body))))
 
 (defn ast
   "Returns the abstract syntax tree of `stmt`."
   [stmt]
-  (cond
-    (map? stmt)
-    stmt
-    (instance? Stmt stmt)
-    (second ((.f stmt) nil))
-    :else (second (stmt nil))))
+  (expr/ast stmt))
 
 (defn as
   "Parse `expr` and return an expr with and AS clause using `alias`."
@@ -141,13 +134,13 @@
   {:style/indent 1}
   [db stmt & [opts]]
   {:pre [(db? db)]}
-  (Stmt. (fn [_]
-           [_ (expr/make-node
-               :op :explain
-               :db db
-               :children [:stmt]
-               :stmt (ast stmt)
-               :opts opts)])))
+  (expr/stmt (fn [_]
+               [_ (expr/make-node
+                   :op :explain
+                   :db db
+                   :children [:stmt]
+                   :stmt (ast stmt)
+                   :opts opts)])))
 
 (defn copy
   "Build a COPY statement.
@@ -164,14 +157,14 @@
   {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         columns (map expr/parse-column columns)]
-    (Stmt. (fn [_]
-             ((chain-state body)
-              (expr/make-node
-               :op :copy
-               :db db
-               :children [:table :columns]
-               :table table
-               :columns columns))))))
+    (expr/stmt (fn [_]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :copy
+                   :db db
+                   :children [:table :columns]
+                   :table table
+                   :columns columns))))))
 
 (defn create-table
   "Build a CREATE TABLE statement."
@@ -179,13 +172,13 @@
   [db table & body]
   {:pre [(db? db)]}
   (let [table (expr/parse-table table)]
-    (Stmt. (fn [_]
-             ((chain-state body)
-              (expr/make-node
-               :op :create-table
-               :db db
-               :children [:table]
-               :table table))))))
+    (expr/stmt (fn [_]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :create-table
+                   :db db
+                   :children [:table]
+                   :table table))))))
 
 (defn delete
   "Build a DELETE statement.
@@ -200,13 +193,13 @@
   [db table & body]
   {:pre [(db? db)]}
   (let [table (expr/parse-table table)]
-    (Stmt. (fn [_]
-             ((chain-state body)
-              (expr/make-node
-               :op :delete
-               :db db
-               :children [:table]
-               :table table))))))
+    (expr/stmt (fn [_]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :delete
+                   :db db
+                   :children [:table]
+                   :table table))))))
 
 (defn drop-table
   "Build a DROP TABLE statement.
@@ -220,25 +213,25 @@
   [db tables & body]
   {:pre [(db? db)]}
   (let [tables (map expr/parse-table tables)]
-    (Stmt. (fn [stmt]
-             ((chain-state body)
-              (expr/make-node
-               :op :drop-table
-               :db db
-               :children [:tables]
-               :tables tables))))))
+    (expr/stmt (fn [stmt]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :drop-table
+                   :db db
+                   :children [:tables]
+                   :tables tables))))))
 
 (defn- make-set-op
   [op args]
   (let [[[opts] stmts] (split-with map? args)]
-    (Stmt. (fn [_]
-             [nil (merge
-                   (expr/make-node
-                    :op op
-                    :db (-> stmts first ast :db)
-                    :children [:stmts]
-                    :stmts (map ast stmts))
-                   opts)]))))
+    (expr/stmt (fn [_]
+                 [nil (merge
+                       (expr/make-node
+                        :op op
+                        :db (-> stmts first ast :db)
+                        :children [:stmts]
+                        :stmts (map ast stmts))
+                       opts)]))))
 
 (defn except
   "Build an EXCEPT statement.
@@ -325,16 +318,16 @@
   {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         columns (map expr/parse-column columns)]
-    (Stmt. (fn [_]
-             ((chain-state body)
-              (expr/make-node
-               :op :insert
-               :db db
-               :children [:table :columns]
-               :table table
-               :columns
-               (when (not-empty columns)
-                 columns)))))))
+    (expr/stmt (fn [_]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :insert
+                   :db db
+                   :children [:table :columns]
+                   :table table
+                   :columns
+                   (when (not-empty columns)
+                     columns)))))))
 
 (defn intersect
   "Build an INTERSECT statement.
@@ -421,8 +414,8 @@
             :op :on-conflict
             :target target
             :children [:target]))]
-      (Stmt. (fn [stmt]
-               [_ (assoc stmt :on-conflict node)])))))
+      (expr/stmt (fn [stmt]
+                   [_ (assoc stmt :on-conflict node)])))))
 
 (defn on-conflict-on-constraint
   "Add a ON CONFLICT ON CONSTRAINT clause to a SQL statement."
@@ -434,8 +427,8 @@
           :op :on-conflict-on-constraint
           :target target
           :children [:target]))]
-    (Stmt. (fn [stmt]
-             [_ (assoc stmt :on-conflict-on-constraint node)]))))
+    (expr/stmt (fn [stmt]
+                 [_ (assoc stmt :on-conflict-on-constraint node)]))))
 
 (defn offset
   "Add a OFFSET clause to an SQL statement."
@@ -468,13 +461,13 @@
   [db view & body]
   {:pre [(db? db)]}
   (let [view (expr/parse-table view)]
-    (Stmt. (fn [_]
-             ((chain-state body)
-              (expr/make-node
-               :op :drop-materialized-view
-               :db db
-               :children [:view]
-               :view view))))))
+    (expr/stmt (fn [_]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :drop-materialized-view
+                   :db db
+                   :children [:view]
+                   :view view))))))
 
 (defn refresh-materialized-view
   "Build a REFRESH MATERIALIZED VIEW statement.
@@ -486,13 +479,13 @@
   [db view & body]
   {:pre [(db? db)]}
   (let [view (expr/parse-table view)]
-    (Stmt. (fn [_]
-             ((chain-state body)
-              (expr/make-node
-               :op :refresh-materialized-view
-               :db db
-               :children [:view]
-               :view view))))))
+    (expr/stmt (fn [_]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :refresh-materialized-view
+                   :db db
+                   :children [:view]
+                   :view view))))))
 
 (defn restart-identity
   "Add a RESTART IDENTITY clause to an SQL statement."
@@ -545,12 +538,12 @@
                       exprs)
           :exprs (if (sequential? exprs)
                    (expr/parse-exprs exprs))))]
-    (Stmt. (fn [stmt]
-             (->> (case (:op stmt)
-                    :insert (assoc stmt :select select)
-                    :select (assoc stmt :exprs (:exprs select))
-                    select)
-                  (repeat 2))))))
+    (expr/stmt (fn [stmt]
+                 (->> (case (:op stmt)
+                        :insert (assoc stmt :select select)
+                        :select (assoc stmt :exprs (:exprs select))
+                        select)
+                      (repeat 2))))))
 
 (defn temporary
   "Add a TEMPORARY clause to an SQL statement."
@@ -569,13 +562,13 @@
   [db tables & body]
   {:pre [(db? db)]}
   (let [tables (map expr/parse-table tables)]
-    (Stmt. (fn [_]
-             ((chain-state body)
-              (expr/make-node
-               :op :truncate
-               :db db
-               :children [:tables]
-               :tables tables))))))
+    (expr/stmt (fn [_]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :truncate
+                   :db db
+                   :children [:tables]
+                   :tables tables))))))
 
 (defn union
   "Build a UNION statement.
@@ -606,15 +599,15 @@
   (let [table (expr/parse-table table)
         exprs (if (sequential? row) (expr/parse-exprs row))
         row (if (map? row) (expr/parse-map-expr row))]
-    (Stmt. (fn [_]
-             ((chain-state body)
-              (expr/make-node
-               :op :update
-               :db db
-               :children [:table :exprs :row]
-               :table table
-               :exprs exprs
-               :row row))))))
+    (expr/stmt (fn [_]
+                 ((chain-state body)
+                  (expr/make-node
+                   :op :update
+                   :db db
+                   :children [:table :exprs :row]
+                   :table table
+                   :exprs exprs
+                   :row row))))))
 
 (defn values
   "Return a VALUES statement or clause.
@@ -628,32 +621,32 @@
   ([vals]
    (values nil vals))
   ([db vals]
-   (Stmt. (fn [stmt]
-            (let [node (cond
-                         (= vals :default)
-                         {:op :values
-                          :db db
-                          :type :default}
-                         (every? map? vals)
-                         {:op :values
-                          :db db
-                          :columns (if (not-empty (:columns stmt))
-                                     (:columns stmt)
-                                     (->> (mapcat keys vals)
-                                          (apply sorted-set)
-                                          (mapv expr/parse-column)))
-                          :type :records
-                          :values (mapv expr/parse-map-expr vals)}
-                         :else
-                         {:op :values
-                          :db db
-                          :columns (:columns stmt)
-                          :type :exprs
-                          :values (mapv expr/parse-exprs vals)})]
-              (->> (case (:op stmt)
-                     :insert (assoc stmt :values node)
-                     node)
-                   (repeat 2)))))))
+   (expr/stmt (fn [stmt]
+                (let [node (cond
+                             (= vals :default)
+                             {:op :values
+                              :db db
+                              :type :default}
+                             (every? map? vals)
+                             {:op :values
+                              :db db
+                              :columns (if (not-empty (:columns stmt))
+                                         (:columns stmt)
+                                         (->> (mapcat keys vals)
+                                              (apply sorted-set)
+                                              (mapv expr/parse-column)))
+                              :type :records
+                              :values (mapv expr/parse-map-expr vals)}
+                             :else
+                             {:op :values
+                              :db db
+                              :columns (:columns stmt)
+                              :type :exprs
+                              :values (mapv expr/parse-exprs vals)})]
+                  (->> (case (:op stmt)
+                         :insert (assoc stmt :values node)
+                         node)
+                       (repeat 2)))))))
 
 (defn where
   "Add a WHERE clause to an SQL statement.
@@ -683,23 +676,29 @@
                                 (ast stmt)))
                       (partition 2 bindings))
         query (ast query)]
-    (Stmt. (fn [stmt]
-             [nil (assoc query
-                         :with (expr/make-node
-                                :op :with
-                                :db db
-                                :children [:bindings]
-                                :bindings bindings))]))))
+    (expr/stmt (fn [stmt]
+                 [nil (assoc query
+                             :with (expr/make-node
+                                    :op :with
+                                    :db db
+                                    :children [:bindings]
+                                    :bindings bindings))]))))
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
   [stmt]
   (compiler/compile-stmt (ast stmt)))
 
-(defmethod print-method Stmt
-  [stmt writer]
-  (print-method (sql stmt) writer))
+#?(:clj (defmethod print-method sqlingvo.expr.Stmt
+          [stmt writer]
+          (print-method (sql stmt) writer)))
+
+#?(:cljs
+   (extend-protocol IPrintWithWriter
+     sqlingvo.expr.Stmt
+     (-pr-writer [stmt writer opts]
+       (-pr-writer (sql stmt) writer opts))))
 
 ;; Override deref in pprint
-(defmethod simple-dispatch Stmt [stmt]
+(defmethod simple-dispatch sqlingvo.expr.Stmt [stmt]
   (pr (sql stmt)))

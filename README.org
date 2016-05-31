@@ -7,8 +7,8 @@
   [[http://jarkeeper.com/r0man/sqlingvo][http://jarkeeper.com/r0man/sqlingvo/status.svg]]
   [[http://jarkeeper.com/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
 
-  /SQLingvo/ is a [[https://clojure.org][Clojure]] /DSL/ that can help you build /SQL/
-  statements programmatically. The resulting /SQL/ statements are
+  /SQLingvo/ is a [[https://clojure.org][Clojure]] and [[https://github.com/clojure/clojurescript][ClojureScript]] /DSL/ that can help you
+  build /SQL/ statements. The resulting /SQL/ statements are
   compatible with the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]] and
   [[https://github.com/alaisi/postgres.async][postgres.async]] libraries. /SQLingvo/ is designed for the [[http://www.postgresql.org/][PostgreSQL]]
   database management system. That said, if you can avoid /PostgreSQL/

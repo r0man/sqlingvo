@@ -1,16 +1,17 @@
 (ns sqlingvo.db-test
-  (:require [clojure.test :refer :all]
+  (:require #?(:clj [clojure.test :refer :all]
+               :cljs [cljs.test :refer-macros [are deftest is]])
             [sqlingvo.compiler :as compiler]
-            [sqlingvo.db :refer :all]
+            [sqlingvo.db :as db]
             [sqlingvo.util :as util]))
 
 (deftest test-db
-  (is (= (db {:subprotocol "postgresql"})
-         (postgresql)))
-  (is (thrown? Exception (db nil))))
+  (is (= (db/db {:subprotocol "postgresql"})
+         (db/postgresql)))
+  (is (thrown? #?(:clj Exception :cljs js/Error) (db/db nil))))
 
 (deftest test-postgresql
-  (let [db (postgresql)]
+  (let [db (db/postgresql)]
     (is (instance? sqlingvo.db.Database db))
     (is (= (:classname db) "org.postgresql.Driver"))
     (is (= (:doc db) "The world's most advanced open source database."))
