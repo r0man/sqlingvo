@@ -1,11 +1,11 @@
 (ns sqlingvo.compiler-test
   (:refer-clojure :exclude [distinct group-by update])
-  (:require [clojure.test :refer :all]
-            [sqlingvo.compiler :refer :all]
-            [sqlingvo.core :refer :all]
-            [sqlingvo.db :as db]))
-
-(def db (db/postgresql))
+  (:require #?(:clj [clojure.test :refer :all]
+               :cljs [cljs.test :refer-macros [are deftest is]])
+            [sqlingvo.compiler :as compiler :refer [compile-sql]]
+            [sqlingvo.core :as sql]
+            [sqlingvo.test :refer [db]]
+            [sqlingvo.expr :as expr]))
 
 (deftest test-compile-column
   (are [ast expected]
@@ -42,52 +42,34 @@
       (= expected (compile-sql db ast))
     {:op :constant
      :form 1
-     :literal? true
      :type :number
      :val 1}
     ["1"]
     {:op :constant
      :form 3.14
-     :literal? true
      :type :number
      :val 3.14}
     ["3.14"]
     {:op :constant
      :form "x"
-     :literal? true
      :type :string
      :val "x"}
     ["?" "x"]))
 
 (deftest test-compile-sql
   (are [ast expected]
-      (= expected (compile-sql db ast))
-    {:op :nil}
+      (= (compile-sql db (expr/parse-expr ast)) expected)
+    nil
     ["NULL"]
-    {:op :constant
-     :form 1
-     :literal? true
-     :type :number
-     :val 1}
+    1
     ["1"]
-    {:op :keyword :form :continents.created-at}
+    :continents.created-at
     ["\"continents\".\"created-at\""]
-    {:op :fn :name 'max :args [{:op :keyword :form :created-at}]}
+    '(max :created-at)
     ["max(\"created-at\")"]
-    {:op :fn
-     :name 'greatest
-     :args [{:op :constant
-             :form 1
-             :literal? true
-             :type :number
-             :val 1}
-            {:op :constant
-             :form 2
-             :literal? true
-             :type :number
-             :val 2}]}
+    '(greatest 1 2)
     ["greatest(1, 2)"]
-    {:op :fn :name 'st_astext :args [{:op :fn :name 'st_centroid :args [{:op :constant :form "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"}]}]}
+    '(st_astext (st_centroid "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"))
     ["st_astext(st_centroid(?))" "MULTIPOINT(-1 0, -1 2, -1 3, -1 4, -1 7, 0 1, 0 3, 1 1, 2 0, 6 0, 7 8, 9 8, 10 6)"]))
 
 (deftest test-compile-drop-table
@@ -139,7 +121,7 @@
 
 (deftest test-wrap-stmt
   (are [stmt expected]
-      (= expected (wrap-stmt stmt))
+      (= (compiler/wrap-stmt stmt) expected)
     ["SELECT 1"]
     ["(SELECT 1)"]
     ["SELECT ?" "x"]
@@ -147,13 +129,13 @@
 
 (deftest test-unwrap-stmt
   (are [stmt expected]
-      (= expected (unwrap-stmt stmt))
+      (= (compiler/unwrap-stmt stmt) expected)
     ["(SELECT 1)"]
     ["SELECT 1"]
     ["(SELECT ?)" "x"]
     ["SELECT ?" "x"]))
 
 (deftest test-compile-stmt-returns-vector
-  (let [sql (compile-stmt (ast (select db [1])))]
+  (let [sql (compiler/compile-stmt (sql/ast (sql/select db [1])))]
     (is (vector? sql))
     (is (= sql ["SELECT 1"]))))

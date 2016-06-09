@@ -1,8 +1,7 @@
 (ns sqlingvo.compiler
-  (:import java.io.File)
+  #?(:cljs (:require-macros [sqlingvo.compiler :refer [defarity]]))
   (:refer-clojure :exclude [replace])
-  (:require [clojure.core :as core]
-            [clojure.java.io :refer [file]]
+  (:require [#?(:clj clojure.core :cljs cljs.core) :as core]
             [clojure.string :refer [blank? join replace upper-case]]
             [sqlingvo.util :as util :refer [sql-quote sql-quote-fn]]))
 
@@ -100,115 +99,131 @@
 
 (defn compile-2-ary
   "Compile a 2-arity SQL function node into a SQL statement."
-  [db {:keys [args name] :as node}]
-  (cond
-    (> 2 (count args))
-    (throw (ex-info "More than 1 arg needed." node))
-    (= 2 (count args))
-    (let [[[s1 & a1] [s2 & a2]] (compile-exprs db args)]
-      (cons (str "(" s1 " " (core/name name) " " s2 ")")
-            (concat a1 a2)))
-    :else
-    (join-sql " AND "
-              (map #(compile-2-ary db (assoc node :args %1))
-                   (partition 2 1 args)))))
+  [db node]
+  (let [[name & args] (:children node)]
+    (assert (< 1 (count args)) "More than 1 arg needed.")
+    (->> (map (fn [[arg-1 arg-2]]
+                (concat-sql "(" (compile-expr db arg-1)
+                            " " (core/name (:val name)) " "
+                            (compile-expr db arg-2) ")"))
+              (partition 2 1 args))
+         (join-sql " AND "))))
 
 (defn compile-infix
   "Compile a SQL infix function node into a SQL statement."
-  [db {:keys [args name]}]
-  (cond
-    (= 1 (count args))
-    (compile-expr db (first args))
-    :else
-    (let [args (compile-exprs db args)]
-      (cons (str "(" (join (str " " (core/name name) " ") (map first args)) ")")
-            (apply concat (map rest args))))))
+  [db node]
+  (let [[name & args] (:children node)]
+    (cond
+      (= 1 (count args))
+      (compile-expr db (first args))
+      :else
+      (let [args (compile-exprs db args)]
+        (cons (str "(" (join (str " " (core/name (:val name)) " ") (map first args)) ")")
+              (apply concat (map rest args)))))))
 
 (defn compile-complex-args [db node]
-  (concat-sql
-   "(" (name (:name node)) " "
-   (compile-sql-join db " " (:args node))
-   ")"))
+  (let [[name & args] (:children node)]
+    (concat-sql
+     "(" (-> name :val core/name) " "
+     (compile-sql-join db " " args)
+     ")")))
 
 (defn compile-whitespace-args [db node]
-  (concat-sql
-   (name (:name node)) "("
-   (compile-sql-join db " " (:args node))
-   ")"))
+  (let [[name & args] (:children node)]
+    (concat-sql
+     (-> name :val core/name) "("
+     (compile-sql-join db " " args)
+     ")")))
 
 (defmulti compile-fn
   "Compile a SQL function node into a SQL statement."
-  (fn [db node] (keyword (:name node))))
+  (fn [db node]
+    (some-> node :children first :val keyword)))
 
 (defmethod compile-fn :case [db node]
-  (let [parts (partition 2 2 nil (:args node))]
+  (let [[_ & args] (:children node)
+        parts (partition 2 2 nil args)]
     (concat-sql (apply concat-sql "CASE"
                        (concat (for [[test then] (filter #(= 2 (count %1)) parts)]
                                  (concat-sql " WHEN "
-                                             (compile-sql db test) " THEN "
-                                             (compile-sql db then)))
+                                             (compile-expr db test) " THEN "
+                                             (compile-expr db then)))
                                (for [[else] (filter #(= 1 (count %1)) parts)]
-                                 (concat-sql " ELSE " (compile-sql db else)))
+                                 (concat-sql " ELSE " (compile-expr db else)))
                                [" END"])))))
 
-(defmethod compile-fn :cast [db {[expr type] :args as :as}]
-  (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"))
+;; (defmethod compile-fn :cast [db {[expr type] :args as :as}]
+;;   (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"))
 
-(defmethod compile-fn :count [db {:keys [args as]}]
-  (concat-sql "count("
-              (if (= 'distinct (:form (first args))) "DISTINCT ")
-              (join-sql ", " (map #(compile-sql db %1)
-                                  (remove #(= 'distinct (:form %1)) args))) ")"))
+(defmethod compile-fn :cast [db node]
+  (let [[_ & [expr type]] (:children node)]
+    (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")")))
 
-(defmethod compile-fn :in [db {[member expr] :args}]
-  (concat-sql (compile-expr db member) " IN "
-              (if (and (= :list (:op expr))
-                       (empty? (:children expr)))
-                "(NULL)"
-                (compile-expr db expr))))
+(defmethod compile-fn :count [db node]
+  (let [[name & args] (:children node)]
+    (concat-sql "count("
+                (if (= 'distinct (:form (first args))) "DISTINCT ")
+                (join-sql ", " (map #(compile-expr db %1)
+                                    (remove #(= 'distinct (:form %1)) args))) ")")))
 
-(defmethod compile-fn :in [db {[member expr] :args}]
-  (concat-sql (compile-expr db member) " IN "
-              (cond
-                (and (= :list (:op expr))
-                     (empty? (:children expr)))
-                "(NULL)"
-                (= (:op expr) :values)
-                (concat-sql "(" (compile-expr db expr) ")")
-                :else (compile-expr db expr))))
+(defn- compile-list
+  "Compile `node` into a comma separated list."
+  [db node]
+  (concat-sql "(" (compile-sql-join db ", " (:children node)) ")"))
 
-(defmethod compile-fn :exists [db {:keys [args]}]
-  (concat-sql "(EXISTS " (compile-expr db (first args)) ")"))
+(defmethod compile-fn :in [db node]
+  (let [[_ member expr] (:children node)]
+    (concat-sql (compile-expr db member) " IN "
+                (cond
+                  (= (:op expr) :list)
+                  (if (empty? (:children expr))
+                    "(NULL)" (compile-list db expr))
+                  (= (:op expr) :values)
+                  (concat-sql "(" (compile-expr db expr) ")")
+                  :else (compile-expr db expr)))))
 
-(defmethod compile-fn :not [db {:keys [args]}]
-  (concat-sql "(NOT " (compile-expr db (first args)) ")"))
+(defmethod compile-fn :exists [db node]
+  (let [[_ & args] (:children node)]
+    (concat-sql "(EXISTS " (compile-expr db (first args)) ")")))
 
-(defmethod compile-fn :not-exists [db {:keys [args]}]
-  (concat-sql "(NOT EXISTS " (compile-expr db (first args)) ")"))
+(defmethod compile-fn :not [db node]
+  (let [[_ & args] (:children node)]
+    (concat-sql "(NOT " (compile-expr db (first args)) ")")))
 
-(defmethod compile-fn :is-null [db {:keys [args]}]
-  (concat-sql "(" (compile-expr db (first args)) " IS NULL)"))
+(defmethod compile-fn :not-exists [db node]
+  (let [[_ & args] (:children node)]
+    (concat-sql "(NOT EXISTS " (compile-expr db (first args)) ")")))
 
-(defmethod compile-fn :is-not-null [db {:keys [args]}]
-  (concat-sql "(" (compile-expr db (first args)) " IS NOT NULL)"))
+(defmethod compile-fn :is-null [db node]
+  (let [[_ & args] (:children node)]
+    (concat-sql "(" (compile-expr db (first args)) " IS NULL)")))
 
-(defmethod compile-fn :not-like [db {:keys [args]}]
-  (let [[string pattern] (compile-exprs db args)]
+(defmethod compile-fn :is-not-null [db node]
+  (let [[_ & args] (:children node)]
+    (concat-sql "(" (compile-expr db (first args)) " IS NOT NULL)")))
+
+(defmethod compile-fn :not-like [db node]
+  (let [[_ & args] (:children node)
+        [string pattern] (compile-exprs db args)]
     (concat-sql "(" string " NOT LIKE " pattern ")" )))
 
-(defmethod compile-fn :range [db {:keys [args]}]
-  (concat-sql "(" (compile-sql-join db ", " args) ")"))
+(defmethod compile-fn :range [db node]
+  (let [[_ & args] (:children node)]
+    (concat-sql "(" (compile-sql-join db ", " args) ")")))
 
-(defmethod compile-fn :row [db {:keys [args]}]
-  (concat-sql "ROW(" (join-sql ", " (compile-exprs db args)) ")"))
+(defmethod compile-fn :row [db node]
+  (let [[_ & args] (:children node)]
+    (concat-sql "ROW(" (join-sql ", " (compile-exprs db args)) ")")))
 
 (defmethod compile-fn :over [db node]
-  (let [args (map #(compile-sql db %) (:args node))]
+  (let [[_ & args] (:children node)
+        args (map #(compile-sql db %) args)]
     (concat-sql (first args) " OVER ("
                 (join-sql " " (rest args)) ")")))
 
 (defmethod compile-fn :partition-by [db node]
-  (let [[expr & more-args] (:args node)]
+  (let [[_ & args] (:children node)
+        [expr & more-args] args]
     (concat-sql "PARTITION BY "
                 (if (= :array (:op expr))
                   (compile-sql-join db ", " (:children expr))
@@ -217,11 +232,13 @@
                   (concat-sql " " (compile-sql-join db " " more-args))))))
 
 (defmethod compile-fn :order-by [db node]
-  (concat-sql "ORDER BY " (compile-sql-join db ", " (:args node))))
+  (let [[_ & args] (:children node)]
+    (concat-sql "ORDER BY " (compile-sql-join db ", " args))))
 
 (defn- compile-direction [db node]
-  (concat-sql (compile-sql db (first (:args node))) " "
-              (upper-case (name (:name node)))))
+  (let [[name & args] (:children node)]
+    (concat-sql (compile-sql db (first args)) " "
+                (upper-case (-> name :val core/name)))))
 
 (defmethod compile-fn :asc [db node]
   (compile-direction db node))
@@ -229,9 +246,10 @@
 (defmethod compile-fn :desc [db node]
   (compile-direction db node))
 
-(defmethod compile-fn :default [db {:keys [as args name]}]
-  (concat-sql (sql-quote-fn db name) "("
-              (join-sql ", " (compile-exprs db args)) ")"))
+(defmethod compile-fn :default [db node]
+  (let [[name & args] (:children node) ]
+    (concat-sql (sql-quote-fn db (:val name)) "("
+                (join-sql ", " (compile-exprs db args)) ")")))
 
 ;;  WITH Queries (Common Table Expressions)
 
@@ -251,7 +269,7 @@
 
 (defmulti compile-from (fn [db ast] (:op ast)))
 
-(defmethod compile-from :fn [db fn]
+(defmethod compile-from :list [db fn]
   (compile-sql db fn))
 
 (defmethod compile-from :select [db node]
@@ -332,10 +350,10 @@
    " FROM "
    (let [from (first from)]
      (cond
-       (instance? File from)
-       ["?" (.getAbsolutePath from)]
+       #?@(:clj [(instance? java.io.File from)
+                 ["?" (.getAbsolutePath from)]] )
        (string? from)
-       ["?" (.getAbsolutePath (File. from))]
+       ["?" #?(:clj (.getAbsolutePath (java.io.File. from)) :cljs from)]
        (= :stdin from)
        "STDIN"))
    (if encoding
@@ -430,11 +448,6 @@
   (concat-sql
    "(" (compile-sql db (:arg node)) ")."
    (sql-quote db (:name node))))
-
-(defmethod compile-sql :fn [db node]
-  (concat-sql (if-let [dir (:direction node)]
-                (join-sql " " [(compile-fn db node) (upper-case (name dir))])
-                (compile-fn db node))))
 
 (defmethod compile-sql :from [db {:keys [clause joins]}]
   (concat-sql "FROM " (join-sql ", " (map #(compile-from db %1) clause))
@@ -560,16 +573,16 @@
    (when (not-empty excluding)
      (str " EXCLUDING " (join " " (map keyword-sql excluding))))))
 
-(defmethod compile-sql :list [db {:keys [children]}]
-  (concat-sql "(" (compile-sql-join db ", " children) ")"))
+(defmethod compile-sql :list [db node]
+  (concat-sql
+   (compile-fn db node)
+   (when-let [direction (:direction node) ]
+     (str " " (upper-case (name direction))))))
 
 (defmethod compile-sql :nil [db _] ["NULL"])
 
 (defmethod compile-sql :offset [db {:keys [start]}]
   (concat-sql "OFFSET " (if (number? start) (str start) "0")))
-
-(defmethod compile-sql :order-by [db {:keys [exprs direction nulls using]}]
-  (concat-sql "ORDER BY " (compile-sql db exprs)))
 
 (defmethod compile-sql :table [db {:keys [schema name]}]
   [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name]))))])
@@ -679,8 +692,9 @@
   "Define SQL functions in terms of `arity-fn`."
   [arity-fn & fns]
   `(do ~@(for [fn# (map keyword fns)]
-           `(defmethod compile-fn ~fn# [db# ~'node]
-              (~arity-fn db# ~'node)))))
+           `(defmethod sqlingvo.compiler/compile-fn ~fn#
+              [~'db ~'node]
+              (~arity-fn ~'db ~'node)))))
 
 (defarity compile-2-ary
   "=" "!=" "<>" "<" ">" "<=" ">=" "&&" "<@" "@>" "/" "^" "~" "~*" "like" "ilike")
@@ -692,8 +706,7 @@
   "partition")
 
 (defarity compile-whitespace-args
-  "substring"
-  "trim")
+  "substring" "trim")
 
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared

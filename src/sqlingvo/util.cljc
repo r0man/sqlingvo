@@ -51,12 +51,12 @@
                :op :condition
                :children [:condition]
                :condition
-               (expr/make-node
-                :op :fn
-                :children [:name :args]
-                :name combine
-                :args [(:condition (condition-type stmt))
-                       (:condition condition)])))]))))
+               {:op :list
+                ;; TODOD: Use :times, :children is reserved for keywords.
+                :children
+                [(expr/parse-expr combine)
+                 (:condition (condition-type stmt))
+                 (:condition condition)]}))]))))
 
 (defn concat-in [ks coll]
   (fn [stmt]
