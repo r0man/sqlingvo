@@ -14,7 +14,8 @@
 
   *Note*: /SQLingvo/ is designed for the [[http://www.postgresql.org/][PostgreSQL]] database
   management system. That said, if you can avoid /PostgreSQL/ specific
-  features, you might be lucky and use other databases as well.
+  features, you might be lucky and use it with other databases as
+  well.
 
   [[https://xkcd.com/1409][https://imgs.xkcd.com/comics/query.png]]
 
