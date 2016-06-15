@@ -51,16 +51,6 @@
   (sql= (sql/select db [(sql/as 1 :a) (sql/as 2 :b) (sql/as 3 :c)])
         ["SELECT 1 AS \"a\", 2 AS \"b\", 3 AS \"c\""]))
 
-(deftest test-select-count-as
-  (sql= (sql/select db [(sql/as '(count :*) :count)]
-          (sql/from :tweets))
-        ["SELECT count(*) AS \"count\" FROM \"tweets\""]))
-
-(deftest test-select-count-distinct
-  (sql= (sql/select db ['(count distinct :user-id)]
-          (sql/from :tweets))
-        ["SELECT count(DISTINCT \"user-id\") FROM \"tweets\""]))
-
 (deftest test-select-select-1
   (sql= (sql/select db [(sql/select db [1])])
         ["SELECT (SELECT 1)"]))
@@ -845,3 +835,40 @@
           (sql/having '(< (max :temp-lo) 40)))
         [(str "SELECT \"city\", max(\"temp-lo\") FROM \"weather\" GROUP BY "
               "\"city\" HAVING (max(\"temp-lo\") < 40)")]))
+
+;; Aggregate Expressions
+
+(deftest test-select-count-as
+  (sql= (sql/select db [(sql/as '(count :*) :count)]
+          (sql/from :tweets))
+        ["SELECT count(*) AS \"count\" FROM \"tweets\""]))
+
+(deftest test-select-count-distinct
+  (sql= (sql/select db ['(count distinct :user-id)]
+          (sql/from :tweets))
+        ["SELECT count(DISTINCT \"user-id\") FROM \"tweets\""]))
+
+(deftest test-select-count-distinct-upper-case
+  (sql= (sql/select db ['(count DISTINCT :user-id)]
+          (sql/from :tweets))
+        ["SELECT count(DISTINCT \"user-id\") FROM \"tweets\""]))
+
+(deftest test-select-count-all
+  (sql= (sql/select db ['(count all :user-id)]
+          (sql/from :tweets))
+        ["SELECT count(ALL \"user-id\") FROM \"tweets\""]))
+
+(deftest test-select-count-all-upper-case
+  (sql= (sql/select db ['(count ALL :user-id)]
+          (sql/from :tweets))
+        ["SELECT count(ALL \"user-id\") FROM \"tweets\""]))
+
+(deftest test-select-array-agg-order-by-desc
+  (sql= (sql/select db ['(array_agg :a (order-by (desc :b)))]
+          (sql/from :table))
+        ["SELECT array_agg(\"a\" ORDER BY \"b\" DESC) FROM \"table\""]))
+
+(deftest test-select-sting-agg-order-by
+  (sql= (sql/select db ['(string_agg :a "," (order-by :a))]
+          (sql/from :table))
+        ["SELECT string_agg(\"a\", ? ORDER BY \"a\") FROM \"table\"" ","]))

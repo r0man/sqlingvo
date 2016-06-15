@@ -95,7 +95,37 @@
 (defn compile-exprs [db exprs]
   (map #(compile-expr db %1) exprs))
 
-;; COMPILE FN CALL
+;; Compile function calls
+
+(defn- aggregate-modifier?
+  "Returns true if `node` is a modifier of an aggregate expression, otherwise false."
+  [node]
+  (#{"ALL" "DISTINCT"} (some-> node :val name upper-case)))
+
+(defn- order-by?
+  "Returns true if `node` is an ORDER BY expression, otherwise false."
+  [node]
+  (and (= (:op node) :list)
+       (= (some-> node :children first :val name upper-case) "ORDER-BY")))
+
+(defn- parse-aggregate-expression
+  "Parse an aggregate expression."
+  [node]
+  (let [[[f & args] remaining] (split-with (complement order-by?) (:children node))
+        [[modifier] args] (split-with aggregate-modifier? args)]
+    [f modifier args remaining]))
+
+(defn compile-aggregate-expression
+  "Compile an aggregate expression to SQL."
+  [db node]
+  (let [[f modifier args remaining] (parse-aggregate-expression node)]
+    (concat-sql
+     (sql-quote-fn db (:val f)) "("
+     (when modifier (concat-sql (some-> modifier :val name upper-case) " "))
+     (join-sql ", " (compile-exprs db args))
+     (when (not-empty remaining)
+       (concat-sql " " (join-sql " " (compile-exprs db remaining))))
+     ")")))
 
 (defn compile-2-ary
   "Compile a 2-arity SQL function node into a SQL statement."
@@ -151,9 +181,6 @@
                                (for [[else] (filter #(= 1 (count %1)) parts)]
                                  (concat-sql " ELSE " (compile-expr db else)))
                                [" END"])))))
-
-;; (defmethod compile-fn :cast [db {[expr type] :args as :as}]
-;;   (concat-sql "CAST(" (compile-expr db expr) " AS " (name (:name type)) ")"))
 
 (defmethod compile-fn :cast [db node]
   (let [[_ & [expr type]] (:children node)]
@@ -707,6 +734,27 @@
 
 (defarity compile-whitespace-args
   "substring" "trim")
+
+;; Aggregate Functions, https://www.postgresql.org/docs/9.5/static/functions-aggregate.html
+
+(defarity compile-aggregate-expression
+  "array_agg"
+  "avg"
+  "bit_and"
+  "bit_or"
+  "bool_and"
+  "bool_or"
+  "count"
+  "every"
+  "json_agg"
+  "json_object_agg"
+  "jsonb_agg"
+  "jsonb_object_agg"
+  "max"
+  "min"
+  "string_agg"
+  "sum"
+  "xmlagg")
 
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared

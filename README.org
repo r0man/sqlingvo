@@ -790,7 +790,7 @@
     #+RESULTS:
     : ["WITH \"regional-sales\" AS (SELECT \"region\", sum(\"amount\") AS \"total-sales\" FROM \"orders\" GROUP BY \"region\"), \"top-regions\" AS (SELECT \"region\" FROM \"regional-sales\" WHERE (\"total-sales\" > (SELECT (sum(\"total-sales\") / 10) FROM \"regional-sales\"))) SELECT \"region\", \"product\", sum(\"quantity\") AS \"product-units\", sum(\"amount\") AS \"product-sales\" FROM \"orders\" WHERE \"region\" IN (SELECT \"region\" FROM \"top-regions\") GROUP BY \"region\", \"product\""]
 
-    For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo/core_test.clj][tests]].
+    For more complex examples, look at the [[https://github.com/r0man/sqlingvo/blob/master/test/sqlingvo][tests]].
 
 ** License
 
