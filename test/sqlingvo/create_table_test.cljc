@@ -5,6 +5,33 @@
                :cljs [sqlingvo.test :refer [db] :refer-macros [sql=]])
             [sqlingvo.core :as sql]))
 
+(deftest test-create-table-inherits
+  (sql= (sql/create-table db :measurement-y2006m02
+          (sql/inherits :measurement))
+        ["CREATE TABLE \"measurement-y2006m02\" () INHERITS (\"measurement\")"]))
+
+(deftest test-create-table-inherits-check
+  (sql= (sql/create-table db :measurement-y2006m02
+          (sql/check '(and (>= :logdate (cast "2006-02-01" :date))
+                           (< :logdate (cast "2006-03-01" :date))))
+          (sql/inherits :measurement))
+        [(str "CREATE TABLE \"measurement-y2006m02\" ("
+              "CHECK ((\"logdate\" >= CAST(? AS date)) and "
+              "(\"logdate\" < CAST(? AS date)))) "
+              "INHERITS (\"measurement\")")
+         "2006-02-01" "2006-03-01"]))
+
+(deftest test-create-table-inherits-check-multiple
+  (sql= (sql/create-table db :measurement-y2006m02
+          (sql/check '(>= :logdate (cast "2006-02-01" :date)))
+          (sql/check '(< :logdate (cast "2006-03-01" :date)))
+          (sql/inherits :measurement))
+        [(str "CREATE TABLE \"measurement-y2006m02\" ("
+              "CHECK (\"logdate\" >= CAST(? AS date)), "
+              "CHECK (\"logdate\" < CAST(? AS date))) "
+              "INHERITS (\"measurement\")")
+         "2006-02-01" "2006-03-01"]))
+
 (deftest test-create-table-tmp-if-not-exists-inherits
   (sql= (sql/create-table db :import
           (sql/temporary true)

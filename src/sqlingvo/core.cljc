@@ -43,6 +43,15 @@
   [condition]
   (util/conditional-clause :cascade condition))
 
+(defn check
+  "Add a CHECK clause to an SQL statement."
+  [expr]
+  (fn [stmt]
+    (let [expr {:op :check
+                :expr (expr/parse-expr expr)}
+          stmt (update-in stmt [:checks] #(conj (vec %) expr))]
+      [expr stmt])))
+
 (defn column
   "Add a column to `stmt`."
   [name type & {:as options}]
@@ -313,7 +322,7 @@
 (defn inherits
   "Add an INHERITS clause to an SQL statement."
   [& tables]
-  (let [tables (map expr/parse-table tables)]
+  (let [tables (mapv expr/parse-table tables)]
     (fn [stmt]
       [tables (assoc stmt :inherits tables)])))
 
@@ -718,4 +727,3 @@
 ;; Override deref in pprint
 (defmethod simple-dispatch sqlingvo.expr.Stmt [stmt]
   (pr (sql stmt)))
-
