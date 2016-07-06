@@ -15,6 +15,7 @@
             [sqlingvo.truncate-test]
             [sqlingvo.update-test]
             [sqlingvo.util-test]
+            [sqlingvo.url-test]
             [sqlingvo.values-test]
             [sqlingvo.with-test]))
 
@@ -34,5 +35,6 @@
  'sqlingvo.truncate-test
  'sqlingvo.update-test
  'sqlingvo.util-test
+ 'sqlingvo.url-test
  'sqlingvo.values-test
  'sqlingvo.with-test)
