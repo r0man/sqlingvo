@@ -346,6 +346,9 @@
 (defmethod compile-sql :cascade [db node]
   ["CASCADE"])
 
+(defmethod compile-sql :check [db {:keys [expr]}]
+  (concat-sql ["CHECK "] (compile-expr db expr)))
+
 (defmethod compile-sql :concurrently [db node]
   ["CONCURRENTLY"])
 
@@ -388,7 +391,8 @@
    (if delimiter
      [(str " DELIMITER " (placeholder db)) delimiter])))
 
-(defmethod compile-sql :create-table [db {:keys [table if-not-exists inherits like primary-key temporary] :as node}]
+(defmethod compile-sql :create-table
+  [db {:keys [checks table if-not-exists inherits like primary-key temporary] :as node}]
   (let [columns (map (:column node) (:columns node))]
     (concat-sql
      "CREATE"
@@ -404,6 +408,8 @@
        (join-sql ", " (map #(compile-column db %1) columns))
        like
        (compile-sql db like))
+     (when (not-empty checks)
+       (compile-sql-join db ", " checks))
      (when (not-empty primary-key)
        (concat-sql ", PRIMARY KEY(" (join ", " (map #(sql-quote db %1) primary-key)) ")"))
      ")"
