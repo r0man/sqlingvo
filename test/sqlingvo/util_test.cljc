@@ -5,6 +5,12 @@
             [sqlingvo.test :refer [db]]
             [sqlingvo.util :as util]))
 
+(deftest test-sql-type
+  (are [type expected] (= (util/sql-type-name type) expected)
+    nil nil
+    :smallint "smallint"
+    :double-precision "double precision"))
+
 (deftest test-sql-quote-backtick
   (are [x expected]
       (= expected (util/sql-quote-backtick x))

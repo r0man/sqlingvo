@@ -126,6 +126,10 @@
 
 ;; CAST
 
+(deftest test-cast-int-as-double-precision
+  (sql= (sql/select db [`(cast 1 :double-precision)])
+        ["SELECT CAST(1 AS double precision)"]))
+
 (deftest test-cast-int-as-text
   (sql= (sql/select db [`(cast 1 :text)])
         ["SELECT CAST(1 AS text)"]))
