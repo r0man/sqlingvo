@@ -1,6 +1,7 @@
 (ns sqlingvo.util
   (:require [clojure.string :refer [join replace split]]
-            [sqlingvo.expr :as expr])
+            [sqlingvo.expr :as expr]
+            [clojure.string :as str])
   (:refer-clojure :exclude [replace]))
 
 (def ^:dynamic *reserved*
@@ -77,6 +78,11 @@
   (if condition
     (assoc-op clause)
     (dissoc-op clause)))
+
+(defn sql-type-name
+  "Return the SQL name for the `type` keyword."
+  [type]
+  (some-> type name (str/replace "-" " ")))
 
 (defn- split-sql-name [x]
   (if x (split (name x) #"\.")))
