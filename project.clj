@@ -7,18 +7,18 @@
   :deploy-repositories [["releases" :clojars]]
   :dependencies [[org.clojure/clojure "1.8.0"]]
   :plugins [[jonase/eastwood "0.2.3"]
-            [lein-cljsbuild "1.1.2"]
+            [lein-cljsbuild "1.1.3"]
             [lein-difftest "2.0.0"]
-            [lein-doo "0.1.6"]]
+            [lein-doo "0.1.7"]]
   :profiles
   {:dev
    {:dependencies [[org.clojure/test.check "0.9.0"]]}
    :provided
-   {:dependencies [[org.clojure/clojurescript "1.9.36"]]}
+   {:dependencies [[org.clojure/clojurescript "1.9.93"]]}
    :repl
    {:dependencies [[com.cemerick/piggieback "0.2.1"]
                    [reloaded.repl "0.2.2"]]
-    :plugins [[figwheel-sidecar "0.5.2"]]
+    :plugins [[figwheel-sidecar "0.5.4-7"]]
     :init-ns user
     :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
   :aliases
