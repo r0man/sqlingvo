@@ -868,7 +868,19 @@
           (sql/from :table))
         ["SELECT array_agg(\"a\" ORDER BY \"b\" DESC) FROM \"table\""]))
 
-(deftest test-select-sting-agg-order-by
+(deftest test-select-string-agg-order-by
   (sql= (sql/select db ['(string_agg :a "," (order-by :a))]
           (sql/from :table))
         ["SELECT string_agg(\"a\", ? ORDER BY \"a\") FROM \"table\"" ","]))
+
+(deftest test-select-order-by-distance-bounds
+  (sql= (sql/select db [:*]
+          (sql/from :x)
+          (sql/order-by '(<#> :x.a :x.b)))
+        ["SELECT * FROM \"x\" ORDER BY (\"x\".\"a\" <#> \"x\".\"b\")"]))
+
+(deftest test-select-order-by-distance-centroids
+  (sql= (sql/select db [:*]
+          (sql/from :x)
+          (sql/order-by '(<-> :x.a :x.b)))
+        ["SELECT * FROM \"x\" ORDER BY (\"x\".\"a\" <-> \"x\".\"b\")"]))
