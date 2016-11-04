@@ -543,13 +543,20 @@
 
   Examples:
 
+```klipse
   (select db [1])
+```
 
+```klipse
   (select db [:*]
     (from :continents))
+```
 
+```klipse
   (select db [:id :name]
-    (from :continents))"
+    (from :continents))
+```
+  "
   {:style/indent 2}
   [db exprs & body]
   {:pre [(db? db)]}

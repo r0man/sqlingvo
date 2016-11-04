@@ -10,10 +10,12 @@
   :plugins [[jonase/eastwood "0.2.3"]
             [lein-cljsbuild "1.1.3"]
             [lein-difftest "2.0.0"]
+            [lein-codox "0.10.1"]
             [lein-doo "0.1.7"]]
   :profiles
   {:dev
-   {:dependencies [[org.clojure/test.check "0.9.0"]]}
+   {:dependencies [[viebel/codox-klipse-theme "0.0.1"]
+                   [org.clojure/test.check "0.9.0"]]}
    :provided
    {:dependencies [[org.clojure/clojurescript "1.9.293"]]}
    :repl
@@ -31,6 +33,21 @@
          ["doo" "phantom" "advanced" "once"]
          ["lint"]]
    "lint" ["do"  ["eastwood"]]}
+:codox {
+          :metadata {:doc/format :markdown}
+          :source-paths ["src"]
+          :output-path "docs"
+          :themes [:default [:klipse {:klipse/external-libs  "https://raw.githubusercontent.com/viebel/sqlingvo/master/src"
+                                      :klipse/require-statement "(refer-clojure :exclude '[distinct group-by update])
+                                                                (require '[sqlingvo.db :refer [defdb]]
+                                                                         '[clojure.string :as s]
+                                                                         '[sqlingvo.core :refer [sql select from where]]
+                                                                         '[sqlingvo.util :as util])
+                                                                (defdb mysql
+                                                                  \"The world's most popular open source database.\"
+                                        :classname \"com.mysql.jdbc.Driver\"
+                                        :sql-quote util/sql-quote-backtick)
+                                                                (def db (mysql))"}]]}
   :cljsbuild
   {:builds
    [{:id "none"
