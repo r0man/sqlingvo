@@ -14,7 +14,7 @@
             [lein-doo "0.1.7"]]
   :profiles
   {:dev
-   {:dependencies [[viebel/codox-klipse-theme "0.0.1"]
+   {:dependencies [[viebel/codox-klipse-theme "0.0.3"]
                    [org.clojure/test.check "0.9.0"]]}
    :provided
    {:dependencies [[org.clojure/clojurescript "1.9.293"]]}
@@ -37,7 +37,8 @@
           :metadata {:doc/format :markdown}
           :source-paths ["src"]
           :output-path "docs"
-          :themes [:default [:klipse {:klipse/external-libs  "https://raw.githubusercontent.com/viebel/sqlingvo/master/src"
+          :themes [:default [:klipse {:klipse/selecto ".clojure"
+                                      :klipse/external-libs  "src"
                                       :klipse/require-statement "(refer-clojure :exclude '[distinct group-by update])
                                                                 (require '[sqlingvo.db :refer [defdb]]
                                                                          '[clojure.string :as s]

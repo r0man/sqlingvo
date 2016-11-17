@@ -7,11 +7,6 @@
             [sqlingvo.expr :as expr]
             [sqlingvo.util :as util]))
 
-(defn db
-  "Return a new database for `spec`."
-  [spec & [opts]]
-  (db/db spec opts))
-
 (defn db?
   "Return true if `x` is a database, otherwise false."
   [x]
@@ -37,7 +32,7 @@
    :children [:expr :name]
    :columns (mapv expr/parse-column columns)
    :expr (expr/parse-expr expr)
-   :name (util/keyword-str alias)})
+   :name alias})
 
 (defn asc
   "Parse `expr` and return an ORDER BY expr using ascending order."
@@ -416,8 +411,8 @@
 
 (defn limit
   "Add a LIMIT clause to an SQL statement."
-  [expr]
-  (when expr (util/assoc-op :limit :expr (expr/parse-expr expr))))
+  [count]
+  (util/assoc-op :limit :count count))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
@@ -455,8 +450,8 @@
 
 (defn offset
   "Add a OFFSET clause to an SQL statement."
-  [expr]
-  (util/assoc-op :offset :expr (expr/parse-expr expr)))
+  [start]
+  (util/assoc-op :offset :start start))
 
 (defn order-by
   "Add a ORDER BY clause to an SQL statement."
@@ -711,18 +706,15 @@
                         (vector (keyword name)
                                 (ast stmt)))
                       (partition 2 bindings))
-        query (ast query)
-        node (expr/make-node
-              :op :with
-              :db db
-              :children [:bindings]
-              :bindings bindings
-              :query query)]
+        query (ast query)]
     (expr/stmt
      (fn [stmt]
-       [node (if stmt
-               (assoc stmt :with node)
-               node)]))))
+       [nil (assoc query
+                   :with (expr/make-node
+                          :op :with
+                          :db db
+                          :children [:bindings]
+                          :bindings bindings))]))))
 
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
