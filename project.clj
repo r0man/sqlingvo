@@ -37,12 +37,12 @@
           :metadata {:doc/format :markdown}
           :source-paths ["src"]
           :output-path "docs"
-          :themes [:default [:klipse {:klipse/selecto ".clojure"
+          :themes [:default [:klipse {:klipse/selector ".clojure"
                                       :klipse/external-libs  "src"
                                       :klipse/require-statement "(refer-clojure :exclude '[distinct group-by update])
                                                                 (require '[sqlingvo.db :refer [defdb]]
                                                                          '[clojure.string :as s]
-                                                                         '[sqlingvo.core :refer [sql select from where]]
+                                                                         '[sqlingvo.core :as c :refer [sql select from where copy as group-by having insert intersect join refresh-materialized-view update returning truncate union values drop-table except ast delete explain drop-materialized-view]]
                                                                          '[sqlingvo.util :as util])
                                                                 (defdb mysql
                                                                   \"The world's most popular open source database.\"

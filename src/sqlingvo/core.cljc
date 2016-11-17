@@ -137,14 +137,16 @@
 
   Examples:
 
-  (explain db
-    (select db [:*]
-      (from :foo)))
+    (explain db
+      (select db [:*]
+        (from :foo)))
 
-  (explain db
-    (select db [:*]
-      (from :foo))
-    {:analyze true})"
+With `analyze`:
+
+    (explain db
+      (select db [:*]
+        (from :foo))
+      {:analyze true})"
   {:style/indent 1}
   [db stmt & [opts]]
   {:pre [(db? db)]}
@@ -162,11 +164,13 @@
 
   Examples:
 
-  (copy db :country []
-    (from :stdin))
+    (copy db :country []
+      (from :stdin))
 
-  (copy db :country []
-    (from \"/usr1/proj/bray/sql/country_data\"))"
+Another example:
+
+    (copy db :country []
+      (from \"/usr1/proj/bray/sql/country_data\"))"
   {:style/indent 3}
   [db table columns & body]
   {:pre [(db? db)]}
@@ -202,10 +206,12 @@
 
   Examples:
 
-  (delete db :continents)
+    (delete db :continents)
 
-  (delete db :continents
-    (where '(= :id 1)))"
+Another example:
+
+    (delete db :continents
+      (where '(= :id 1)))"
   {:style/indent 2}
   [db table & body]
   {:pre [(db? db)]}
@@ -224,9 +230,11 @@
 
   Examples:
 
-  (drop-table db [:continents])
+    (drop-table db [:continents])
 
-  (drop-table db [:continents :countries])"
+Another example:
+
+    (drop-table db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
   {:pre [(db? db)]}
@@ -256,16 +264,18 @@
 (defn except
   "Build an EXCEPT statement.
 
-   Examples:
+Examples:
 
-   (except
-    (select db [1])
-    (select db [2]))
+    (except
+     (select db [1])
+     (select db [2]))
 
-   (except
-    {:all true}
-    (select db [1])
-    (select db [2]))"
+Another example:
+
+    (except
+     {:all true}
+     (select db [1])
+     (select db [2]))"
   [& args]
   (make-set-op :except args))
 
@@ -275,21 +285,33 @@
 
   Examples:
 
-    (select db [:*]
-      (from :continents))
+Simple select:
 
-    (select db [:*]
-      (from :continents :countries)
-      (where '(= :continents.id :continent-id)))
+      (select db [:*]
+        (from :continents))
 
-    (select db [:*]
-      (from (as (select [1 2 3]) :x)))
 
-    (copy db :country []
-      (from :stdin))
+Using `where`:
 
-    (copy db :country []
-      (from \"/usr1/proj/bray/sql/country_data\"))"
+      (select db [:*]
+        (from :continents :countries)
+        (where '(= :continents.id :continent-id)))
+
+
+Using `as`:
+
+      (select db [:*]
+        (from (as (select [1 2 3]) :x)))
+
+Using `copy`:
+
+      (copy db :country []
+        (from :stdin))
+
+Using `copy`:
+
+      (copy db :country []
+        (from \"/usr1/proj/bray/sql/country_data\"))"
   [& from]
   (fn [stmt]
     (let [from (case (:op stmt)
@@ -307,10 +329,10 @@
 
   Examples:
 
-  (select db [:city '(max :temp-lo)]
-    (from :weather)
-    (group-by :city)
-    (having '(< (max :temp-lo) 40)))"
+    (select db [:city '(max :temp-lo)]
+      (from :weather)
+      (group-by :city)
+      (having '(< (max :temp-lo) 40)))"
   [condition & [combine]]
   (util/build-condition :having condition combine))
 
@@ -353,16 +375,18 @@
 (defn intersect
   "Build an INTERSECT statement.
 
-   Examples:
+Examples:
 
-   (intersect
-    (select db [1])
-    (select db [2]))
+     (intersect
+      (select db [1])
+      (select db [2]))
 
-   (intersect
-    {:all true}
-    (select db [1])
-    (select db [2]))"
+Another example:
+
+     (intersect
+      {:all true}
+      (select db [1])
+      (select db [2]))"
   [& args]
   (make-set-op :intersect args))
 
@@ -371,17 +395,23 @@
 
   Examples:
 
-  (select db [:*]
-    (from :countries)
-    (join :continents '(using :id)))
+First:
 
-  (select db [:*]
-    (from :continents)
-    (join :countries.continent-id :continents.id))
+    (select db [:*]
+      (from :countries)
+      (join :continents '(using :id)))
 
-  (select db [:*]
-    (from :countries)
-    (join :continents '(on (= :continents.id :countries.continent-id))))"
+Second:
+
+    (select db [:*]
+      (from :continents)
+      (join :countries.continent-id :continents.id))
+
+Third:
+
+    (select db [:*]
+      (from :countries)
+      (join :continents '(on (= :continents.id :countries.continent-id))))"
   [from condition & {:keys [type outer pk]}]
   (util/concat-in
    [:joins]
@@ -479,7 +509,7 @@
 
   Examples:
 
-  (drop-materialized-view db :order-summary)"
+    (drop-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
   {:pre [(db? db)]}
@@ -498,7 +528,7 @@
 
   Examples:
 
-  (refresh-materialized-view db :order-summary)"
+    (refresh-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
   {:pre [(db? db)]}
@@ -525,16 +555,18 @@
 (defn returning
   "Add a RETURNING clause to an SQL statement.
 
-  Examples:
+Examples:
 
-  (insert db :distributors []
-    (values [{:did 106 :dname \"XYZ Widgets\"}])
-    (returning :*))
+    (insert db :distributors []
+      (values [{:did 106 :dname \"XYZ Widgets\"}])
+      (returning :*))
 
-  (update db :films
-    {:kind \"Dramatic\"}
-    (where '(= :kind \"Drama\"))
-    (returning :*))"
+Another example:
+
+    (update db :films
+      {:kind \"Dramatic\"}
+      (where '(= :kind \"Drama\"))
+      (returning :*))"
   [& exprs]
   (util/concat-in [:returning] (expr/parse-exprs exprs)))
 
@@ -543,20 +575,18 @@
 
   Examples:
 
-```klipse
-  (select db [1])
-```
+    (select db [1])
 
-```klipse
-  (select db [:*]
-    (from :continents))
-```
+All the columns:
 
-```klipse
-  (select db [:id :name]
-    (from :continents))
-```
-  "
+    (select db [:*]
+      (from :continents))
+
+
+Only `id` and `name`:
+
+    (select db [:id :name]
+      (from :continents))"
   {:style/indent 2}
   [db exprs & body]
   {:pre [(db? db)]}
@@ -588,9 +618,11 @@
 
   Examples:
 
-  (truncate db [:continents])
+    (truncate db [:continents])
 
-  (truncate db [:continents :countries])"
+Another example:
+
+    (truncate db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
   {:pre [(db? db)]}
@@ -609,14 +641,16 @@
 
    Examples:
 
-   (union
-    (select db [1])
-    (select db [2]))
+     (union
+      (select db [1])
+      (select db [2]))
 
-   (union
-    {:all true}
-    (select db [1])
-    (select db [2]))"
+Another example:
+
+     (union
+      {:all true}
+      (select db [1])
+      (select db [2]))"
   [& args]
   (make-set-op :union args))
 
@@ -625,8 +659,8 @@
 
   Examples:
 
-  (update db :films {:kind \"Dramatic\"}
-    (where '(= :kind \"Drama\")))"
+    (update db :films {:kind \"Dramatic\"}
+      (where '(= :kind \"Drama\")))"
   {:style/indent 2}
   [db table row & body]
   {:pre [(db? db)]}
@@ -649,10 +683,13 @@
 
   Examples:
 
-  (values db [[1 \"one\"] [2 \"two\"] [3 \"three\"]])
 
-  (insert db :distributors []
-    (values [{:did 106 :dname \"XYZ Widgets\"}]))"
+    (values db [[1 \"one\"] [2 \"two\"] [3 \"three\"]])
+
+With insert:
+
+    (insert db :distributors []
+      (values [{:did 106 :dname \"XYZ Widgets\"}]))"
   ([vals]
    (values nil vals))
   ([db vals]
@@ -689,15 +726,19 @@
 
   Examples:
 
-  (select db [1]
-    (where '(in 1 (1 2 3))))
+    (select db [1]
+      (where '(in 1 (1 2 3))))
 
-  (select db [*]
-    (from :continents)
-    (where '(= :name \"Europe\")))
+Another example:
 
-  (delete db :continents
-    (where '(= :id 1)))"
+    (select db [*]
+      (from :continents)
+      (where '(= :name \"Europe\")))
+
+Another example:
+
+    (delete db :continents
+      (where '(= :id 1)))"
   [condition & [combine]]
   (util/build-condition :where condition combine))
 
