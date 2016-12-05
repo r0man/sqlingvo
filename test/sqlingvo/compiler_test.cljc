@@ -89,22 +89,6 @@
      :if-exists {:op :if-exists :if-exists true}}
     ["DROP TABLE IF EXISTS \"continents\" CASCADE RESTRICT"]))
 
-(deftest test-compile-limit
-  (are [ast expected]
-      (= expected (compile-sql db ast))
-    {:op :limit :count 1}
-    ["LIMIT 1"]
-    {:op :limit :count nil}
-    []))
-
-(deftest test-compile-offset
-  (are [ast expected]
-      (= expected (compile-sql db ast))
-    {:op :offset :start 1}
-    ["OFFSET 1"]
-    {:op :offset :start nil}
-    ["OFFSET 0"]))
-
 (deftest test-compile-table
   (are [ast expected]
       (= expected (compile-sql db ast))

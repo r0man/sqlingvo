@@ -595,8 +595,8 @@
 (defmethod compile-sql :keyword [db {:keys [form]}]
   [(sql-quote db form)])
 
-(defmethod compile-sql :limit [db {:keys [count]}]
-  (concat-sql (when (number? count) (str "LIMIT " count))))
+(defmethod compile-sql :limit [db {:keys [expr]}]
+  (concat-sql "LIMIT " (compile-expr db expr)))
 
 (defmethod compile-sql :like [db {:keys [excluding including table]}]
   (concat-sql
@@ -615,8 +615,8 @@
 
 (defmethod compile-sql :nil [db _] ["NULL"])
 
-(defmethod compile-sql :offset [db {:keys [start]}]
-  (concat-sql "OFFSET " (if (number? start) (str start) "0")))
+(defmethod compile-sql :offset [db {:keys [expr]}]
+  (concat-sql "OFFSET " (compile-expr db expr)))
 
 (defmethod compile-sql :table [db {:keys [schema name]}]
   [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name]))))])
