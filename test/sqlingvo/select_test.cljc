@@ -176,6 +176,21 @@
           (sql/limit 10))
         ["SELECT * FROM \"continents\" LIMIT 10"]))
 
+(deftest test-select-limit-expr
+  (sql= (sql/select db [:*]
+          (sql/from :continents)
+          (sql/limit '(+ 1 2)))
+        ["SELECT * FROM \"continents\" LIMIT (1 + 2)"]))
+
+(deftest test-select-limit-subquery
+  (sql= (sql/select db [:*]
+          (sql/from :continents)
+          (sql/limit
+           (sql/select db ['(count :*)]
+             (sql/from :continents))))
+        [(str "SELECT * FROM \"continents\" "
+              "LIMIT (SELECT count(*) FROM \"continents\")")]))
+
 (deftest test-select-limit-nil
   (sql= (sql/select db [:*]
           (sql/from :continents)
@@ -187,6 +202,21 @@
           (sql/from :continents)
           (sql/offset 15))
         ["SELECT * FROM \"continents\" OFFSET 15"]))
+
+(deftest test-select-offset-expr
+  (sql= (sql/select db [:*]
+          (sql/from :continents)
+          (sql/offset '(+ 1 2)))
+        ["SELECT * FROM \"continents\" OFFSET (1 + 2)"]))
+
+(deftest test-select-offset-subquery
+  (sql= (sql/select db [:*]
+          (sql/from :continents)
+          (sql/offset
+           (sql/select db ['(count :*)]
+             (sql/from :continents))))
+        [(str "SELECT * FROM \"continents\" "
+              "OFFSET (SELECT count(*) FROM \"continents\")")]))
 
 (deftest test-select-limit-offset
   (sql= (sql/select db [:*]
