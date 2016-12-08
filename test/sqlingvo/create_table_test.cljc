@@ -59,11 +59,11 @@
 
 (deftest test-create-table-films
   (sql= (sql/create-table db :films
-          (sql/column :code :char :length 5 :primary-key? true)
-          (sql/column :title :varchar :length 40 :not-null? true)
+          (sql/column :code :char :size 5 :primary-key? true)
+          (sql/column :title :varchar :size 40 :not-null? true)
           (sql/column :did :integer :not-null? true)
           (sql/column :date-prod :date)
-          (sql/column :kind :varchar :length 10)
+          (sql/column :kind :varchar :size 10)
           (sql/column :len :interval)
           (sql/column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
           (sql/column :updated-at :timestamp-with-time-zone :not-null? true :default '(now)))
