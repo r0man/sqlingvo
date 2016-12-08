@@ -311,12 +311,14 @@
   (compile-sql db node))
 
 (defn compile-column [db column]
+  (when (:length column)
+    (println "Column :length is deprecated, use :size instead!"))
   (concat-sql
    (sql-quote db (:name column))
    " " (replace (upper-case (name (:type column))) "-" " ")
    (if (:array? column) "[]")
-   (if-let [length (:length column)]
-     (str "(" length ")"))
+   (if-let [size (or (:size column) (:size column))]
+     (str "(" size ")"))
    (if (:not-null? column)
      " NOT NULL")
    (if (:unique? column)
