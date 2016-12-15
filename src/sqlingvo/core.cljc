@@ -709,6 +709,29 @@
                           :children [:bindings]
                           :bindings bindings))]))))
 
+(defn with
+  "Build a WITH (common table expressions) query."
+  {:style/indent 2}
+  [db bindings query]
+  {:pre [(db? db)]}
+  (assert (even? (count bindings)) "The WITH bindings must be even.")
+  (let [bindings (map (fn [[name stmt]]
+                        (vector (keyword name)
+                                (ast stmt)))
+                      (partition 2 bindings))
+        query (ast query)
+        node (expr/make-node
+              :op :with
+              :db db
+              :children [:bindings]
+              :bindings bindings
+              :query query)]
+    (expr/stmt
+     (fn [stmt]
+       [node (if stmt
+               (assoc stmt :with node)
+               node)]))))
+
 (defn sql
   "Compile `stmt` into a clojure.java.jdbc compatible vector."
   [stmt]
