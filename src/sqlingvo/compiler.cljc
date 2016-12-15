@@ -279,20 +279,6 @@
     (concat-sql (sql-quote-fn db (:val name)) "("
                 (join-sql ", " (compile-exprs db args)) ")")))
 
-;;  WITH Queries (Common Table Expressions)
-
-(defn compile-with [db node compiled-statement]
-  (if-let [bindings (:bindings node)]
-    (concat-sql
-     "WITH "
-     (join-sql
-      ", " (map (fn [alias stmt]
-                  (concat-sql (sql-quote db alias) " AS (" (compile-sql db stmt) ")"))
-                (map first bindings)
-                (map second bindings)))
-     " " compiled-statement)
-    compiled-statement))
-
 ;; COMPILE FROM CLAUSE
 
 (defmulti compile-from (fn [db ast] (:op ast)))
@@ -421,14 +407,12 @@
 
 (defmethod compile-sql :delete [db node]
   (let [{:keys [where table returning]} node]
-    (compile-with
-     db (:with node)
-     (concat-sql
-      "DELETE FROM " (compile-sql db table)
-      (when (not-empty where)
-        (concat-sql " WHERE " (compile-sql db where)))
-      (when (not-empty returning)
-        (concat-sql " RETURNING " (compile-sql-join db ", " returning))) ))))
+    (concat-sql
+     "DELETE FROM " (compile-sql db table)
+     (when (not-empty where)
+       (concat-sql " WHERE " (compile-sql db where)))
+     (when (not-empty returning)
+       (concat-sql " RETURNING " (compile-sql-join db ", " returning))) )))
 
 (defmethod compile-sql :distinct [db {:keys [exprs on]}]
   (concat-sql
@@ -555,25 +539,25 @@
      (concat-sql " WHERE " (compile-sql db where)))
    (compile-sql db (:do-nothing node))))
 
-(defmethod compile-sql :insert [db node]
-  (let [{:keys [columns table rows values returning select where]} node
-        columns (if (not-empty columns) columns (:columns values))]
-    (compile-with
-     db (:with node)
-     (concat-sql
-      "INSERT INTO " (compile-sql db table)
-      (when (not-empty columns)
-        (concat-sql " (" (compile-sql-join db ", " columns) ")"))
-      (when values
-        (concat-sql " " (compile-sql db values)))
-      (when select
-        (concat-sql " " (compile-sql db select)))
-      (when (not-empty where)
-        (concat-sql " WHERE " (compile-sql db where)))
-      (compile-sql db (:on-conflict node))
-      (compile-sql db (:on-conflict-on-constraint node))
-      (when (not-empty returning)
-        (concat-sql " RETURNING " (compile-sql-join db ", " returning)))))))
+(defmethod compile-sql :insert
+  [db {:keys [columns table rows values returning select where with] :as node}]
+  (let [columns (if (not-empty columns) columns (:columns values))]
+    (concat-sql
+     "INSERT INTO " (compile-sql db table)
+     (when (not-empty columns)
+       (concat-sql " (" (compile-sql-join db ", " columns) ")"))
+     (when values
+       (concat-sql " " (compile-sql db values)))
+     (when select
+       (concat-sql " " (compile-sql db select)))
+     (when with
+       (concat-sql " " (compile-sql db with)))
+     (when (not-empty where)
+       (concat-sql " WHERE " (compile-sql db where)))
+     (compile-sql db (:on-conflict node))
+     (compile-sql db (:on-conflict-on-constraint node))
+     (when (not-empty returning)
+       (concat-sql " RETURNING " (compile-sql-join db ", " returning))))))
 
 (defmethod compile-sql :intersect [db node]
   (compile-set-op db :intersect node))
@@ -651,32 +635,30 @@
 
 (defmethod compile-sql :select [db node]
   (let [{:keys [exprs distinct joins from where group-by limit offset order-by set]} node]
-    (compile-with
-     db (:with node)
-     (concat-sql
-      "SELECT " (join-sql ", " (map #(compile-expr db %1) exprs))
-      (if distinct
-        (compile-sql db distinct))
-      (when (not-empty from)
-        (concat-sql " FROM " (join-sql ", " (map #(compile-from db %1) from))))
-      (when (not-empty joins)
-        (concat-sql " " (compile-sql-join db " " joins)))
-      (when (not-empty where)
-        (concat-sql " WHERE " (compile-sql db where)))
-      (when (not-empty group-by)
-        (concat-sql " GROUP BY " (compile-sql-join db ", " group-by)))
-      (when-let [having (:having node)]
-        (concat-sql " HAVING " (compile-sql db having)))
-      (when-let [window (:window node)]
-        (concat-sql " " (compile-sql db window)))
-      (when (not-empty order-by)
-        (concat-sql " ORDER BY " (compile-sql-join db ", " order-by)))
-      (when-let [limit-sql (and limit (seq (compile-sql db limit)))]
-        (concat-sql " " limit-sql))
-      (if offset
-        (concat-sql " " (compile-sql db offset)))
-      (when (not-empty set)
-        (concat-sql " " (compile-sql-join db ", " set)))))))
+    (concat-sql
+     "SELECT " (join-sql ", " (map #(compile-expr db %1) exprs))
+     (if distinct
+       (compile-sql db distinct))
+     (when (not-empty from)
+       (concat-sql " FROM " (join-sql ", " (map #(compile-from db %1) from))))
+     (when (not-empty joins)
+       (concat-sql " " (compile-sql-join db " " joins)))
+     (when (not-empty where)
+       (concat-sql " WHERE " (compile-sql db where)))
+     (when (not-empty group-by)
+       (concat-sql " GROUP BY " (compile-sql-join db ", " group-by)))
+     (when-let [having (:having node)]
+       (concat-sql " HAVING " (compile-sql db having)))
+     (when-let [window (:window node)]
+       (concat-sql " " (compile-sql db window)))
+     (when (not-empty order-by)
+       (concat-sql " ORDER BY " (compile-sql-join db ", " order-by)))
+     (when-let [limit-sql (and limit (seq (compile-sql db limit)))]
+       (concat-sql " " limit-sql))
+     (if offset
+       (concat-sql " " (compile-sql db offset)))
+     (when (not-empty set)
+       (concat-sql " " (compile-sql-join db ", " set))))))
 
 (defmethod compile-sql :truncate [db {:keys [tables continue-identity restart-identity cascade restrict]}]
   (join-sql " " ["TRUNCATE TABLE"
@@ -691,20 +673,29 @@
 
 (defmethod compile-sql :update [db node]
   (let [{:keys [where from exprs table row returning]} node]
-    (compile-with
-     db (:with node)
-     (concat-sql
-      "UPDATE " (compile-sql db table)
-      " SET "
-      (if row
-        (compile-row db row)
-        (join-sql ", "(map unwrap-stmt (compile-exprs db exprs))))
-      (when (not-empty from)
-        (concat-sql " FROM " (join-sql " " (map #(compile-from db %1) from))))
-      (when (not-empty where)
-        (concat-sql " WHERE " (compile-sql db where)))
-      (when (not-empty returning)
-        (concat-sql " RETURNING " (compile-sql-join db ", " returning)))))))
+    (concat-sql
+     "UPDATE " (compile-sql db table)
+     " SET "
+     (if row
+       (compile-row db row)
+       (join-sql ", "(map unwrap-stmt (compile-exprs db exprs))))
+     (when (not-empty from)
+       (concat-sql " FROM " (join-sql " " (map #(compile-from db %1) from))))
+     (when (not-empty where)
+       (concat-sql " WHERE " (compile-sql db where)))
+     (when (not-empty returning)
+       (concat-sql " RETURNING " (compile-sql-join db ", " returning))))))
+
+(defmethod compile-sql :with
+  [db {:keys [bindings query] :as node}]
+  (concat-sql
+   "WITH "
+   (join-sql
+    ", " (map (fn [alias stmt]
+                (concat-sql (sql-quote db alias) " AS (" (compile-sql db stmt) ")"))
+              (map first bindings)
+              (map second bindings)))
+   " " (compile-sql db query)))
 
 (defmethod compile-sql :window [db node]
   (->> (for [alias (:definitions node)]

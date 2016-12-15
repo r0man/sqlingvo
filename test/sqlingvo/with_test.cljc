@@ -76,8 +76,22 @@
         ["WITH \"t\" AS (DELETE FROM \"foo\") DELETE FROM \"bar\""]))
 
 (deftest test-with-compose
-  (sql= (sql/compose
-         (sql/with db [:a (sql/select db [:*] (sql/from :b))]
-           (sql/select db [:*] (sql/from :a)))
-         (sql/where '(= 1 1)))
+  (sql= (sql/with db [:a (sql/select db [:*] (sql/from :b))]
+          (sql/compose
+           (sql/select db [:*] (sql/from :a))
+           (sql/where '(= 1 1))))
         ["WITH \"a\" AS (SELECT * FROM \"b\") SELECT * FROM \"a\" WHERE (1 = 1)"]))
+
+(deftest test-insert-from-with
+  (sql= (sql/insert db :c [:id]
+          (sql/with db [:a (sql/select db [:a.id]
+                             (sql/from :a))]
+            (sql/select db [:b.id]
+              (sql/from :b)
+              (sql/where `(in :b.id
+                              ~(sql/select db [:a.id]
+                                 (sql/from :a)))))))
+        [(str "INSERT INTO \"c\" (\"id\") "
+              "WITH \"a\" AS (SELECT \"a\".\"id\" FROM \"a\") "
+              "SELECT \"b\".\"id\" FROM \"b\" WHERE \"b\".\"id\" "
+              "IN (SELECT \"a\".\"id\" FROM \"a\")")]))
