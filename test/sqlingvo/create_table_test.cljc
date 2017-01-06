@@ -1,8 +1,7 @@
 (ns sqlingvo.create-table-test
-  (:require #?(:clj [clojure.test :refer [deftest]]
-               :cljs [cljs.test :refer-macros [deftest]])
-            #?(:clj [sqlingvo.test :refer [db sql=]]
+  (:require #?(:clj [sqlingvo.test :refer [db sql=]]
                :cljs [sqlingvo.test :refer [db] :refer-macros [sql=]])
+            [clojure.test :refer [are deftest is]]
             [sqlingvo.core :as sql]))
 
 (deftest test-create-table-inherits

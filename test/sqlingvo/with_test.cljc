@@ -1,9 +1,8 @@
 (ns sqlingvo.with-test
-  (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [deftest is]])
-            [sqlingvo.core :as sql]
-            #?(:clj [sqlingvo.test :refer [db sql=]]
-               :cljs [sqlingvo.test :refer [db] :refer-macros [sql=]])))
+  (:require #?(:clj [sqlingvo.test :refer [db sql=]]
+               :cljs [sqlingvo.test :refer [db] :refer-macros [sql=]])
+            [clojure.test :refer [deftest is]]
+            [sqlingvo.core :as sql]))
 
 (deftest test-with-query
   (sql= (sql/with db [:regional-sales

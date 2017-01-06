@@ -1,7 +1,6 @@
 (ns sqlingvo.url-test
-  (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [are deftest is]])
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [are deftest is]]
             [clojure.test.check :as tc]
             [clojure.test.check.clojure-test #?(:clj :refer :cljs :refer-macros) [defspec]]
             [clojure.test.check.generators :as gen]

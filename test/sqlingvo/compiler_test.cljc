@@ -1,11 +1,9 @@
 (ns sqlingvo.compiler-test
-  (:refer-clojure :exclude [distinct group-by update])
-  (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [are deftest is]])
+  (:require [clojure.test :refer [are deftest is]]
             [sqlingvo.compiler :as compiler :refer [compile-sql]]
             [sqlingvo.core :as sql]
-            [sqlingvo.test :refer [db]]
-            [sqlingvo.expr :as expr]))
+            [sqlingvo.expr :as expr]
+            [sqlingvo.test :refer [db]]))
 
 (deftest test-compile-column
   (are [ast expected]

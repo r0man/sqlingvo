@@ -1,6 +1,5 @@
 (ns sqlingvo.util-test
-  (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [are deftest is]])
+  (:require [clojure.test :refer [are deftest is]]
             [sqlingvo.db :as db]
             [sqlingvo.test :refer [db]]
             [sqlingvo.util :as util]))
