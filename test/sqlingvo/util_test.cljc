@@ -38,9 +38,9 @@
 
 (deftest test-sql-name
   (are [x expected]
-      (and (= expected (util/sql-name (db/mysql) x))
-           (= expected (util/sql-name (db/postgresql) x))
-           (= expected (util/sql-name (db/vertica) x)))
+      (and (= expected (util/sql-name (db/db :mysql) x))
+           (= expected (util/sql-name (db/db :postgresql) x))
+           (= expected (util/sql-name (db/db :vertica) x)))
     nil nil
     "" ""
     "country/id" "country/id"
@@ -49,9 +49,9 @@
 
 (deftest test-sql-keyword
   (are [x expected]
-      (and (= expected (util/sql-keyword (db/mysql) x))
-           (= expected (util/sql-keyword (db/postgresql) x))
-           (= expected (util/sql-keyword (db/vertica) x)))
+      (and (= expected (util/sql-keyword (db/db :mysql) x))
+           (= expected (util/sql-keyword (db/db :postgresql) x))
+           (= expected (util/sql-keyword (db/db :vertica) x)))
     nil nil
     "" (keyword "")
     "country/id" :country/id
@@ -60,20 +60,20 @@
     :a_1 :a_1))
 
 (deftest test-sql-quote
-  (are [db x expected]
-      (= expected (util/sql-quote (db) x))
-    db/mysql nil nil
-    db/mysql "" "``"
-    db/mysql :a "`a`"
-    db/mysql :a-1 "`a-1`"
-    db/postgresql "" "\"\""
-    db/postgresql "country/id" "\"country/id\""
-    db/postgresql :a "\"a\""
-    db/postgresql :a-1 "\"a-1\""
-    db/postgresql :EXCLUDED.dname "EXCLUDED.\"dname\""
-    db/vertica"" "\"\""
-    db/vertica :a "\"a\""
-    db/vertica :a-1 "\"a-1\""))
+  (are [scheme x expected]
+      (= expected (util/sql-quote (db/db scheme) x))
+    :mysql nil nil
+    :mysql "" "``"
+    :mysql :a "`a`"
+    :mysql :a-1 "`a-1`"
+    :postgresql "" "\"\""
+    :postgresql "country/id" "\"country/id\""
+    :postgresql :a "\"a\""
+    :postgresql :a-1 "\"a-1\""
+    :postgresql :EXCLUDED.dname "EXCLUDED.\"dname\""
+    :vertica"" "\"\""
+    :vertica :a "\"a\""
+    :vertica :a-1 "\"a-1\""))
 
 (deftest test-sql-placeholder-constant
   (let [placeholder (util/sql-placeholder-constant)]

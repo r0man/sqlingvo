@@ -590,13 +590,13 @@
       (= (sql/sql (sql/select db [:continents.id]
                     (sql/from :continents)))
          expected)
-    (db/mysql)
+    (db/db :mysql)
     ["SELECT `continents`.`id` FROM `continents`"]
-    (db/postgresql)
+    (db/db :postgresql)
     ["SELECT \"continents\".\"id\" FROM \"continents\""]
-    (db/oracle)
+    (db/db :oracle)
     ["SELECT \"continents\".\"id\" FROM \"continents\""]
-    (db/vertica)
+    (db/db :vertica)
     ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 
 ;; POSTGRESQL ARRAYS

@@ -7,6 +7,11 @@
             [sqlingvo.expr :as expr]
             [sqlingvo.util :as util]))
 
+(defn db
+  "Return a new database for `spec`."
+  [spec & [opts]]
+  (db/db spec opts))
+
 (defn db?
   "Return true if `x` is a database, otherwise false."
   [x]
@@ -688,26 +693,6 @@
     (where '(= :id 1)))"
   [condition & [combine]]
   (util/build-condition :where condition combine))
-
-(defn with
-  "Build a WITH (common table expressions) query."
-  {:style/indent 2}
-  [db bindings query]
-  {:pre [(db? db)]}
-  (assert (even? (count bindings)) "The WITH bindings must be even.")
-  (let [bindings (map (fn [[name stmt]]
-                        (vector (keyword name)
-                                (ast stmt)))
-                      (partition 2 bindings))
-        query (ast query)]
-    (expr/stmt
-     (fn [stmt]
-       [nil (assoc query
-                   :with (expr/make-node
-                          :op :with
-                          :db db
-                          :children [:bindings]
-                          :bindings bindings))]))))
 
 (defn with
   "Build a WITH (common table expressions) query."

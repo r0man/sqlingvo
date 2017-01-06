@@ -13,3 +13,5 @@ pom.xml
 /.cask/
 /dist/
 /README.html
+/.cljs_node_repl
+/docs
