@@ -44,7 +44,6 @@
    /PostgreSQL/.
 
    #+BEGIN_SRC clojure :exports code :results silent
-     (require '[sqlingvo.db :as db])
      (def my-db (db :postgresql))
    #+END_SRC
 
