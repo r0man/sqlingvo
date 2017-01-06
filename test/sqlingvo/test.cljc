@@ -4,7 +4,7 @@
             [sqlingvo.core :refer [sql]]
             [sqlingvo.db :as db]))
 
-(def db (db/postgresql))
+(def db (db/db :postgresql))
 
 (defn cljs-env?
   "Take the &env from a macro, and tell whether we are expanding into cljs."

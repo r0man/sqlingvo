@@ -1,62 +1,58 @@
 (ns sqlingvo.db
-  #?(:cljs (:require-macros [sqlingvo.db :refer [defdb]] ))
   (:require [sqlingvo.compiler :as compiler]
+            [sqlingvo.url :as url]
             [sqlingvo.util :as util]))
 
 (defrecord Database [subprotocol])
 
-(defmulti db
+(defn scheme
+  "Return the database adapter as a keyword."
+  [db]
+  (or (:scheme db) (:subprotocol db)))
+
+(defmulti db-spec
   "Return the `Database` record for :adapter or :subprotocol in
   `db-spec`."
-  (fn [db-spec]
-    (keyword (or (:scheme db-spec)
-                 (:subprotocol db-spec)))))
+  #(some-> %1 scheme keyword))
 
-(defmethod db :default [{:keys [subprotocol] :as db-spec}]
-  (throw (ex-info (str "Unknown database subprotocol: "
-                       (some-> db-spec :subprotocol name))
-                  db-spec)))
+(defmethod db-spec :mysql [db]
+  {:classname "com.mysql.cj.jdbc.Driver"
+   :scheme :mysql
+   :sql-quote util/sql-quote-backtick
+   :subprotocol "mysql"})
 
-(defmacro defdb
-  "Define a database specification."
-  [db-name doc & {:as opts}]
-  `(do
-     (defmethod db ~(keyword db-name) [~'db-spec]
-       (map->Database
-        (merge {:doc ~doc
-                :eval-fn compiler/compile-stmt
-                :subprotocol ~(name db-name)}
-               ~opts
-               ~'db-spec)))
-     (defn ~(symbol db-name) [& [~'db-spec]]
-       (db (assoc ~'db-spec :subprotocol ~(name db-name))))))
+(defmethod db-spec :postgresql [db]
+  {:classname "org.postgresql.Driver"
+   :sql-quote util/sql-quote-double-quote})
 
-(defdb mysql
-  "The world's most popular open source database."
-  :classname "com.mysql.cj.jdbc.Driver"
-  :sql-quote util/sql-quote-backtick)
+(defmethod db-spec :oracle [db]
+  {:classname "oracle.jdbc.driver.OracleDriver"
+   :sql-quote util/sql-quote-double-quote})
 
-(defdb postgresql
-  "The world's most advanced open source database."
-  :classname "org.postgresql.Driver"
-  :sql-quote util/sql-quote-double-quote)
+(defmethod db-spec :sqlite [db]
+  {:classname "org.sqlite.JDBC"
+   :sql-quote util/sql-quote-double-quote})
 
-(defdb oracle
-  "Oracle Database."
-  :classname "oracle.jdbc.driver.OracleDriver"
-  :sql-quote util/sql-quote-double-quote)
+(defmethod db-spec :sqlserver [db]
+  {:classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+   :sql-quote util/sql-quote-double-quote})
 
-(defdb sqlite
-  "The in-process SQL database engine."
-  :classname "org.sqlite.JDBC"
-  :sql-quote util/sql-quote-double-quote)
+(defmethod db-spec :vertica [db]
+  {:classname "com.vertica.jdbc.Driver"
+   :sql-quote util/sql-quote-double-quote})
 
-(defdb sqlserver
-  "Microsoft SQL server."
-  :classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-  :sql-quote util/sql-quote-double-quote)
+(defmethod db-spec :default [db]
+  (throw (ex-info "Unknown database :scheme or :subprotocol." (or db {}))))
 
-(defdb vertica
-  "The Real-Time Analytics Platform."
-  :classname "com.vertica.jdbc.Driver"
-  :sql-quote util/sql-quote-double-quote)
+(defn db
+  "Return a database for `spec`."
+  [spec & [opts]]
+  (as-> (cond
+          (keyword? spec)
+          {:scheme spec}
+          (string? spec)
+          (url/parse spec)
+          (and (map? spec) (scheme spec))
+          spec) db
+    (merge db (db-spec db) {:eval-fn compiler/compile-stmt} opts)
+    (map->Database db)))

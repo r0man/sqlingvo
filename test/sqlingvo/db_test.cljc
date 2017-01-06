@@ -5,18 +5,39 @@
             [sqlingvo.db :as db]
             [sqlingvo.util :as util]))
 
-(deftest test-db
-  (is (= (db/db {:subprotocol "postgresql"})
-         (db/postgresql)))
-  (is (thrown? #?(:clj Exception :cljs js/Error) (db/db nil))))
+(deftest test-db-invalid
+  (are [spec] (thrown? #?(:clj Exception :cljs js/Error) (db/db spec))
+    nil "" "invalid" 1))
 
-(deftest test-postgresql
-  (let [db (db/postgresql)]
+(deftest test-db-with-keyword
+  (let [db (db/db :postgresql)]
     (is (instance? sqlingvo.db.Database db))
     (is (= (:classname db) "org.postgresql.Driver"))
-    (is (= (:doc db) "The world's most advanced open source database."))
     (is (= (:eval-fn db) compiler/compile-stmt))
-    (is (= (:subprotocol db) "postgresql"))
-    (is (= (:sql-name db) nil))
+    (is (= (:scheme db) :postgresql))
     (is (= (:sql-name db) nil))
     (is (= (:sql-quote db) util/sql-quote-double-quote))))
+
+(deftest test-db-with-scheme
+  (let [db (db/db {:scheme :postgresql})]
+    (is (instance? sqlingvo.db.Database db))
+    (is (= (:classname db) "org.postgresql.Driver"))
+    (is (= (:eval-fn db) compiler/compile-stmt))
+    (is (= (:scheme db) :postgresql))
+    (is (= (:sql-name db) nil))
+    (is (= (:sql-quote db) util/sql-quote-double-quote))))
+
+(deftest test-db-with-url
+  (let [db (db/db "postgresql://tiger:scotch@localhost/sqlingvo?a=1&b=2")]
+    (is (instance? sqlingvo.db.Database db))
+    (is (= (:classname db) "org.postgresql.Driver"))
+    (is (= (:eval-fn db) compiler/compile-stmt))
+    (is (= (:name db) "sqlingvo"))
+    (is (= (:password db) "scotch"))
+    (is (= (:query-params db) {:a "1" :b "2"}))
+    (is (= (:scheme db) :postgresql))
+    (is (= (:server-name db) "localhost" ))
+    (is (= (:sql-name db) nil))
+    (is (= (:sql-quote db) util/sql-quote-double-quote))
+    (is (= (:username db) "tiger"))
+    (is (nil? (:server-port db)))))
