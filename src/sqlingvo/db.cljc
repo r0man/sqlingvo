@@ -3,7 +3,7 @@
             [sqlingvo.url :as url]
             [sqlingvo.util :as util]))
 
-(defrecord Database [subprotocol])
+(defrecord Database [scheme])
 
 (defn scheme
   "Return the database adapter as a keyword."
@@ -17,9 +17,7 @@
 
 (defmethod db-spec :mysql [db]
   {:classname "com.mysql.cj.jdbc.Driver"
-   :scheme :mysql
-   :sql-quote util/sql-quote-backtick
-   :subprotocol "mysql"})
+   :sql-quote util/sql-quote-backtick})
 
 (defmethod db-spec :postgresql [db]
   {:classname "org.postgresql.Driver"
