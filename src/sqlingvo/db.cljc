@@ -33,7 +33,7 @@
 
 (defdb mysql
   "The world's most popular open source database."
-  :classname "com.mysql.jdbc.Driver"
+  :classname "com.mysql.cj.jdbc.Driver"
   :sql-quote util/sql-quote-backtick)
 
 (defdb postgresql

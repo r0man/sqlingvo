@@ -3,11 +3,11 @@
 
 (def ^:dynamic *column-regex*
   "The regular expression used to parse a column identifier."
-  #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)(/(.+))?")
+  #"(([^./]+)\.)?(([^./]+)\.)?([^./]+)")
 
 (def ^:dynamic *table-regex*
   "The regular expression used to parse a table identifier."
-  #"(([^./]+)\.)?([^./]+)(/(.+))?")
+  #"(([^./]+)\.)?([^./]+)")
 
 (defprotocol IExpr
   (-parse-expr [x] "Parse `x` and return the AST of a SQL expression."))
@@ -80,7 +80,7 @@
   [s]
   (if (map? s)
     s (if-let [matches (re-matches *column-regex* (qualified-name s))]
-        (let [[_ _ schema _ table name _ as] matches]
+        (let [[_ _ schema _ table name _] matches]
           (make-node
            :op :column
            :children [:schema :table :name :as]
@@ -88,7 +88,6 @@
            :schema (if (and schema table) (keyword schema))
            :table (keyword (or table schema))
            :name (keyword name)
-           :as (keyword as)
            :val s)))))
 
 (defn parse-table
@@ -103,7 +102,6 @@
          :form s
          :schema (keyword (nth matches 2))
          :name (keyword (nth matches 3))
-         :as (keyword (nth matches 5))
          :val s))))
 
 (defn- parse-attr-expr [expr]
