@@ -20,14 +20,6 @@
      :name :id
      :form :continents.id
      :val :continents.id}
-    :continents.id/i
-    {:op :column
-     :children [:table :name :as]
-     :table :continents
-     :name :id
-     :as :i
-     :form :continents.id/i
-     :val :continents.id/i}
     :public.continents.id
     {:op :column
      :children [:schema :table :name]
@@ -36,15 +28,6 @@
      :name :id
      :form :public.continents.id
      :val :public.continents.id}
-    :public.continents.id/i
-    {:op :column
-     :children [:schema :table :name :as]
-     :schema :public
-     :table :continents
-     :name :id
-     :as :i
-     :form :public.continents.id/i
-     :val :public.continents.id/i}
     (expr/parse-column :continents.id)
     (expr/parse-column :continents.id)))
 
@@ -56,13 +39,6 @@
      :name :continents
      :form :continents
      :val :continents}
-    :continents/c
-    {:op :table
-     :children [:name :as]
-     :name :continents
-     :as :c
-     :form :continents/c
-     :val :continents/c}
     :public.continents
     {:op :table
      :children [:schema :name]
@@ -70,16 +46,8 @@
      :name :continents
      :form :public.continents
      :val :public.continents}
-    :public.continents/c
-    {:op :table
-     :children [:schema :name :as]
-     :schema :public
-     :name :continents
-     :as :c
-     :form :public.continents/c
-     :val :public.continents/c}
-    (expr/parse-table :public.continents/c)
-    (expr/parse-table :public.continents/c)))
+    (expr/parse-table :public.continents)
+    (expr/parse-table :public.continents)))
 
 (deftest test-parse-expr
   (are [expr expected] (= (expr/parse-expr expr) expected)
@@ -294,7 +262,7 @@
       :op :table
       :form :countries
       :val :countries}
-     :name :c
+     :name "c"
      :columns []}))
 
 (deftest test-parse-expr-array

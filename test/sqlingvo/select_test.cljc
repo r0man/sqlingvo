@@ -914,3 +914,8 @@
           (sql/from :x)
           (sql/order-by '(<-> :x.a :x.b)))
         ["SELECT * FROM \"x\" ORDER BY (\"x\".\"a\" <-> \"x\".\"b\")"]))
+
+(deftest test-select-qualified
+  (sql= (sql/select db [(sql/as :spots.id :spot/id)]
+          (sql/from :spots))
+        ["SELECT \"spots\".\"id\" AS \"spot/id\" FROM \"spots\""]))

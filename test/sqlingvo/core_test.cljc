@@ -81,30 +81,7 @@
             :op :column
             :form :id
             :val :id}
-     :name :other
-     :columns []}
-    [:continents [:id :name]]
-    {:op :alias
-     :children [:expr :name]
-     :expr
-     {:children [:name]
-      :name :continents
-      :op :column
-      :form :continents
-      :val :continents}
-     :name [:id :name]
-     :columns []}
-    [:public.continents [:id :name]]
-    {:op :alias
-     :children [:expr :name]
-     :expr
-     {:children [:table :name]
-      :table :public
-      :name :continents
-      :op :column
-      :form :public.continents
-      :val :public.continents}
-     :name [:id :name]
+     :name "other"
      :columns []}
     ['(count :*) :count]
     {:op :alias
@@ -122,7 +99,7 @@
         :val :*
         :op :column
         :form :*}]}
-     :name :count}))
+     :name "count"}))
 
 ;; CAST
 

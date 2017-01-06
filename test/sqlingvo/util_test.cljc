@@ -5,6 +5,13 @@
             [sqlingvo.test :refer [db]]
             [sqlingvo.util :as util]))
 
+(deftest test-keyword-str
+  (are [k expected] (= (util/keyword-str k) expected)
+    nil nil
+    :x "x"
+    :x.y "x.y"
+    :x/y "x/y"))
+
 (deftest test-sql-type
   (are [type expected] (= (util/sql-type-name type) expected)
     nil nil
@@ -36,6 +43,7 @@
            (= expected (util/sql-name (db/vertica) x)))
     nil nil
     "" ""
+    "country/id" "country/id"
     :a "a"
     :a-1 "a-1"))
 
@@ -46,6 +54,7 @@
            (= expected (util/sql-keyword (db/vertica) x)))
     nil nil
     "" (keyword "")
+    "country/id" :country/id
     :a :a
     :a-1 :a-1
     :a_1 :a_1))
@@ -58,6 +67,7 @@
     db/mysql :a "`a`"
     db/mysql :a-1 "`a-1`"
     db/postgresql "" "\"\""
+    db/postgresql "country/id" "\"country/id\""
     db/postgresql :a "\"a\""
     db/postgresql :a-1 "\"a-1\""
     db/postgresql :EXCLUDED.dname "EXCLUDED.\"dname\""
