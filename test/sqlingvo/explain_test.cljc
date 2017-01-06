@@ -1,8 +1,7 @@
 (ns sqlingvo.explain-test
-  (:require #?(:clj [clojure.test :refer [deftest]]
-               :cljs [cljs.test :refer-macros [deftest]])
-            #?(:clj [sqlingvo.test :refer [db sql=]]
+  (:require #?(:clj [sqlingvo.test :refer [db sql=]]
                :cljs [sqlingvo.test :refer [db] :refer-macros [sql=]])
+            [clojure.test :refer [deftest is]]
             [clojure.string :as str]
             [sqlingvo.core :as sql]))
 

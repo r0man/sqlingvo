@@ -15,10 +15,10 @@
   {:dev
    {:dependencies [[org.clojure/test.check "0.9.0"]]}
    :provided
-   {:dependencies [[org.clojure/clojurescript "1.9.93"]]}
+   {:dependencies [[org.clojure/clojurescript "1.9.293"]]}
    :repl
    {:dependencies [[com.cemerick/piggieback "0.2.1"]
-                   [reloaded.repl "0.2.2"]]
+                   [reloaded.repl "0.2.3"]]
     :plugins [[figwheel-sidecar "0.5.4-7"]]
     :init-ns user
     :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}

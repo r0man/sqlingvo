@@ -1,6 +1,5 @@
 (ns sqlingvo.expr-test
-  (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [are deftest is]])
+  (:require [clojure.test :refer [are deftest is]]
             [sqlingvo.core :refer [as select values]]
             [sqlingvo.expr :as expr]
             [sqlingvo.test :refer [db]]))
