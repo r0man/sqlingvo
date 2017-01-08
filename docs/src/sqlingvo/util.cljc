@@ -8,6 +8,14 @@
   "A set of reserved words that should not be quoted."
   #{"EXCLUDED" "DEFAULT"})
 
+(defn keyword-str
+  "Return the qualified name of the keyword `k` as a string."
+  [k]
+  (when (keyword? k)
+    (if (namespace k)
+      (str (namespace k) "/" (name k))
+      (str (name k)))))
+
 (defn m-bind [mv mf]
   (fn [state]
     (let [[temp-v temp-state] (mv state)
