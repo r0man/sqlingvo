@@ -761,7 +761,6 @@
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
   [{:keys [db] :as stmt}]
-  (assert db "No db given!")
   (let [placeholder ((or (:sql-placeholder db) util/sql-placeholder-constant))
         db (assoc db :sql-next-placeholder placeholder)]
     (vec (compile-sql db stmt))))
