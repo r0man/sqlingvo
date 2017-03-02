@@ -147,7 +147,6 @@
     {:analyze true})"
   {:style/indent 1}
   [db stmt & [opts]]
-  {:pre [(db? db)]}
   (expr/stmt
    (fn [_]
      [_ (expr/make-node
@@ -169,7 +168,6 @@
     (from \"/usr1/proj/bray/sql/country_data\"))"
   {:style/indent 3}
   [db table columns & body]
-  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         columns (map expr/parse-column columns)]
     (expr/stmt
@@ -186,7 +184,6 @@
   "Build a CREATE TABLE statement."
   {:style/indent 2}
   [db table & body]
-  {:pre [(db? db)]}
   (let [table (expr/parse-table table)]
     (expr/stmt
      (fn [_]
@@ -208,7 +205,6 @@
     (where '(= :id 1)))"
   {:style/indent 2}
   [db table & body]
-  {:pre [(db? db)]}
   (let [table (expr/parse-table table)]
     (expr/stmt
      (fn [_]
@@ -229,7 +225,6 @@
   (drop-table db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
-  {:pre [(db? db)]}
   (let [tables (map expr/parse-table tables)]
     (expr/stmt
      (fn [stmt]
@@ -335,7 +330,6 @@
   "Build a INSERT statement."
   {:style/indent 3}
   [db table columns & body]
-  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         columns (map expr/parse-column columns)]
     (expr/stmt
@@ -482,7 +476,6 @@
   (drop-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
-  {:pre [(db? db)]}
   (let [view (expr/parse-table view)]
     (expr/stmt
      (fn [_]
@@ -501,7 +494,6 @@
   (refresh-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
-  {:pre [(db? db)]}
   (let [view (expr/parse-table view)]
     (expr/stmt
      (fn [_]
@@ -552,7 +544,6 @@
     (from :continents))"
   {:style/indent 2}
   [db exprs & body]
-  {:pre [(db? db)]}
   (let [[_ select]
         ((chain-state body)
          (expr/make-node
@@ -586,7 +577,6 @@
   (truncate db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
-  {:pre [(db? db)]}
   (let [tables (map expr/parse-table tables)]
     (expr/stmt
      (fn [_]
@@ -622,7 +612,6 @@
     (where '(= :kind \"Drama\")))"
   {:style/indent 2}
   [db table row & body]
-  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         exprs (if (sequential? row) (expr/parse-exprs row))
         row (if (map? row) (expr/parse-map-expr row))]
@@ -698,7 +687,6 @@
   "Build a WITH (common table expressions) query."
   {:style/indent 2}
   [db bindings query]
-  {:pre [(db? db)]}
   (assert (even? (count bindings)) "The WITH bindings must be even.")
   (let [bindings (map (fn [[name stmt]]
                         (vector (keyword name)

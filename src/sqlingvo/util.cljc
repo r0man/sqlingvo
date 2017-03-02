@@ -139,7 +139,7 @@
   "Return the `db` specific quoted string for `x`."
   [db x]
   (when x
-    ((or (:sql-quote db) sql-quote-backtick)
+    ((or (:sql-quote db) sql-quote-double-quote)
      (sql-name db x))))
 
 (defn sql-quote-fn
