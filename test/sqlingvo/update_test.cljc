@@ -4,6 +4,13 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-update-keyword-db
+  (sql= (sql/update :postgresql :films
+          {:kind "Dramatic"}
+          (sql/where '(= :kind "Drama")))
+        ["UPDATE \"films\" SET \"kind\" = ? WHERE (\"kind\" = ?)"
+         "Dramatic" "Drama"]))
+
 (deftest test-update-drama-to-dramatic
   (sql= (sql/update db :films
           {:kind "Dramatic"}

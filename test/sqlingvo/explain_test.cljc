@@ -5,6 +5,12 @@
             [clojure.string :as str]
             [sqlingvo.core :as sql]))
 
+(deftest test-explain-keyword-db
+  (sql= (sql/explain :postgresql
+          (sql/select :postgresql [:*]
+            (sql/from :foo)))
+        ["EXPLAIN SELECT * FROM \"foo\""]))
+
 (deftest test-explain
   (sql= (sql/explain db
           (sql/select db [:*]

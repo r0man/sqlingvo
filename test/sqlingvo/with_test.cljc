@@ -4,6 +4,13 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-with-keyword-db
+  (sql= (sql/with :postgresql [:a (sql/select :postgresql [:*] (sql/from :b))]
+          (sql/select :postgresql [:*]
+            (sql/from :a)
+            (sql/where '(= 1 1))))
+        ["WITH \"a\" AS (SELECT * FROM \"b\") SELECT * FROM \"a\" WHERE (1 = 1)"]))
+
 (deftest test-with-query
   (sql= (sql/with db [:regional-sales
                       (sql/select db [:region (sql/as '(sum :amount) :total-sales)]

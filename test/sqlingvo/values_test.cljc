@@ -4,6 +4,11 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-values-keyword-db
+  (sql= (sql/values :postgresql [[1 "one"] [2 "two"] [3 "three"]])
+        ["VALUES (1, ?), (2, ?), (3, ?)"
+         "one" "two" "three"]))
+
 (deftest test-values
   (sql= (sql/values db [[1 "one"] [2 "two"] [3 "three"]])
         ["VALUES (1, ?), (2, ?), (3, ?)"
