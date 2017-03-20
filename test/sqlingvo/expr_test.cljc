@@ -5,13 +5,14 @@
             [sqlingvo.test :refer [db]]))
 
 (deftest test-parse-column
-  (are [table expected] (= (expr/parse-column table) expected)
+  (are [column expected] (= (expr/parse-column column) expected)
     :id
     {:op :column
      :children [:name]
      :name :id
      :form :id
      :val :id}
+
     :continents.id
     {:op :column
      :children [:table :name]
@@ -19,6 +20,7 @@
      :name :id
      :form :continents.id
      :val :continents.id}
+
     :public.continents.id
     {:op :column
      :children [:schema :table :name]
@@ -27,6 +29,14 @@
      :name :id
      :form :public.continents.id
      :val :public.continents.id}
+
+    :continent/id
+    {:op :column
+     :children [:name]
+     :name :id
+     :form :continent/id
+     :val :continent/id}
+
     (expr/parse-column :continents.id)
     (expr/parse-column :continents.id)))
 
@@ -38,6 +48,7 @@
      :name :continents
      :form :continents
      :val :continents}
+
     :public.continents
     {:op :table
      :children [:schema :name]
@@ -45,6 +56,14 @@
      :name :continents
      :form :public.continents
      :val :public.continents}
+
+    :sqlingvo/continents
+    {:op :table
+     :children [:name]
+     :name :continents
+     :form :sqlingvo/continents
+     :val :sqlingvo/continents}
+
     (expr/parse-table :public.continents)
     (expr/parse-table :public.continents)))
 
@@ -270,16 +289,6 @@
           :children
           [(expr/parse-expr 1)
            (expr/parse-expr 2)]})))
-
-(deftest test-qualified-name
-  (are [arg expected]
-      (is (= expected (expr/qualified-name arg)))
-    nil ""
-    "" ""
-    "continents" "continents"
-    :continents "continents"
-    :public.continents "public.continents"
-    :ns/continents "continents"))
 
 (deftest test-deref-statement
   (is (= @(select db [1])

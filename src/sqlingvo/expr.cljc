@@ -50,10 +50,6 @@
 (defn stmt [x]
   (Stmt. x))
 
-(defn qualified-name
-  "Returns the qualified name of `k`."
-  [k] (if k (name k) ""))
-
 (defn unintern-name
   "Returns `x` without any namespace."
   [x]
@@ -79,7 +75,7 @@
   with :op, :schema, :name and :as keys."
   [s]
   (if (map? s)
-    s (if-let [matches (re-matches *column-regex* (qualified-name s))]
+    s (if-let [matches (re-matches *column-regex* (name s))]
         (let [[_ _ schema _ table name _] matches]
           (make-node
            :op :column
@@ -95,7 +91,7 @@
   with :op, :schema, :name and :as keys."
   [s]
   (if (map? s)
-    s (if-let [matches (re-matches *table-regex* (qualified-name s))]
+    s (if-let [matches (re-matches *table-regex* (name s))]
         (make-node
          :op :table
          :children [:schema :name :as]
