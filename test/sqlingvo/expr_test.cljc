@@ -278,7 +278,8 @@
     "" ""
     "continents" "continents"
     :continents "continents"
-    :public.continents "public.continents"))
+    :public.continents "public.continents"
+    :ns/continents "continents"))
 
 (deftest test-deref-statement
   (is (= @(select db [1])

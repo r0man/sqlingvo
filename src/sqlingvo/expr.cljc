@@ -52,7 +52,7 @@
 
 (defn qualified-name
   "Returns the qualified name of `k`."
-  [k] (str/replace (str k) #"^:" ""))
+  [k] (if k (name k) ""))
 
 (defn unintern-name
   "Returns `x` without any namespace."
