@@ -22,6 +22,15 @@
          "B6717" "Tampopo"
          "HG120" "The Dinner Game"]))
 
+(deftest test-values-with-namespaced-keys
+  (sql= (sql/values db [{:sqlingvo/code "B6717"
+                         :sqlingvo/title "Tampopo"}
+                        {:sqlingvo/code "HG120"
+                         :sqlingvo/title "The Dinner Game"}])
+        ["VALUES (?, ?), (?, ?)"
+         "B6717" "Tampopo"
+         "HG120" "The Dinner Game"]))
+
 (deftest test-values-with-exprs
   (sql= (sql/values db [['(cast "192.168.0.1" :inet)
                          "192.168.0.10"
