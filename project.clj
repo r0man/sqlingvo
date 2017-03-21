@@ -1,4 +1,4 @@
-(defproject sqlingvo "0.9.2-SNAPSHOT"
+(defproject sqlingvo "0.9.3-SNAPSHOT"
   :description "A Clojure DSL to create SQL statements"
   :url "http://github.com/r0man/sqlingvo"
   :license {:name "Eclipse Public License"
@@ -15,7 +15,7 @@
   {:dev
    {:dependencies [[org.clojure/test.check "0.9.0"]]}
    :provided
-   {:dependencies [[org.clojure/clojurescript "1.9.293"]]}
+   {:dependencies [[org.clojure/clojurescript "1.9.495"]]}
    :repl
    {:dependencies [[com.cemerick/piggieback "0.2.1"]
                    [reloaded.repl "0.2.3"]]
