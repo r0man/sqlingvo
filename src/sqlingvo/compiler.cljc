@@ -481,7 +481,7 @@
   ["IF EXISTS"])
 
 (defn- compile-value [db columns value]
-  (let [values (map #(or (get value %) {:op :nil}) (map :name columns))
+  (let [values (map #(or (get value %) {:op :nil}) (map :form columns))
         values (map #(compile-sql db %) values)]
     (concat-sql "(" (join-sql ", " values ) ")")))
 
