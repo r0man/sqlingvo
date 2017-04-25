@@ -918,3 +918,29 @@
   (sql= (sql/select db [(sql/as :spots.id :spot/id)]
           (sql/from :spots))
         ["SELECT \"spots\".\"id\" AS \"spot/id\" FROM \"spots\""]))
+
+(deftest test-select->-number
+  (sql= (sql/select db [`(-> (cast "[1,2,3]" :json) 2)])
+        ["SELECT CAST(? AS json)->2" "[1,2,3]"]))
+
+(deftest test-select->-string
+  (sql= (sql/select db [`(-> (cast "{\"a\":1, \"b\": 2}" :json) "b")])
+        ["SELECT CAST(? AS json)->?" "{\"a\":1, \"b\": 2}" "b"]))
+
+(deftest test-select->-alias
+  (sql= (sql/select db [(sql/as `(-> (cast "[1,2,3]" :json) 2) :x)])
+        ["SELECT CAST(? AS json)->2 AS \"x\"" "[1,2,3]"]))
+
+(deftest test-select->-nested
+  (sql= (sql/select db [`(-> (cast "{\"a\":1, \"c\": {\"d\": 1}}" :json) "c" "d")])
+        ["SELECT CAST(? AS json)->?->?"
+         "{\"a\":1, \"c\": {\"d\": 1}}"
+         "c" "d"]))
+
+(deftest test-select->>-number
+  (sql= (sql/select db [`(->> (cast "[1,2,3]" :json) 2)])
+        ["SELECT CAST(? AS json)->>2" "[1,2,3]"]))
+
+(deftest test-select->>-string
+  (sql= (sql/select db [`(->> (cast "{\"a\":1, \"b\": 2}" :json) "b")])
+        ["SELECT CAST(? AS json)->>?" "{\"a\":1, \"b\": 2}" "b"]))
