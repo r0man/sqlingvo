@@ -6,6 +6,11 @@
             [sqlingvo.db :as db]
             [sqlingvo.expr :as expr]))
 
+(deftest test-select-keyword-db
+  (sql= (sql/select :postgresql [:*]
+          (sql/from :continents))
+        ["SELECT * FROM \"continents\""]))
+
 (deftest test-select-from
   (sql= (sql/select db [:*]
           (sql/from :continents))

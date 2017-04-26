@@ -151,7 +151,7 @@
    (fn [_]
      [_ (expr/make-node
          :op :explain
-         :db db
+         :db (db/db db)
          :children [:stmt]
          :stmt (ast stmt)
          :opts opts)])))
@@ -175,7 +175,7 @@
        ((chain-state body)
         (expr/make-node
          :op :copy
-         :db db
+         :db (db/db db)
          :children [:table :columns]
          :table table
          :columns columns))))))
@@ -190,7 +190,7 @@
        ((chain-state body)
         (expr/make-node
          :op :create-table
-         :db db
+         :db (db/db db)
          :children [:table]
          :table table))))))
 
@@ -211,7 +211,7 @@
        ((chain-state body)
         (expr/make-node
          :op :delete
-         :db db
+         :db (db/db db)
          :children [:table]
          :table table))))))
 
@@ -231,7 +231,7 @@
        ((chain-state body)
         (expr/make-node
          :op :drop-table
-         :db db
+         :db (db/db db)
          :children [:tables]
          :tables tables))))))
 
@@ -337,7 +337,7 @@
        ((chain-state body)
         (expr/make-node
          :op :insert
-         :db db
+         :db (db/db db)
          :children [:table :columns]
          :table table
          :columns
@@ -482,7 +482,7 @@
        ((chain-state body)
         (expr/make-node
          :op :drop-materialized-view
-         :db db
+         :db (db/db db)
          :children [:view]
          :view view))))))
 
@@ -500,7 +500,7 @@
        ((chain-state body)
         (expr/make-node
          :op :refresh-materialized-view
-         :db db
+         :db (db/db db)
          :children [:view]
          :view view))))))
 
@@ -548,7 +548,7 @@
         ((chain-state body)
          (expr/make-node
           :op :select
-          :db db
+          :db (db/db db)
           :children [:distinct :exprs]
           :distinct (if (= :distinct (:op exprs))
                       exprs)
@@ -583,7 +583,7 @@
        ((chain-state body)
         (expr/make-node
          :op :truncate
-         :db db
+         :db (db/db db)
          :children [:tables]
          :tables tables))))))
 
@@ -620,7 +620,7 @@
        ((chain-state body)
         (expr/make-node
          :op :update
-         :db db
+         :db (db/db db)
          :children [:table :exprs :row]
          :table table
          :exprs exprs
@@ -643,11 +643,11 @@
       (let [node (cond
                    (= vals :default)
                    {:op :values
-                    :db db
+                    :db (some-> db db/db)
                     :type :default}
                    (every? map? vals)
                    {:op :values
-                    :db db
+                    :db (some-> db db/db)
                     :columns (if (not-empty (:columns stmt))
                                (:columns stmt)
                                (->> (mapcat keys vals)
@@ -657,7 +657,7 @@
                     :values (mapv expr/parse-map-expr vals)}
                    :else
                    {:op :values
-                    :db db
+                    :db (some-> db db/db)
                     :columns (:columns stmt)
                     :type :exprs
                     :values (mapv expr/parse-exprs vals)})]
@@ -695,7 +695,7 @@
         query (ast query)
         node (expr/make-node
               :op :with
-              :db db
+              :db (db/db db)
               :children [:bindings]
               :bindings bindings
               :query query)]

@@ -4,6 +4,10 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-truncate-keyword-db
+  (sql= (sql/truncate :postgresql [:continents])
+        ["TRUNCATE TABLE \"continents\""]))
+
 (deftest test-truncate-continents
   (sql= (sql/truncate db [:continents])
         ["TRUNCATE TABLE \"continents\""]))

@@ -5,6 +5,8 @@
             [sqlingvo.core :as sql]))
 
 (deftest test-refresh-materialized-view
+  (sql= (sql/refresh-materialized-view :postgresql :order-summary)
+        ["REFRESH MATERIALIZED VIEW \"order-summary\""])
   (sql= (sql/refresh-materialized-view db :order-summary)
         ["REFRESH MATERIALIZED VIEW \"order-summary\""])
   (sql= (sql/refresh-materialized-view db :order-summary
@@ -22,6 +24,8 @@
         ["REFRESH MATERIALIZED VIEW CONCURRENTLY \"order-summary\" WITH NO DATA"]))
 
 (deftest test-drop-materialized-view
+  (sql= (sql/drop-materialized-view :postgresql :order-summary)
+        ["DROP MATERIALIZED VIEW \"order-summary\""])
   (sql= (sql/drop-materialized-view db :order-summary)
         ["DROP MATERIALIZED VIEW \"order-summary\""])
   (sql= (sql/drop-materialized-view db :order-summary

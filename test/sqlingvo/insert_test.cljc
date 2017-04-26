@@ -4,6 +4,11 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-insert-keyword-db
+  (sql= (sql/insert :postgresql :films []
+          (sql/values :default))
+        ["INSERT INTO \"films\" DEFAULT VALUES"]))
+
 (deftest test-insert-default-values
   (sql= (sql/insert db :films []
           (sql/values :default))

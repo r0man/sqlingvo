@@ -4,6 +4,11 @@
             [clojure.test :refer [are deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-create-table-keyword-db
+  (sql= (sql/create-table :postgresql :measurement-y2006m02
+          (sql/inherits :measurement))
+        ["CREATE TABLE \"measurement-y2006m02\" () INHERITS (\"measurement\")"]))
+
 (deftest test-create-table-inherits
   (sql= (sql/create-table db :measurement-y2006m02
           (sql/inherits :measurement))

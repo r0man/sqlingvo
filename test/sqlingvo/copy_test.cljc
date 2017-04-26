@@ -5,6 +5,11 @@
             [sqlingvo.core :as sql]
             [sqlingvo.expr :as expr]))
 
+(deftest test-copy-keyword-db
+  (sql= (sql/copy :postgresql :country []
+          (sql/from :stdin))
+        ["COPY \"country\" FROM STDIN"]))
+
 (deftest test-copy-stdin
   (sql= (sql/copy db :country []
           (sql/from :stdin))

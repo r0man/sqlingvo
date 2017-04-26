@@ -4,6 +4,10 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-delete-keyword-db
+  (sql= (sql/delete :postgresql :films)
+        ["DELETE FROM \"films\""]))
+
 (deftest test-delete-films
   (sql= (sql/delete db :films)
         ["DELETE FROM \"films\""]))

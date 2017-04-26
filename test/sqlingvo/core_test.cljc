@@ -147,12 +147,3 @@
 (deftest test-pprint
   (is (= (with-out-str (pprint (sql/select db [1])))
          "[\"SELECT 1\"]\n")))
-
-(deftest test-db-nil
-  (sql= (sql/insert nil :films []
-          (sql/select nil [:*]
-            (sql/from :tmp-films)
-            (sql/where '(< :date-prod "2004-05-07"))))
-        [(str "INSERT INTO \"films\" SELECT * FROM \"tmp-films\" "
-              "WHERE (\"date-prod\" < ?)")
-         "2004-05-07"]))

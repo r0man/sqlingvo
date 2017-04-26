@@ -4,6 +4,10 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-drop-table-keyword-db
+  (sql= (sql/drop-table :postgresql [:continents])
+        ["DROP TABLE \"continents\""]))
+
 (deftest test-drop-continents
   (sql= (sql/drop-table db [:continents])
         ["DROP TABLE \"continents\""]))
