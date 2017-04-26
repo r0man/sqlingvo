@@ -40,3 +40,7 @@
     (is (= (:sql-quote db) util/sql-quote-double-quote))
     (is (= (:username db) "tiger"))
     (is (nil? (:server-port db)))))
+
+(deftest test-db-idempotent
+  (let [db (db/db :postgresql {:eval-fn identity})]
+    (is (= (:eval-fn (db/db db)) identity))))
