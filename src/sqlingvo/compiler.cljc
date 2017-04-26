@@ -170,6 +170,12 @@
   (fn [db node]
     (some-> node :children first :val keyword)))
 
+(defmethod compile-fn :-> [db node]
+  (compile-sql-join db "->" (-> node :children rest)))
+
+(defmethod compile-fn :->> [db node]
+  (compile-sql-join db "->>" (-> node :children rest)))
+
 (defmethod compile-fn :case [db node]
   (let [[_ & args] (:children node)
         parts (partition 2 2 nil args)]
