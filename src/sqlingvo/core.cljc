@@ -37,7 +37,7 @@
    :children [:expr :name]
    :columns (mapv expr/parse-column columns)
    :expr (expr/parse-expr expr)
-   :name (util/keyword-str alias)})
+   :name alias})
 
 (defn asc
   "Parse `expr` and return an ORDER BY expr using ascending order."

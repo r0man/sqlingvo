@@ -11,10 +11,14 @@
 (defn keyword-str
   "Return the qualified name of the keyword `k` as a string."
   [k]
-  (when (keyword? k)
+  (cond
+    (or (keyword? k)
+        (symbol? k))
     (if (namespace k)
       (str (namespace k) "/" (name k))
-      (str (name k)))))
+      (str (name k)))
+    (string? k)
+    k))
 
 (defn m-bind [mv mf]
   (fn [state]
@@ -127,7 +131,7 @@
   "Return the `db` specific SQL name for `x`."
   [db x]
   (when x
-    ((or (:sql-name db) name) x)))
+    ((or (:sql-name db) keyword-str) x)))
 
 (defn sql-keyword
   "Return the `db` specific SQL keyword for `x`."

@@ -1,10 +1,18 @@
 (ns sqlingvo.select-test
   (:require #?(:clj [sqlingvo.test :refer [db sql=]]
                :cljs [sqlingvo.test :refer [db] :refer-macros [sql=]])
+            [clojure.string :as str]
             [clojure.test :refer [are deftest is]]
             [sqlingvo.core :as sql]
             [sqlingvo.db :as db]
             [sqlingvo.expr :as expr]))
+
+(defn underscore [s]
+  (cond
+    (keyword? s)
+    (str/replace (name s) "-" "_")
+    (string? s)
+    s))
 
 (deftest test-select-keyword-db
   (sql= (sql/select :postgresql [:*]
@@ -46,6 +54,12 @@
 (deftest test-select-x-as-x
   (sql= (sql/select db [(sql/as "x" :x)])
         ["SELECT ? AS \"x\"" "x"]))
+
+(deftest test-select-alias-string
+  (let [my-db (sql/db :postgresql {:sql-name underscore})]
+    (sql= (sql/select my-db [(sql/as 1 :alias-1)
+                             (sql/as 2 "alias-2")])
+          ["SELECT 1 AS \"alias_1\", 2 AS \"alias-2\""])))
 
 (deftest test-select-1-2-3
   (sql= (sql/select db [1 2 3])

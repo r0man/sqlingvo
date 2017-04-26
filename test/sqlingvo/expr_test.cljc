@@ -280,7 +280,7 @@
       :op :table
       :form :countries
       :val :countries}
-     :name "c"
+     :name :c
      :columns []}))
 
 (deftest test-parse-expr-array
