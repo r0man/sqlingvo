@@ -52,5 +52,5 @@
           (url/parse spec)
           (and (map? spec) (scheme spec))
           spec) db
-    (merge db (db-spec db) {:eval-fn compiler/compile-stmt} opts)
+    (merge {:eval-fn compiler/compile-stmt} db (db-spec db) opts)
     (map->Database db)))
