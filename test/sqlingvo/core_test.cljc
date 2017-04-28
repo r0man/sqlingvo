@@ -80,7 +80,7 @@
             :op :column
             :form :id
             :val :id}
-     :name "other"
+     :name :other
      :columns []}
     ['(count :*) :count]
     {:op :alias
@@ -98,7 +98,7 @@
         :val :*
         :op :column
         :form :*}]}
-     :name "count"}))
+     :name :count}))
 
 ;; CAST
 
