@@ -269,6 +269,18 @@
               "FROM \"weather-reports\" ORDER BY \"location\", \"time\" "
               "DESC")]))
 
+(deftest test-select-order-by-ns
+  (sql= (sql/select db [:*]
+          (sql/from :continents)
+          (sql/order-by :search/rank))
+        ["SELECT * FROM \"continents\" ORDER BY \"search/rank\""]))
+
+(deftest test-select-order-by-ns-asc
+  (sql= (sql/select db [:*]
+          (sql/from :continents)
+          (sql/order-by (sql/asc :search/rank)))
+        ["SELECT * FROM \"continents\" ORDER BY \"search/rank\" ASC"]))
+
 (deftest test-select-order-by-asc
   (sql= (sql/select db [:*]
           (sql/from :continents)
@@ -593,7 +605,7 @@
         ["SELECT \"n\" FROM generate_series(0, 200) AS \"n\""]))
 
 (deftest test-select-qualified-column
-  (sql= (sql/select db [{:op :column :table :continents :name :id}]
+  (sql= (sql/select db [:continents.id]
           (sql/from :continents))
         ["SELECT \"continents\".\"id\" FROM \"continents\""]))
 

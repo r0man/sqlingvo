@@ -6,33 +6,23 @@
             [sqlingvo.test :refer [db]]))
 
 (deftest test-compile-column
-  (are [ast expected]
-      (= expected (compile-sql db ast))
-    {:op :column :name :*}
+  (are [ast expected] (= expected (compile-sql db ast))
+    (expr/parse-column :*)
     ["*"]
-    {:op :column
-     :table :continents
-     :name :*}
+
+    (expr/parse-column :continents.*)
     ["\"continents\".*"]
-    {:op :column
-     :name :created-at}
+
+    (expr/parse-column :created-at)
     ["\"created-at\""]
-    {:op :column
-     :table :continents
-     :name :created-at}
+
+    (expr/parse-column :continents.created-at)
     ["\"continents\".\"created-at\""]
-    {:op :column
-     :schema :public
-     :table :continents
-     :name :created-at}
+
+    (expr/parse-column :public.continents.created-at)
     ["\"public\".\"continents\".\"created-at\""]
-    {:op :alias
-     :name :c
-     :expr
-     {:op :column
-      :schema :public
-      :table :continents
-      :name :created-at}}
+
+    (sql/as (expr/parse-column :public.continents.created-at) :c)
     ["\"public\".\"continents\".\"created-at\" AS \"c\""]))
 
 (deftest test-compile-constant

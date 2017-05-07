@@ -10,16 +10,19 @@
   (are [column expected]
       (= (sql/ast column) expected)
     (sql/column :id :serial :primary-key? true)
-    {:columns [:id]
+    {:columns [:id],
      :column
      {:id
-      {:schema nil
-       :table nil
-       :primary-key? true
-       :default nil
-       :name :id
-       :type :serial
-       :op :column}}}))
+      {:schema nil,
+       :children [:name],
+       :table nil,
+       :primary-key? true,
+       :default nil,
+       :name :id,
+       :val :id,
+       :type :serial,
+       :op :column,
+       :form :id}}}))
 
 (deftest test-from
   (let [[from stmt] ((sql/from :continents) {})]

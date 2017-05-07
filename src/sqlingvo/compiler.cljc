@@ -350,13 +350,15 @@
 (defmethod compile-sql :condition [db {:keys [condition]}]
   (compile-sql db condition))
 
-(defmethod compile-sql :column [db {:keys [schema name table direction nulls]}]
+(defmethod compile-sql :column [db {:keys [schema form name table direction nulls]}]
   (concat-sql
-   (->> [(if schema (sql-quote db schema))
-         (if table (sql-quote db table))
-         (if name (if (= :* name) "*" (sql-quote db name)))]
-        (remove nil?)
-        (join "."))
+   (if (and (namespace form) (core/name form))
+     (sql-quote db form)
+     (->> [(if schema (sql-quote db schema))
+           (if table (sql-quote db table))
+           (if name (if (= :* name) "*" (sql-quote db name)))]
+          (remove nil?)
+          (join ".")))
    (if direction (str " " (upper-case (core/name direction))))
    (if nulls (str " NULLS " (keyword-sql nulls)))))
 
