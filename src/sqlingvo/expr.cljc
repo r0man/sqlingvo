@@ -77,14 +77,16 @@
   (if (map? s)
     s (if-let [matches (re-matches *column-regex* (name s))]
         (let [[_ _ schema _ table name _] matches]
-          (make-node
-           :op :column
-           :children [:schema :table :name :as]
-           :form s
-           :schema (if (and schema table) (keyword schema))
-           :table (keyword (or table schema))
-           :name (keyword name)
-           :val s)))))
+          (cond-> (make-node
+                   :op :column
+                   :children [:schema :table :name :as]
+                   :form s
+                   :schema (if (and schema table) (keyword schema))
+                   :table (keyword (or table schema))
+                   :name (keyword name)
+                   :val s)
+            (and (keyword? s) (namespace s))
+            (assoc :ns (namespace s)))))))
 
 (defn parse-table
   "Parse `s` as a table identifier and return a map
@@ -92,13 +94,15 @@
   [s]
   (if (map? s)
     s (if-let [matches (re-matches *table-regex* (name s))]
-        (make-node
-         :op :table
-         :children [:schema :name :as]
-         :form s
-         :schema (keyword (nth matches 2))
-         :name (keyword (nth matches 3))
-         :val s))))
+        (cond-> (make-node
+                 :op :table
+                 :children [:schema :name :as]
+                 :form s
+                 :schema (keyword (nth matches 2))
+                 :name (keyword (nth matches 3))
+                 :val s)
+          (and (keyword? s) (namespace s))
+          (assoc :ns (namespace s))))))
 
 (defn- parse-attr-expr [expr]
   (make-node

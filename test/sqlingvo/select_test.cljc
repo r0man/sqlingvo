@@ -975,3 +975,8 @@
 (deftest test-select->>-string
   (sql= (sql/select db [`(->> (cast "{\"a\":1, \"b\": 2}" :json) "b")])
         ["SELECT CAST(? AS json)->>?" "{\"a\":1, \"b\": 2}" "b"]))
+
+(deftest test-select-in-cast
+  (sql= (sql/select db [1]
+          (sql/where `(in 1 ((cast "1" :integer) (cast "2" :integer)))))
+        ["SELECT 1 WHERE 1 IN (CAST(? AS integer), CAST(? AS integer))" "1" "2"]))

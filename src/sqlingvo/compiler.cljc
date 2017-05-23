@@ -207,14 +207,19 @@
 
 (defmethod compile-fn :in [db node]
   (let [[_ member expr] (:children node)]
-    (concat-sql (compile-expr db member) " IN "
-                (cond
-                  (= (:op expr) :list)
-                  (if (empty? (:children expr))
-                    "(NULL)" (compile-list db expr))
-                  (= (:op expr) :values)
-                  (concat-sql "(" (compile-expr db expr) ")")
-                  :else (compile-expr db expr)))))
+    (concat-sql
+     (compile-expr db member) " IN "
+     (cond
+       (or (= (:op expr) :list)
+           (= (:op expr) :expr-list))
+       (if (empty? (:children expr))
+         "(NULL)" (compile-list db expr))
+
+       (= (:op expr) :values)
+       (concat-sql "(" (compile-expr db expr) ")")
+
+       :else
+       (compile-expr db expr)))))
 
 (defmethod compile-fn :exists [db node]
   (let [[_ & args] (:children node)]
