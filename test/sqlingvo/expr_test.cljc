@@ -34,6 +34,7 @@
     {:op :column
      :children [:name]
      :name :id
+     :ns "continent"
      :form :continent/id
      :val :continent/id}
 
@@ -61,6 +62,7 @@
     {:op :table
      :children [:name]
      :name :continents
+     :ns "sqlingvo"
      :form :sqlingvo/continents
      :val :sqlingvo/continents}
 
@@ -259,18 +261,21 @@
      :name :continents
      :op :table
      :val "continents"}
+
     :continents
     {:children [:name]
      :form :continents
      :name :continents
      :op :table
      :val :continents}
+
     '(generate_series 0 10)
     {:op :list
      :children
      [(expr/parse-expr 'generate_series)
       (expr/parse-expr 0)
       (expr/parse-expr 10)]}
+
     (as :countries :c)
     {:op :alias
      :children [:expr :name]
