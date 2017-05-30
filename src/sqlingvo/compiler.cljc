@@ -3,6 +3,7 @@
   (:refer-clojure :exclude [replace])
   (:require [#?(:clj clojure.core :cljs cljs.core) :as core]
             [clojure.string :refer [blank? join replace upper-case]]
+            [sqlingvo.expr :as expr]
             [sqlingvo.util :as util :refer [sql-quote sql-quote-fn]]))
 
 (defmulti compile-sql
@@ -773,7 +774,8 @@
 (defn compile-stmt
   "Compile `stmt` into a clojure.java.jdbc compatible prepared
   statement vector."
-  [{:keys [db] :as stmt}]
-  (let [placeholder ((or (:sql-placeholder db) util/sql-placeholder-constant))
+  [stmt]
+  (let [{:keys [db] :as ast} (expr/ast stmt)
+        placeholder ((or (:sql-placeholder db) util/sql-placeholder-constant))
         db (assoc db :sql-next-placeholder placeholder)]
-    (vec (compile-sql db stmt))))
+    (vec (compile-sql db ast))))
