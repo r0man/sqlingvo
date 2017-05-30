@@ -411,7 +411,9 @@
 (defn limit
   "Add a LIMIT clause to an SQL statement."
   [expr]
-  (when expr (util/assoc-op :limit :expr (expr/parse-expr expr))))
+  (if expr
+    (util/assoc-op :limit :expr (expr/parse-expr expr))
+    (util/dissoc-op :limit)))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
@@ -450,7 +452,9 @@
 (defn offset
   "Add a OFFSET clause to an SQL statement."
   [expr]
-  (util/assoc-op :offset :expr (expr/parse-expr expr)))
+  (if expr
+    (util/assoc-op :offset :expr (expr/parse-expr expr))
+    (util/dissoc-op :offset)))
 
 (defn order-by
   "Add a ORDER BY clause to an SQL statement."

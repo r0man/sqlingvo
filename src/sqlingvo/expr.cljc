@@ -32,7 +32,7 @@
   #?(:clj clojure.lang.IDeref :cljs cljs.core/IDeref)
   (#?(:clj deref :cljs -deref) [stmt]
     (let [ast (second (f nil))]
-      ((:eval-fn (:db ast)) ast)))
+      ((:eval-fn (:db ast)) stmt)))
   #?(:clj clojure.lang.IFn :cljs cljs.core/IFn)
   (#?(:clj invoke :cljs -invoke) [this n]
     (f n)))

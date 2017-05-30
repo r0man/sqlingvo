@@ -215,6 +215,14 @@
           (sql/limit nil))
         ["SELECT * FROM \"continents\""]))
 
+(deftest test-select-limit-nil-compose
+  (sql= (sql/compose
+         (sql/select db [:*]
+           (sql/from :continents)
+           (sql/limit 10))
+         (sql/limit nil))
+        ["SELECT * FROM \"continents\""]))
+
 (deftest test-select-offset
   (sql= (sql/select db [:*]
           (sql/from :continents)
@@ -242,6 +250,14 @@
           (sql/limit 10)
           (sql/offset 20))
         ["SELECT * FROM \"continents\" LIMIT 10 OFFSET 20"]))
+
+(deftest test-select-offset-nil-compose
+  (sql= (sql/compose
+         (sql/select db [:*]
+           (sql/from :continents)
+           (sql/offset 10))
+         (sql/offset nil))
+        ["SELECT * FROM \"continents\""]))
 
 (deftest test-select-column-max
   (sql= (sql/select db ['(max :created-at)]
