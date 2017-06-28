@@ -67,7 +67,9 @@
   (compile-inline db node))
 
 (defmethod compile-const :string [db node]
-  [(str (placeholder db)) (:val node)])
+  (if (:inline? node)
+    [(str "'" (:val node) "'")]
+    [(str (placeholder db)) (:val node)]))
 
 (defmethod compile-const :symbol [db node]
   (compile-inline db node))
