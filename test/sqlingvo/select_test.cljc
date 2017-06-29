@@ -996,3 +996,7 @@
   (sql= (sql/select db [1]
           (sql/where `(in 1 ((cast "1" :integer) (cast "2" :integer)))))
         ["SELECT 1 WHERE 1 IN (CAST(? AS integer), CAST(? AS integer))" "1" "2"]))
+
+(deftest test-inline-str
+  (sql= (sql/select db [`(to_tsvector ~(sql/inline-str "english") "fat cats ate fat rats")])
+        ["SELECT to_tsvector('english', ?)" "fat cats ate fat rats"]))

@@ -114,6 +114,19 @@
    :exprs (expr/parse-exprs exprs)
    :on (expr/parse-exprs on)))
 
+(defn inline-str
+  "Compile `s` as an inline string, instead of a prepared statement
+  parameter.
+
+  WARNING: You have to make sure the string `s` is safe against SQL
+  injection attacks yourself."
+  [s]
+  {:form s
+   :inline? true
+   :op :constant
+   :type :string
+   :val s})
+
 (defn delimiter
   "Add a DELIMITER clause to an SQL statement."
   [delimiter]
