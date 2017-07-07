@@ -437,6 +437,13 @@
      (concat-sql "ON (" (compile-sql-join db ", " on) ") "))
    (compile-sql-join db ", " exprs)))
 
+(defmethod compile-sql :direction [db node]
+  (concat-sql
+   (compile-sql db (:expr node))
+   (case (:direction node)
+     :asc " ASC"
+     :desc " DESC")))
+
 (defmethod compile-sql :drop-table [db {:keys [cascade if-exists restrict tables]}]
   (join-sql " " ["DROP TABLE"
                  (compile-sql db if-exists)

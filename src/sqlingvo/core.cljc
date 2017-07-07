@@ -41,7 +41,10 @@
 
 (defn asc
   "Parse `expr` and return an ORDER BY expr using ascending order."
-  [expr] (assoc (expr/parse-expr expr) :direction :asc))
+  [expr]
+  {:op :direction
+   :direction :asc
+   :expr (expr/parse-expr expr)})
 
 (defn cascade
   "Add a CASCADE clause to an SQL statement."
@@ -103,7 +106,9 @@
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
   [expr]
-  (assoc (expr/parse-expr expr) :direction :desc))
+  {:op :direction
+   :direction :desc
+   :expr (expr/parse-expr expr)})
 
 (defn distinct
   "Parse `exprs` and return a DISTINCT clause."
