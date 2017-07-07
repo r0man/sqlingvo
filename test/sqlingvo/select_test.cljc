@@ -352,6 +352,12 @@
           (sql/order-by nil))
         ["SELECT * FROM \"continents\""]))
 
+(deftest test-select-order-by-index-direction
+  (sql= (sql/select db [:id :created-at]
+          (sql/from :continents)
+          (sql/order-by (sql/desc 2)))
+        ["SELECT \"id\", \"created-at\" FROM \"continents\" ORDER BY 2 DESC"]))
+
 (deftest test-select-1-where-1-is-1
   (sql= (sql/select db [1]
           (sql/where '(= 1 1)))
