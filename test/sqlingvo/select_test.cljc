@@ -1006,3 +1006,7 @@
 (deftest test-inline-str
   (sql= (sql/select db [`(to_tsvector ~(sql/inline-str "english") "fat cats ate fat rats")])
         ["SELECT to_tsvector('english', ?)" "fat cats ate fat rats"]))
+
+(deftest test-cast-array
+  (sql= (sql/select db ['(cast [] [:uuid])])
+        ["SELECT CAST(ARRAY[] AS uuid[])"]))

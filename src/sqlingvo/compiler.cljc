@@ -194,7 +194,13 @@
 (defmethod compile-fn :cast [db node]
   (let [[_ & [expr type]] (:children node)]
     (concat-sql "CAST(" (compile-expr db expr) " AS "
-                (util/sql-type-name (:name type)) ")")))
+                (case (:op type)
+                  :array
+                  (concat-sql
+                   (util/sql-type-name
+                    (-> type :children first :name)) "[]")
+                  :column
+                  (util/sql-type-name (:name type))) ")")))
 
 (defmethod compile-fn :count [db node]
   (let [[name & args] (:children node)]
