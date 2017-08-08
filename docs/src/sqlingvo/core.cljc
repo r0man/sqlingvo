@@ -37,14 +37,11 @@
    :children [:expr :name]
    :columns (mapv expr/parse-column columns)
    :expr (expr/parse-expr expr)
-   :name alias})
+   :name (util/keyword-str alias)})
 
 (defn asc
   "Parse `expr` and return an ORDER BY expr using ascending order."
-  [expr]
-  {:op :direction
-   :direction :asc
-   :expr (expr/parse-expr expr)})
+  [expr] (assoc (expr/parse-expr expr) :direction :asc))
 
 (defn cascade
   "Add a CASCADE clause to an SQL statement."
@@ -63,7 +60,7 @@
 (defn column
   "Add a column to `stmt`."
   [name type & {:as options}]
-  (let [column (merge options (expr/parse-column name) {:type type})
+  (let [column (assoc options :op :column :name name :type type)
         column (update-in column [:default] #(if %1 (expr/parse-expr %1)))]
     (fn [stmt]
       (let [column (-> (update-in stmt [:columns] #(vec (concat %1 [(:name column)])))
@@ -106,9 +103,7 @@
 (defn desc
   "Parse `expr` and return an ORDER BY expr using descending order."
   [expr]
-  {:op :direction
-   :direction :desc
-   :expr (expr/parse-expr expr)})
+  (assoc (expr/parse-expr expr) :direction :desc))
 
 (defn distinct
   "Parse `exprs` and return a DISTINCT clause."
@@ -118,19 +113,6 @@
    :children [:exprs :on]
    :exprs (expr/parse-exprs exprs)
    :on (expr/parse-exprs on)))
-
-(defn inline-str
-  "Compile `s` as an inline string, instead of a prepared statement
-  parameter.
-
-  WARNING: You have to make sure the string `s` is safe against SQL
-  injection attacks yourself."
-  [s]
-  {:form s
-   :inline? true
-   :op :constant
-   :type :string
-   :val s})
 
 (defn delimiter
   "Add a DELIMITER clause to an SQL statement."
@@ -167,11 +149,12 @@ With `analyze`:
       {:analyze true})"
   {:style/indent 1}
   [db stmt & [opts]]
+  {:pre [(db? db)]}
   (expr/stmt
    (fn [_]
      [_ (expr/make-node
          :op :explain
-         :db (db/db db)
+         :db db
          :children [:stmt]
          :stmt (ast stmt)
          :opts opts)])))
@@ -190,6 +173,7 @@ Another example:
       (from \"/usr1/proj/bray/sql/country_data\"))"
   {:style/indent 3}
   [db table columns & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         columns (map expr/parse-column columns)]
     (expr/stmt
@@ -197,7 +181,7 @@ Another example:
        ((chain-state body)
         (expr/make-node
          :op :copy
-         :db (db/db db)
+         :db db
          :children [:table :columns]
          :table table
          :columns columns))))))
@@ -206,13 +190,14 @@ Another example:
   "Build a CREATE TABLE statement."
   {:style/indent 2}
   [db table & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)]
     (expr/stmt
      (fn [_]
        ((chain-state body)
         (expr/make-node
          :op :create-table
-         :db (db/db db)
+         :db db
          :children [:table]
          :table table))))))
 
@@ -229,13 +214,14 @@ Another example:
       (where '(= :id 1)))"
   {:style/indent 2}
   [db table & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)]
     (expr/stmt
      (fn [_]
        ((chain-state body)
         (expr/make-node
          :op :delete
-         :db (db/db db)
+         :db db
          :children [:table]
          :table table))))))
 
@@ -251,13 +237,14 @@ Another example:
     (drop-table db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
+  {:pre [(db? db)]}
   (let [tables (map expr/parse-table tables)]
     (expr/stmt
      (fn [stmt]
        ((chain-state body)
         (expr/make-node
          :op :drop-table
-         :db (db/db db)
+         :db db
          :children [:tables]
          :tables tables))))))
 
@@ -370,6 +357,7 @@ Using `copy`:
   "Build a INSERT statement."
   {:style/indent 3}
   [db table columns & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         columns (map expr/parse-column columns)]
     (expr/stmt
@@ -377,7 +365,7 @@ Using `copy`:
        ((chain-state body)
         (expr/make-node
          :op :insert
-         :db (db/db db)
+         :db db
          :children [:table :columns]
          :table table
          :columns
@@ -459,9 +447,7 @@ Third:
 (defn limit
   "Add a LIMIT clause to an SQL statement."
   [expr]
-  (if expr
-    (util/assoc-op :limit :expr (expr/parse-expr expr))
-    (util/dissoc-op :limit)))
+  (when expr (util/assoc-op :limit :expr (expr/parse-expr expr))))
 
 (defn nulls
   "Parse `expr` and return an NULLS FIRST/LAST expr."
@@ -500,9 +486,7 @@ Third:
 (defn offset
   "Add a OFFSET clause to an SQL statement."
   [expr]
-  (if expr
-    (util/assoc-op :offset :expr (expr/parse-expr expr))
-    (util/dissoc-op :offset)))
+  (util/assoc-op :offset :expr (expr/parse-expr expr)))
 
 (defn order-by
   "Add a ORDER BY clause to an SQL statement."
@@ -528,13 +512,14 @@ Third:
     (drop-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
+  {:pre [(db? db)]}
   (let [view (expr/parse-table view)]
     (expr/stmt
      (fn [_]
        ((chain-state body)
         (expr/make-node
          :op :drop-materialized-view
-         :db (db/db db)
+         :db db
          :children [:view]
          :view view))))))
 
@@ -546,13 +531,14 @@ Third:
     (refresh-materialized-view db :order-summary)"
   {:style/indent 2}
   [db view & body]
+  {:pre [(db? db)]}
   (let [view (expr/parse-table view)]
     (expr/stmt
      (fn [_]
        ((chain-state body)
         (expr/make-node
          :op :refresh-materialized-view
-         :db (db/db db)
+         :db db
          :children [:view]
          :view view))))))
 
@@ -603,11 +589,12 @@ Only `id` and `name`:
       (from :continents))"
   {:style/indent 2}
   [db exprs & body]
+  {:pre [(db? db)]}
   (let [[_ select]
         ((chain-state body)
          (expr/make-node
           :op :select
-          :db (db/db db)
+          :db db
           :children [:distinct :exprs]
           :distinct (if (= :distinct (:op exprs))
                       exprs)
@@ -638,13 +625,14 @@ Another example:
     (truncate db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
+  {:pre [(db? db)]}
   (let [tables (map expr/parse-table tables)]
     (expr/stmt
      (fn [_]
        ((chain-state body)
         (expr/make-node
          :op :truncate
-         :db (db/db db)
+         :db db
          :children [:tables]
          :tables tables))))))
 
@@ -675,6 +663,7 @@ Another example:
       (where '(= :kind \"Drama\")))"
   {:style/indent 2}
   [db table row & body]
+  {:pre [(db? db)]}
   (let [table (expr/parse-table table)
         exprs (if (sequential? row) (expr/parse-exprs row))
         row (if (map? row) (expr/parse-map-expr row))]
@@ -683,7 +672,7 @@ Another example:
        ((chain-state body)
         (expr/make-node
          :op :update
-         :db (db/db db)
+         :db db
          :children [:table :exprs :row]
          :table table
          :exprs exprs
@@ -709,11 +698,11 @@ With insert:
       (let [node (cond
                    (= vals :default)
                    {:op :values
-                    :db (some-> db db/db)
+                    :db db
                     :type :default}
                    (every? map? vals)
                    {:op :values
-                    :db (some-> db db/db)
+                    :db db
                     :columns (if (not-empty (:columns stmt))
                                (:columns stmt)
                                (->> (mapcat keys vals)
@@ -723,7 +712,7 @@ With insert:
                     :values (mapv expr/parse-map-expr vals)}
                    :else
                    {:op :values
-                    :db (some-> db db/db)
+                    :db db
                     :columns (:columns stmt)
                     :type :exprs
                     :values (mapv expr/parse-exprs vals)})]
@@ -757,6 +746,7 @@ Another example:
   "Build a WITH (common table expressions) query."
   {:style/indent 2}
   [db bindings query]
+  {:pre [(db? db)]}
   (assert (even? (count bindings)) "The WITH bindings must be even.")
   (let [bindings (map (fn [[name stmt]]
                         (vector (keyword name)
@@ -765,7 +755,7 @@ Another example:
         query (ast query)
         node (expr/make-node
               :op :with
-              :db (db/db db)
+              :db db
               :children [:bindings]
               :bindings bindings
               :query query)]

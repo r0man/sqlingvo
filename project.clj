@@ -10,10 +10,12 @@
   :plugins [[jonase/eastwood "0.2.3"]
             [lein-cljsbuild "1.1.6"]
             [lein-difftest "2.0.0"]
+            [lein-codox "0.10.2"]
             [lein-doo "0.1.7"]]
   :profiles
   {:dev
-   {:dependencies [[org.clojure/test.check "0.9.0"]]}
+   {:dependencies [[viebel/codox-klipse-theme "0.0.4"]
+                   [org.clojure/test.check "0.9.0"]]}
    :provided
    {:dependencies [[org.clojure/clojurescript "1.9.542"]]}
    :repl
@@ -31,6 +33,22 @@
          ["doo" "phantom" "advanced" "once"]
          ["lint"]]
    "lint" ["do"  ["eastwood"]]}
+:codox {
+          :metadata {:doc/format :markdown}
+          :source-paths ["src"]
+          :output-path "docs"
+        :themes [:default [:klipse {:klipse/selector ".clojure"
+                                    :klipse/cached-macro-ns-regexp #"/sqlingvo\..*/"
+                                    :klipse/cached-ns-regexp #"/sqlingvo\..*|no\.en\..*/"
+                                    :klipse/cached-ns-root "./cache-cljs"
+                                    :klipse/require-statement "(refer-clojure :exclude '[distinct group-by update])
+                                                                (require '[clojure.string :as s]
+                                                                         '[sqlingvo.core :as c :refer [db sql select from where copy as group-by having insert intersect join refresh-materialized-view update returning truncate union values drop-table except ast delete explain drop-materialized-view]]
+                                                                         '[sqlingvo.util :as util])
+                                  
+                                                                (def db (db :mysql))
+
+"}]]}
   :cljsbuild
   {:builds
    [{:id "none"
