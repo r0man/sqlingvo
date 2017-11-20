@@ -1,5 +1,6 @@
 (ns sqlingvo.expr
-  (:require [clojure.string :as str]))
+  (:require [clojure.spec.alpha :as s]
+            [clojure.string :as str]))
 
 (def ^:dynamic *column-regex*
   "The regular expression used to parse a column identifier."
@@ -146,6 +147,17 @@
     (parse-expr forms)
     :else (throw (ex-info "Can't parse FROM form." {:forms forms}))))
 
+(defn- parse-constant
+  "Parse the `constant` of `type`."
+  [type constant]
+  {:form constant
+   :op :constant
+   :type type
+   :val constant})
+
+(s/fdef parse-constant
+  :args (s/cat :type keyword? :constant any?)
+  :ret map?)
 
 #?(:clj
    (extend-protocol IExpr
@@ -156,37 +168,25 @@
 
      java.lang.Double
      (-parse-expr [x]
-       {:form x
-        :op :constant
-        :type :number
-        :val x})
+       (parse-constant :number x))
+
      java.lang.Integer
      (-parse-expr [x]
-       {:form x
-        :op :constant
-        :type :number
-        :val x})
+       (parse-constant :number x))
+
      java.lang.Long
      (-parse-expr [x]
-       {:form x
-        :op :constant
-        :type :number
-        :val x})
+       (parse-constant :number x))
+
      java.util.Date
      (-parse-expr [x]
-       {:form x
-        :op :constant
-        :type :date
-        :val x})))
+       (parse-constant :date x))))
 
 #?(:cljs
    (extend-protocol IExpr
      number
      (-parse-expr [x]
-       {:form x
-        :op :constant
-        :type :number
-        :val x})
+       (parse-constant :number x))
 
      cljs.core/PersistentArrayMap
      (-parse-expr [x]
@@ -202,10 +202,7 @@
 
      js/Date
      (-parse-expr [x]
-       {:form x
-        :op :constant
-        :type :date
-        :val x})))
+       (parse-constant :date x))))
 
 (extend-protocol IExpr
 
@@ -222,10 +219,7 @@
 
   #?(:clj Boolean :cljs boolean)
   (-parse-expr [x]
-    {:form x
-     :op :constant
-     :type :boolean
-     :val x})
+    (parse-constant :boolean x))
 
   #?(:clj clojure.lang.Cons :cljs cljs.core/Cons)
   (-parse-expr [x]
@@ -267,14 +261,8 @@
 
   #?(:clj String :cljs string)
   (-parse-expr [x]
-    {:form x
-     :op :constant
-     :type :string
-     :val x})
+    (parse-constant :string x))
 
   #?(:clj Object :cljs object)
   (-parse-expr [x]
-    {:form x
-     :op :constant
-     :type :object
-     :val x}))
+    (parse-constant :object x)))
