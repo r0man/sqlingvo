@@ -18,7 +18,7 @@
   IDatabase
   (-db [db] db))
 
-(defmulti ^:private vendor
+(defmulti vendor
   "Returns a map of `vendor` specific database options."
   (fn [vendor] (keyword vendor)))
 
