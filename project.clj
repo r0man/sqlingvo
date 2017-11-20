@@ -6,20 +6,21 @@
   :min-lein-version "2.5.2"
   :deploy-repositories [["releases" :clojars]]
   :dependencies [[noencore "0.3.3"]
-                 [org.clojure/clojure "1.9.0-alpha16"]]
-  :plugins [[jonase/eastwood "0.2.3"]
-            [lein-cljsbuild "1.1.6"]
+                 [org.clojure/clojure "1.9.0-RC1"]]
+  :plugins [[jonase/eastwood "0.2.5"]
+            [lein-cljsbuild "1.1.7"]
             [lein-difftest "2.0.0"]
-            [lein-doo "0.1.7"]]
+            [lein-doo "0.1.8"]]
+  :eastwood {:exclude-linters [:local-shadows-var]}
   :profiles
   {:dev
    {:dependencies [[org.clojure/test.check "0.9.0"]]}
    :provided
-   {:dependencies [[org.clojure/clojurescript "1.9.542"]]}
+   {:dependencies [[org.clojure/clojurescript "1.9.946"]]}
    :repl
-   {:dependencies [[com.cemerick/piggieback "0.2.1"]
-                   [reloaded.repl "0.2.3"]]
-    :plugins [[figwheel-sidecar "0.5.10"]]
+   {:dependencies [[com.cemerick/piggieback "0.2.2"]
+                   [reloaded.repl "0.2.4"]]
+    :plugins [[figwheel-sidecar "0.5.14"]]
     :init-ns user
     :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
   :aliases
