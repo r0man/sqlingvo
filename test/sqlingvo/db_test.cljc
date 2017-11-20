@@ -1,5 +1,6 @@
 (ns sqlingvo.db-test
-  (:require [clojure.test :refer [are deftest is]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.test :refer [are deftest is]]
             [sqlingvo.compiler :as compiler]
             [sqlingvo.db :as db]
             [sqlingvo.util :as util]))
@@ -8,8 +9,9 @@
   (are [spec] (thrown? #?(:clj Exception :cljs js/Error) (db/db spec))
     nil "" "invalid" 1))
 
-(deftest test-db-with-keyword
+(deftest test-db-keyword
   (let [db (db/db :postgresql)]
+    (is (s/valid? ::db/db db))
     (is (instance? sqlingvo.db.Database db))
     (is (= (:classname db) "org.postgresql.Driver"))
     (is (= (:eval-fn db) compiler/compile-stmt))
@@ -17,16 +19,12 @@
     (is (= (:sql-name db) nil))
     (is (= (:sql-quote db) util/sql-quote-double-quote))))
 
-(deftest test-db-with-scheme
-  (let [db (db/db {:scheme :postgresql})]
-    (is (instance? sqlingvo.db.Database db))
-    (is (= (:classname db) "org.postgresql.Driver"))
-    (is (= (:eval-fn db) compiler/compile-stmt))
-    (is (= (:scheme db) :postgresql))
-    (is (= (:sql-name db) nil))
-    (is (= (:sql-quote db) util/sql-quote-double-quote))))
+(deftest test-db-map-scheme
+  (is (= (db/db {:scheme :postgresql})
+         (db/db {:scheme "postgresql"})
+         (db/db :postgresql))))
 
-(deftest test-db-with-url
+(deftest test-db-url
   (let [db (db/db "postgresql://tiger:scotch@localhost/sqlingvo?a=1&b=2")]
     (is (instance? sqlingvo.db.Database db))
     (is (= (:classname db) "org.postgresql.Driver"))
