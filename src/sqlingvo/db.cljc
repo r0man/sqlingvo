@@ -1,56 +1,79 @@
 (ns sqlingvo.db
-  (:require [sqlingvo.compiler :as compiler]
+  (:require [clojure.spec.alpha :as s]
+            [sqlingvo.compiler :as compiler]
             [sqlingvo.url :as url]
             [sqlingvo.util :as util]))
 
-(defrecord Database [scheme])
+(s/def ::classname string?)
+(s/def ::eval-fn ifn?)
+(s/def ::sql-quote ifn?)
 
-(defn scheme
-  "Return the database adapter as a keyword."
-  [db]
-  (or (:scheme db) (:subprotocol db)))
+(s/def ::db
+  (s/keys :req-un [::classname ::eval-fn ::sql-quote]))
 
-(defmulti db-spec
-  "Return the `Database` record for :adapter or :subprotocol in
+(defprotocol IDatabase
+  (-db [db] "Convert `db` to a database."))
+
+(defrecord Database [scheme]
+  IDatabase
+  (-db [db] db))
+
+(defmulti ^:private vendor
+  "Returns a map of `vendor` specific database options.
   `db-spec`."
-  #(some-> %1 scheme keyword))
+  (fn [vendor] (keyword vendor)))
 
-(defmethod db-spec :mysql [db]
+(defmethod vendor :mysql [_]
   {:classname "com.mysql.cj.jdbc.Driver"
    :sql-quote util/sql-quote-backtick})
 
-(defmethod db-spec :postgresql [db]
+(defmethod vendor :postgresql [_]
   {:classname "org.postgresql.Driver"
    :sql-quote util/sql-quote-double-quote})
 
-(defmethod db-spec :oracle [db]
+(defmethod vendor :oracle [_]
   {:classname "oracle.jdbc.driver.OracleDriver"
    :sql-quote util/sql-quote-double-quote})
 
-(defmethod db-spec :sqlite [db]
+(defmethod vendor :sqlite [_]
   {:classname "org.sqlite.JDBC"
    :sql-quote util/sql-quote-double-quote})
 
-(defmethod db-spec :sqlserver [db]
+(defmethod vendor :sqlserver [_]
   {:classname "com.microsoft.sqlserver.jdbc.SQLServerDriver"
    :sql-quote util/sql-quote-double-quote})
 
-(defmethod db-spec :vertica [db]
+(defmethod vendor :vertica [_]
   {:classname "com.vertica.jdbc.Driver"
    :sql-quote util/sql-quote-double-quote})
 
-(defmethod db-spec :default [db]
-  (throw (ex-info "Unknown database :scheme or :subprotocol." (or db {}))))
+(defmethod vendor :default [vendor]
+  (throw (ex-info (str "Unsupported database vendor: " (name vendor))
+                  {:vendor vendor})))
 
 (defn db
   "Return a database for `spec`."
   [spec & [opts]]
-  (as-> (cond
-          (keyword? spec)
-          {:scheme spec}
-          (string? spec)
-          (url/parse spec)
-          (and (map? spec) (scheme spec))
-          spec) db
-    (merge {:eval-fn compiler/compile-stmt} db (db-spec db) opts)
-    (map->Database db)))
+  (merge (-db spec) opts))
+
+(s/fdef db
+  :args (s/cat :spec any? :opts (s/? map?))
+  :ret ::db)
+
+(extend-protocol IDatabase
+
+  #?(:clj clojure.lang.Keyword :cljs cljs.core/Keyword)
+  (-db [k]
+    (->> {:eval-fn compiler/compile-stmt :scheme k}
+         (merge (vendor k))
+         (map->Database)))
+
+  #?(:clj clojure.lang.IPersistentMap :cljs cljs.core/PersistentArrayMap)
+  (-db [{:keys [scheme] :as spec}]
+    (or (some->> scheme keyword -db (merge spec) map->Database)
+        (throw (ex-info (str "Unsupported database spec." (pr-str spec))
+                        {:spec spec}))))
+
+  #?(:clj String :cljs string)
+  (-db [url]
+    (-db (url/parse! url))))
