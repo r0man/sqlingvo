@@ -19,8 +19,7 @@
   (-db [db] db))
 
 (defmulti ^:private vendor
-  "Returns a map of `vendor` specific database options.
-  `db-spec`."
+  "Returns a map of `vendor` specific database options."
   (fn [vendor] (keyword vendor)))
 
 (defmethod vendor :mysql [_]
