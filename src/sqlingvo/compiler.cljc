@@ -2,7 +2,8 @@
   #?(:cljs (:require-macros [sqlingvo.compiler :refer [defarity]]))
   (:refer-clojure :exclude [replace])
   (:require [#?(:clj clojure.core :cljs cljs.core) :as core]
-            [clojure.string :refer [blank? join replace upper-case]]
+            [clojure.set :as set]
+            [clojure.string :as str :refer [blank? join replace upper-case]]
             [sqlingvo.expr :as expr]
             [sqlingvo.util :as util :refer [sql-quote sql-quote-fn]]))
 
@@ -316,22 +317,35 @@
 (defmethod compile-from :alias [db node]
   (compile-sql db node))
 
+(defn- compile-reference [db reference]
+  (let [table (expr/parse-column reference)
+        column (expr/parse-column reference)]
+    (concat-sql
+     (->> {:op :table
+           :schema (or (:schema column) (:schema table))
+           :name (or (:table column) (:name table))}
+          (compile-sql db))
+     (when (:table column)
+       (concat-sql " (" (sql-quote db (:name column)) ")")))))
+
 (defn compile-column [db column]
   (when (:length column)
     (println "Column :length is deprecated, use :size instead!"))
   (concat-sql
    (sql-quote db (:name column))
    " " (replace (upper-case (name (:type column))) "-" " ")
-   (if (:array? column) "[]")
-   (if-let [size (or (:size column) (:size column))]
+   (when (:array? column) "[]")
+   (when-let [size (or (:size column) (:size column))]
      (str "(" size ")"))
-   (if (:not-null? column)
+   (when (:not-null? column)
      " NOT NULL")
-   (if (:unique? column)
+   (when (:unique? column)
      " UNIQUE")
-   (if (:primary-key? column)
+   (when (:primary-key? column)
      " PRIMARY KEY")
-   (if-let [default (:default column)]
+   (when-let [references (:references column)]
+     (concat-sql " REFERENCES " (compile-reference db references)))
+   (when-let [default (:default column)]
      (concat-sql " DEFAULT " (compile-sql db default)))))
 
 ;; COMPILE SQL
