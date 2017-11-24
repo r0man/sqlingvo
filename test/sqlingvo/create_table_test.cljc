@@ -84,8 +84,8 @@
 (deftest test-create-table-compound-primary-key
   (sql= (sql/create-table db :ratings
           (sql/column :id :serial)
-          (sql/column :user-id :integer :not-null? true :references :users/id)
-          (sql/column :spot-id :integer :not-null? true :references :spots/id)
+          (sql/column :user-id :integer :not-null? true)
+          (sql/column :spot-id :integer :not-null? true)
           (sql/column :rating :integer :not-null? true)
           (sql/column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
           (sql/column :updated-at :timestamp-with-time-zone :not-null? true :default '(now))
@@ -99,6 +99,27 @@
               "\"updated-at\" TIMESTAMP WITH "
               "TIME ZONE NOT NULL DEFAULT now(), "
               "PRIMARY KEY(\"user-id\", \"spot-id\", \"created-at\"))")]))
+
+(deftest test-create-table-references-schema-table-column
+  (sql= (sql/create-table db :countries
+          (sql/column :id :serial)
+          (sql/column :continent-id :integer :references :public.continents.id))
+        [(str "CREATE TABLE \"countries\" ("
+              "\"id\" SERIAL, \"continent-id\" INTEGER REFERENCES \"public\".\"continents\" (\"id\"))")]))
+
+(deftest test-create-table-references-table-column
+  (sql= (sql/create-table db :countries
+          (sql/column :id :serial)
+          (sql/column :continent-id :integer :references :continents.id))
+        [(str "CREATE TABLE \"countries\" ("
+              "\"id\" SERIAL, \"continent-id\" INTEGER REFERENCES \"continents\" (\"id\"))")]))
+
+(deftest test-create-table-references-table
+  (sql= (sql/create-table db :countries
+          (sql/column :id :serial)
+          (sql/column :continent-id :integer :references :continents))
+        [(str "CREATE TABLE \"countries\" ("
+              "\"id\" SERIAL, \"continent-id\" INTEGER REFERENCES \"continents\")")]))
 
 (deftest test-create-table-array-column
   (sql= (sql/create-table db :ratings
