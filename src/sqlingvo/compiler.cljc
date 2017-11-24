@@ -1,9 +1,8 @@
 (ns sqlingvo.compiler
   #?(:cljs (:require-macros [sqlingvo.compiler :refer [defarity]]))
-  (:refer-clojure :exclude [replace])
-  (:require [#?(:clj clojure.core :cljs cljs.core) :as core]
+  (:require [clojure.core :as core]
             [clojure.set :as set]
-            [clojure.string :as str :refer [blank? join replace upper-case]]
+            [clojure.string :as str]
             [sqlingvo.expr :as expr]
             [sqlingvo.util :as util :refer [sql-quote sql-quote-fn]]))
 
@@ -28,14 +27,14 @@
 
 (defn join-sql [separator args]
   (let [args (map to-sql args)]
-    (cons (join separator (remove blank? (map first args)))
+    (cons (str/join separator (remove str/blank? (map first args)))
           (apply concat (map rest args)))))
 
 (defn compile-sql-join [db separator args]
   (join-sql separator (map #(compile-sql db %) args)))
 
 (defn keyword-sql [k]
-  (replace (upper-case (name k)) #"-" " "))
+  (str/replace (str/upper-case (name k)) #"-" " "))
 
 (defn wrap-stmt [stmt]
   (let [[sql & args] stmt]
@@ -43,10 +42,10 @@
 
 (defn unwrap-stmt [stmt]
   (let [[sql & args] stmt]
-    (cons (replace sql #"^\(|\)$" "") args)))
+    (cons (str/replace sql #"^\(|\)$" "") args)))
 
 (defn- compile-set-op [db op {:keys [stmts all] :as node}]
-  (let [separater (str " " (upper-case (name op)) " " (if all "ALL "))]
+  (let [separater (str " " (str/upper-case (name op)) " " (if all "ALL "))]
     (compile-sql-join db separater (:stmts node))))
 
 (defn- placeholder
@@ -104,13 +103,13 @@
 (defn- aggregate-modifier?
   "Returns true if `node` is a modifier of an aggregate expression, otherwise false."
   [node]
-  (#{"ALL" "DISTINCT"} (some-> node :val name upper-case)))
+  (#{"ALL" "DISTINCT"} (some-> node :val name str/upper-case)))
 
 (defn- order-by?
   "Returns true if `node` is an ORDER BY expression, otherwise false."
   [node]
   (and (= (:op node) :list)
-       (= (some-> node :children first :val name upper-case) "ORDER-BY")))
+       (= (some-> node :children first :val name str/upper-case) "ORDER-BY")))
 
 (defn- parse-aggregate-expression
   "Parse an aggregate expression."
@@ -125,7 +124,7 @@
   (let [[f modifier args remaining] (parse-aggregate-expression node)]
     (concat-sql
      (sql-quote-fn db (:val f)) "("
-     (when modifier (concat-sql (some-> modifier :val name upper-case) " "))
+     (when modifier (concat-sql (some-> modifier :val name str/upper-case) " "))
      (join-sql ", " (compile-exprs db args))
      (when (not-empty remaining)
        (concat-sql " " (join-sql " " (compile-exprs db remaining))))
@@ -152,7 +151,7 @@
       (compile-expr db (first args))
       :else
       (let [args (compile-exprs db args)]
-        (cons (str "(" (join (str " " (core/name (:val name)) " ") (map first args)) ")")
+        (cons (str "(" (str/join (str " " (core/name (:val name)) " ") (map first args)) ")")
               (apply concat (map rest args)))))))
 
 (defn compile-complex-args [db node]
@@ -287,7 +286,7 @@
 (defn- compile-direction [db node]
   (let [[name & args] (:children node)]
     (concat-sql (compile-sql db (first args)) " "
-                (upper-case (-> name :val core/name)))))
+                (str/upper-case (-> name :val core/name)))))
 
 (defmethod compile-fn :asc [db node]
   (compile-direction db node))
@@ -333,7 +332,7 @@
     (println "Column :length is deprecated, use :size instead!"))
   (concat-sql
    (sql-quote db (:name column))
-   " " (replace (upper-case (name (:type column))) "-" " ")
+   " " (str/replace (str/upper-case (name (:type column))) "-" " ")
    (when (:array? column) "[]")
    (when-let [size (or (:size column) (:size column))]
      (str "(" size ")"))
@@ -386,8 +385,8 @@
            (if table (sql-quote db table))
            (if name (if (= :* name) "*" (sql-quote db name)))]
           (remove nil?)
-          (join ".")))
-   (if direction (str " " (upper-case (core/name direction))))
+          (str/join ".")))
+   (if direction (str " " (str/upper-case (core/name direction))))
    (if nulls (str " NULLS " (keyword-sql nulls)))))
 
 (defmethod compile-sql :constant [db node]
@@ -436,7 +435,7 @@
      (when (not-empty checks)
        (compile-sql-join db ", " checks))
      (when (not-empty primary-key)
-       (concat-sql ", PRIMARY KEY(" (join ", " (map #(sql-quote db %1) primary-key)) ")"))
+       (concat-sql ", PRIMARY KEY(" (str/join ", " (map #(sql-quote db %1) primary-key)) ")"))
      ")"
      (if inherits
        (concat-sql " INHERITS (" (compile-sql-join db ", " inherits) ")")))))
@@ -485,13 +484,13 @@
   [db [option value]]
   (assert (contains? #{:text :xml :json :yaml} value)
           (str "Invalid EXPLAIN format: " (name value)))
-  (concat-sql "FORMAT " (upper-case (name value))))
+  (concat-sql "FORMAT " (str/upper-case (name value))))
 
 (defmethod compile-explain-option :default
   [db [option value]]
   (assert (contains? #{:analyze :buffers :costs :timing :verbose} option)
           (str "Invalid EXPLAIN option: " (name option)))
-  (concat-sql (upper-case (name option)) " " (upper-case (str (true? value)))))
+  (concat-sql (str/upper-case (name option)) " " (str/upper-case (str (true? value)))))
 
 (defn compile-explain-options
   "Compile the EXPLAIN `options`."
@@ -632,15 +631,15 @@
    "LIKE "
    (compile-sql db table)
    (when (not-empty including)
-     (str " INCLUDING " (join " " (map keyword-sql including))))
+     (str " INCLUDING " (str/join " " (map keyword-sql including))))
    (when (not-empty excluding)
-     (str " EXCLUDING " (join " " (map keyword-sql excluding))))))
+     (str " EXCLUDING " (str/join " " (map keyword-sql excluding))))))
 
 (defmethod compile-sql :list [db node]
   (concat-sql
    (compile-fn db node)
    (when-let [direction (:direction node) ]
-     (str " " (upper-case (name direction))))))
+     (str " " (str/upper-case (name direction))))))
 
 (defmethod compile-sql :nil [db _] ["NULL"])
 
@@ -648,7 +647,7 @@
   (concat-sql "OFFSET " (compile-expr db expr)))
 
 (defmethod compile-sql :table [db {:keys [schema name]}]
-  [(str (join "." (map #(sql-quote db %1) (remove nil? [schema name]))))])
+  [(str (str/join "." (map #(sql-quote db %1) (remove nil? [schema name]))))])
 
 (defmethod compile-sql :drop-materialized-view [db node]
   (let [{:keys [cascade if-exists restrict view]} node]
