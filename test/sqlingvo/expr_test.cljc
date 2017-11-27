@@ -11,6 +11,8 @@
      :children [:name]
      :name :id
      :form :id
+     :sqlingvo/op :column
+     :sqlingvo.column/name "id"
      :val :id}
 
     :continents.id
@@ -18,6 +20,9 @@
      :children [:table :name]
      :table :continents
      :name :id
+     :sqlingvo/op :column
+     :sqlingvo.column/table "continents"
+     :sqlingvo.column/name "id"
      :form :continents.id
      :val :continents.id}
 
@@ -26,6 +31,10 @@
      :children [:schema :table :name]
      :schema :public
      :table :continents
+     :sqlingvo/op :column
+     :sqlingvo.column/schema "public"
+     :sqlingvo.column/table "continents"
+     :sqlingvo.column/name "id"
      :name :id
      :form :public.continents.id
      :val :public.continents.id}
@@ -36,6 +45,8 @@
      :name :id
      :ns "continent"
      :form :continent/id
+     :sqlingvo/op :column
+     :sqlingvo.column/name "id"
      :val :continent/id}
 
     (expr/parse-column :continents.id)
@@ -48,6 +59,8 @@
      :children [:name]
      :name :continents
      :form :continents
+     :sqlingvo/op :table
+     :sqlingvo.table/name "continents"
      :val :continents}
 
     :public.continents
@@ -56,6 +69,9 @@
      :schema :public
      :name :continents
      :form :public.continents
+     :sqlingvo/op :table
+     :sqlingvo.table/schema "public"
+     :sqlingvo.table/name "continents"
      :val :public.continents}
 
     :sqlingvo/continents
@@ -64,6 +80,8 @@
      :name :continents
      :ns "sqlingvo"
      :form :sqlingvo/continents
+     :sqlingvo/op :table
+     :sqlingvo.table/name "continents"
      :val :sqlingvo/continents}
 
     (expr/parse-table :public.continents)
@@ -75,6 +93,8 @@
     {:children [:name]
      :name :*
      :op :column
+     :sqlingvo/op :column
+     :sqlingvo.column/name "*"
      :val :*
      :form :*}
     1
@@ -204,6 +224,8 @@
                :name :close,
                :val :close,
                :op :column,
+               :sqlingvo/op :column
+               :sqlingvo.column/name "close"
                :form :close}]}
             {:form over, :op :constant, :type :symbol, :val over}
             {:op :list,
@@ -214,6 +236,8 @@
                :name :company-id,
                :val :company-id,
                :op :column,
+               :sqlingvo/op :column
+               :sqlingvo.column/name "company-id"
                :form :company-id}
               {:form order, :op :constant, :type :symbol, :val order}
               {:form by, :op :constant, :type :symbol, :val by}
@@ -221,7 +245,9 @@
                :name :date,
                :val :date,
                :op :column,
-               :form :date}
+               :form :date
+               :sqlingvo/op :column
+               :sqlingvo.column/name "date"}
               {:form desc, :op :constant, :type :symbol, :val desc}]}],
            :as nil})))
 
@@ -237,6 +263,8 @@
             :name :*
             :val :*
             :op :column
+            :sqlingvo/op :column
+            :sqlingvo.column/name "*"
             :form :*}]}))
   (is (= (expr/parse-expr `((~'lag (~'count :*) 1)))
          (expr/parse-expr '((lag (count :*) 1)))))
@@ -260,6 +288,8 @@
      :form "continents"
      :name :continents
      :op :table
+     :sqlingvo/op :table
+     :sqlingvo.table/name "continents"
      :val "continents"}
 
     :continents
@@ -267,6 +297,8 @@
      :form :continents
      :name :continents
      :op :table
+     :sqlingvo/op :table
+     :sqlingvo.table/name "continents"
      :val :continents}
 
     '(generate_series 0 10)
@@ -284,6 +316,8 @@
       :name :countries
       :op :table
       :form :countries
+      :sqlingvo/op :table
+      :sqlingvo.table/name "countries"
       :val :countries}
      :name :c
      :columns []}))

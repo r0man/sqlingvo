@@ -75,35 +75,50 @@
   "Parse `s` as a column identifier and return a map
   with :op, :schema, :name and :as keys."
   [s]
-  (if (map? s)
-    s (if-let [matches (re-matches *column-regex* (name s))]
-        (let [[_ _ schema _ table name _] matches]
-          (cond-> (make-node
-                   :op :column
-                   :children [:schema :table :name :as]
-                   :form s
-                   :schema (if (and schema table) (keyword schema))
-                   :table (keyword (or table schema))
-                   :name (keyword name)
-                   :val s)
-            (and (keyword? s) (namespace s))
-            (assoc :ns (namespace s)))))))
+  (cond
+    (map? s) s
+    (or (keyword? s) (string? s))
+    (if-let [matches (re-matches *column-regex* (name s))]
+      (let [[_ _ schema' _ table' name _] matches
+            schema (if (and schema' table') schema')
+            table (or table' schema')]
+        (cond-> (make-node
+                 :op :column
+                 :children [:schema :table :name :as]
+                 :form s
+                 :name (keyword name)
+                 :schema (keyword schema)
+                 :sqlingvo/op :column
+                 :sqlingvo.column/name name
+                 :table (keyword table)
+                 :val s)
+          schema (assoc :sqlingvo.column/schema schema)
+          table (assoc :sqlingvo.column/table table)
+          (and (keyword? s) (namespace s))
+          (assoc :ns (namespace s)))))))
 
 (defn parse-table
   "Parse `s` as a table identifier and return a map
   with :op, :schema, :name and :as keys."
   [s]
-  (if (map? s)
-    s (if-let [matches (re-matches *table-regex* (name s))]
+  (cond
+    (map? s) s
+    (or (keyword? s) (string? s))
+    (if-let [matches (re-matches *table-regex* (name s))]
+      (let [schema (nth matches 2)
+            table (nth matches 3)]
         (cond-> (make-node
                  :op :table
                  :children [:schema :name :as]
                  :form s
-                 :schema (keyword (nth matches 2))
-                 :name (keyword (nth matches 3))
+                 :name (keyword table)
+                 :schema (keyword schema)
+                 :sqlingvo/op :table
+                 :sqlingvo.table/name table
                  :val s)
+          schema (assoc :sqlingvo.table/schema schema )
           (and (keyword? s) (namespace s))
-          (assoc :ns (namespace s))))))
+          (assoc :ns (namespace s)))))))
 
 (defn- parse-attr-expr [expr]
   (make-node
