@@ -13,6 +13,7 @@
             [sqlingvo.insert-test]
             [sqlingvo.materialized-view-test]
             [sqlingvo.select-test]
+            [sqlingvo.spec-test]
             [sqlingvo.truncate-test]
             [sqlingvo.update-test]
             [sqlingvo.url-test]
@@ -35,6 +36,7 @@
  'sqlingvo.insert-test
  'sqlingvo.materialized-view-test
  'sqlingvo.select-test
+ 'sqlingvo.spec-test
  'sqlingvo.truncate-test
  'sqlingvo.update-test
  'sqlingvo.util-test

@@ -13,16 +13,18 @@
     {:columns [:id],
      :column
      {:id
-      {:schema nil,
-       :children [:name],
-       :table nil,
-       :primary-key? true,
+      {:children [:name],
        :default nil,
+       :form :id
        :name :id,
-       :val :id,
-       :type :serial,
        :op :column,
-       :form :id}}}))
+       :primary-key? true,
+       :schema nil,
+       :sqlingvo.column/name "id"
+       :sqlingvo/op :column
+       :table nil,
+       :type :serial,
+       :val :id}}}))
 
 (deftest test-from
   (let [[from stmt] ((sql/from :continents) {})]
@@ -30,14 +32,18 @@
              :children [:name]
              :name :continents
              :form :continents
-             :val :continents}]
+             :val :continents
+             :sqlingvo/op :table
+             :sqlingvo.table/name "continents"}]
            from))
     (is (= {:from
             [{:op :table
               :children [:name]
               :name :continents
               :form :continents
-              :val :continents}]}
+              :val :continents
+              :sqlingvo/op :table
+              :sqlingvo.table/name "continents"}]}
            stmt))))
 
 ;; COMPOSE
@@ -82,6 +88,8 @@
             :name :id
             :op :column
             :form :id
+            :sqlingvo/op :column
+            :sqlingvo.column/name "id"
             :val :id}
      :name :other
      :columns []}
@@ -100,6 +108,8 @@
         :name :*
         :val :*
         :op :column
+        :sqlingvo/op :column
+        :sqlingvo.column/name "*"
         :form :*}]}
      :name :count}))
 
