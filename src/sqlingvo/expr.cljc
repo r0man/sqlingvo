@@ -1,6 +1,7 @@
 (ns sqlingvo.expr
   (:require [clojure.spec.alpha :as s]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [sqlingvo.spec :as spec]))
 
 (def ^:dynamic *column-regex*
   "The regular expression used to parse a column identifier."
@@ -75,35 +76,49 @@
   "Parse `s` as a column identifier and return a map
   with :op, :schema, :name and :as keys."
   [s]
-  (if (map? s)
-    s (if-let [matches (re-matches *column-regex* (name s))]
-        (let [[_ _ schema _ table name _] matches]
-          (cond-> (make-node
-                   :op :column
-                   :children [:schema :table :name :as]
-                   :form s
-                   :schema (if (and schema table) (keyword schema))
-                   :table (keyword (or table schema))
-                   :name (keyword name)
-                   :val s)
-            (and (keyword? s) (namespace s))
-            (assoc :ns (namespace s)))))))
+  (cond
+    (s/valid? :sqlingvo/alias s) s
+    (s/valid? :sqlingvo/column s) s
+    (or (string? s) (keyword? s))
+    (if-let [matches (re-matches *column-regex* (name s))]
+      (let [[_ _ schema _ table name _] matches]
+        (cond-> (make-node
+                 :op :column
+                 :children [:schema :table :name :as]
+                 :form s
+                 :schema (if (and schema table) (keyword schema))
+                 :table (keyword (or table schema))
+                 :name (keyword name)
+                 :val s)
+          (and (keyword? s) (namespace s))
+          (assoc :ns (namespace s)))))))
+
+(s/fdef parse-column
+  :args (s/cat :s :sqlingvo.column/identifier)
+  :ret (s/nilable :sqlingvo/column))
 
 (defn parse-table
   "Parse `s` as a table identifier and return a map
   with :op, :schema, :name and :as keys."
   [s]
-  (if (map? s)
-    s (if-let [matches (re-matches *table-regex* (name s))]
-        (cond-> (make-node
-                 :op :table
-                 :children [:schema :name :as]
-                 :form s
-                 :schema (keyword (nth matches 2))
-                 :name (keyword (nth matches 3))
-                 :val s)
-          (and (keyword? s) (namespace s))
-          (assoc :ns (namespace s))))))
+  (cond
+    (s/valid? :sqlingvo/alias s) s
+    (map? s) s
+    (or (string? s) (keyword? s))
+    (if-let [matches (re-matches *table-regex* (name s))]
+      (cond-> (make-node
+               :op :table
+               :children [:schema :name :as]
+               :form s
+               :schema (keyword (nth matches 2))
+               :name (keyword (nth matches 3))
+               :val s)
+        (and (keyword? s) (namespace s))
+        (assoc :ns (namespace s))))))
+
+(s/fdef parse-table
+  :args (s/cat :s :sqlingvo.table/identifier)
+  :ret (s/nilable :sqlingvo/table))
 
 (defn- parse-attr-expr [expr]
   (make-node

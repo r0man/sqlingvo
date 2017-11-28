@@ -1,10 +1,14 @@
 (ns sqlingvo.test
   (:require #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer-macros [is]])
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
             [sqlingvo.core :refer [sql]]
             [sqlingvo.db :as db]))
 
 (def db (db/db :postgresql))
+
+(stest/instrument)
 
 (defn cljs-env?
   "Take the &env from a macro, and tell whether we are expanding into cljs."
