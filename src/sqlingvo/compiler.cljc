@@ -179,6 +179,11 @@
 (defmethod compile-fn :->> [db node]
   (compile-sql-join db "->>" (-> node :children rest)))
 
+(defmethod compile-fn :array_subvec [db node]
+  (let [[_ array start end] (:children node)]
+    (concat-sql "(" (compile-sql db array) ")"
+                (str "[" (:val start) ":" (:val end) "]"))))
+
 (defmethod compile-fn :case [db node]
   (let [[_ & args] (:children node)
         parts (partition 2 2 nil args)]

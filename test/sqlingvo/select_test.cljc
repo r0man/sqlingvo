@@ -669,6 +669,10 @@
   (sql= (sql/select db [`(~(keyword "<@") [1 2] [3 4])])
         ["SELECT (ARRAY[1, 2] <@ ARRAY[3, 4])"]))
 
+(deftest test-array-subvec
+  (sql= (sql/select db [`(array_subvec [1 2 3 4] 1 2)])
+        ["SELECT (ARRAY[1, 2, 3, 4])[1:2]"]))
+
 ;; POSTGRESQL FULLTEXT
 
 (deftest test-cast-as-document-1
