@@ -673,6 +673,14 @@
   (sql= (sql/select db [`(array_subvec [1 2 3 4] 1 2)])
         ["SELECT (ARRAY[1, 2, 3, 4])[1:2]"]))
 
+(deftest test-array-subvec-without-end
+  (sql= (sql/select db [`(array_subvec [1 2 3 4] 2)])
+        ["SELECT (ARRAY[1, 2, 3, 4])[2:]"]))
+
+(deftest test-array-subvec-without-start-end
+  (sql= (sql/select db [`(array_subvec [1 2 3 4])])
+        ["SELECT (ARRAY[1, 2, 3, 4])[:]"]))
+
 ;; POSTGRESQL FULLTEXT
 
 (deftest test-cast-as-document-1
@@ -1014,3 +1022,21 @@
 (deftest test-cast-array
   (sql= (sql/select db ['(cast [] [:uuid])])
         ["SELECT CAST(ARRAY[] AS uuid[])"]))
+
+(deftest test-array-agg
+  (sql= (sql/select db ['(array_agg [1 2 3 4 5])])
+        ["SELECT array_agg(ARRAY[1, 2, 3, 4, 5])"]))
+
+(deftest test-array-agg-order-by-asc
+  (sql= (sql/select db [`(array_agg :name (order-by (asc :id)))]
+          (sql/from :books)
+          (sql/group-by :author-id))
+        [(str "SELECT array_agg(\"name\" ORDER BY \"id\" ASC) "
+              "FROM \"books\" GROUP BY \"author-id\"")]))
+
+(deftest test-array-agg-order-by-desc
+  (sql= (sql/select db [`(array_agg :name (order-by (desc :id)))]
+          (sql/from :books)
+          (sql/group-by :author-id))
+        [(str "SELECT array_agg(\"name\" ORDER BY \"id\" DESC) "
+              "FROM \"books\" GROUP BY \"author-id\"")]))
