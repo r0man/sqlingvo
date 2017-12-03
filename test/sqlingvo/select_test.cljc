@@ -682,7 +682,7 @@
           (sql/from :messages)
           (sql/where '(= :mid 12)))
         [(str "SELECT CAST((\"title\" || ? || \"author\" || ? || \"abstract\" "
-              "|| ? || \"body\") AS document) FROM \"messages\" "
+              "|| ? || \"body\") AS DOCUMENT) FROM \"messages\" "
               "WHERE (\"mid\" = 12)")
          " " " " " "]))
 
@@ -694,7 +694,7 @@
           (sql/where '(and (= :mid :did)
                            (= :mid 12))))
         [(str "SELECT CAST((\"m\".\"title\" || ? || \"m\".\"author\" || ? || "
-              "\"m\".\"abstract\" || ? || \"d\".\"body\") AS document) FROM "
+              "\"m\".\"abstract\" || ? || \"d\".\"body\") AS DOCUMENT) FROM "
               "\"messages\" \"m\", \"docs\" \"d\" WHERE ((\"mid\" = \"did\") "
               "and (\"mid\" = 12))")
          " " " " " "]))
@@ -704,14 +704,14 @@
                           (cast "a fat cat sat on a mat and ate a fat rat"
                                 :tsvector)
                           (cast "rat & cat" :tsquery))])
-        ["SELECT (CAST(? AS tsvector) @@ CAST(? AS tsquery))"
+        ["SELECT (CAST(? AS TSVECTOR) @@ CAST(? AS TSQUERY))"
          "a fat cat sat on a mat and ate a fat rat" "rat & cat"]))
 
 (deftest test-basic-text-matching-2
   (sql= (sql/select db [`(~(keyword "@@")
                           (cast "fat & cow" :tsquery)
                           (cast "a fat cat sat on a mat and ate a fat rat" :tsvector))])
-        ["SELECT (CAST(? AS tsquery) @@ CAST(? AS tsvector))"
+        ["SELECT (CAST(? AS TSQUERY) @@ CAST(? AS TSVECTOR))"
          "fat & cow" "a fat cat sat on a mat and ate a fat rat"]))
 
 (deftest test-basic-text-matching-3
@@ -725,7 +725,7 @@
   (sql= (sql/select db [`(~(keyword "@@")
                           (cast "fat cats ate fat rats" :tsvector)
                           (to_tsquery "fat & rat"))])
-        ["SELECT (CAST(? AS tsvector) @@ to_tsquery(?))"
+        ["SELECT (CAST(? AS TSVECTOR) @@ to_tsquery(?))"
          "fat cats ate fat rats" "fat & rat"]))
 
 (deftest test-searching-a-table-1
@@ -978,34 +978,34 @@
 
 (deftest test-select->-number
   (sql= (sql/select db [`(-> (cast "[1,2,3]" :json) 2)])
-        ["SELECT CAST(? AS json)->2" "[1,2,3]"]))
+        ["SELECT CAST(? AS JSON)->2" "[1,2,3]"]))
 
 (deftest test-select->-string
   (sql= (sql/select db [`(-> (cast "{\"a\":1, \"b\": 2}" :json) "b")])
-        ["SELECT CAST(? AS json)->?" "{\"a\":1, \"b\": 2}" "b"]))
+        ["SELECT CAST(? AS JSON)->?" "{\"a\":1, \"b\": 2}" "b"]))
 
 (deftest test-select->-alias
   (sql= (sql/select db [(sql/as `(-> (cast "[1,2,3]" :json) 2) :x)])
-        ["SELECT CAST(? AS json)->2 AS \"x\"" "[1,2,3]"]))
+        ["SELECT CAST(? AS JSON)->2 AS \"x\"" "[1,2,3]"]))
 
 (deftest test-select->-nested
   (sql= (sql/select db [`(-> (cast "{\"a\":1, \"c\": {\"d\": 1}}" :json) "c" "d")])
-        ["SELECT CAST(? AS json)->?->?"
+        ["SELECT CAST(? AS JSON)->?->?"
          "{\"a\":1, \"c\": {\"d\": 1}}"
          "c" "d"]))
 
 (deftest test-select->>-number
   (sql= (sql/select db [`(->> (cast "[1,2,3]" :json) 2)])
-        ["SELECT CAST(? AS json)->>2" "[1,2,3]"]))
+        ["SELECT CAST(? AS JSON)->>2" "[1,2,3]"]))
 
 (deftest test-select->>-string
   (sql= (sql/select db [`(->> (cast "{\"a\":1, \"b\": 2}" :json) "b")])
-        ["SELECT CAST(? AS json)->>?" "{\"a\":1, \"b\": 2}" "b"]))
+        ["SELECT CAST(? AS JSON)->>?" "{\"a\":1, \"b\": 2}" "b"]))
 
 (deftest test-select-in-cast
   (sql= (sql/select db [1]
           (sql/where `(in 1 ((cast "1" :integer) (cast "2" :integer)))))
-        ["SELECT 1 WHERE 1 IN (CAST(? AS integer), CAST(? AS integer))" "1" "2"]))
+        ["SELECT 1 WHERE 1 IN (CAST(? AS INTEGER), CAST(? AS INTEGER))" "1" "2"]))
 
 (deftest test-inline-str
   (sql= (sql/select db [`(to_tsvector ~(sql/inline-str "english") "fat cats ate fat rats")])
@@ -1013,4 +1013,4 @@
 
 (deftest test-cast-array
   (sql= (sql/select db ['(cast [] [:uuid])])
-        ["SELECT CAST(ARRAY[] AS uuid[])"]))
+        ["SELECT CAST(ARRAY[] AS UUID[])"]))

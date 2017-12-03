@@ -20,8 +20,8 @@
                            (< :logdate (cast "2006-03-01" :date))))
           (sql/inherits :measurement))
         [(str "CREATE TABLE \"measurement-y2006m02\" ("
-              "CHECK ((\"logdate\" >= CAST(? AS date)) and "
-              "(\"logdate\" < CAST(? AS date)))) "
+              "CHECK ((\"logdate\" >= CAST(? AS DATE)) and "
+              "(\"logdate\" < CAST(? AS DATE)))) "
               "INHERITS (\"measurement\")")
          "2006-02-01" "2006-03-01"]))
 
@@ -31,8 +31,8 @@
           (sql/check '(< :logdate (cast "2006-03-01" :date)))
           (sql/inherits :measurement))
         [(str "CREATE TABLE \"measurement-y2006m02\" ("
-              "CHECK (\"logdate\" >= CAST(? AS date)), "
-              "CHECK (\"logdate\" < CAST(? AS date))) "
+              "CHECK (\"logdate\" >= CAST(? AS DATE)), "
+              "CHECK (\"logdate\" < CAST(? AS DATE))) "
               "INHERITS (\"measurement\")")
          "2006-02-01" "2006-03-01"]))
 
@@ -138,35 +138,35 @@
 
 (deftest test-create-table-geometry-collection
   (sql= (sql/create-table db :my-table
-          (sql/column :my-geom :geometry-collection))
+          (sql/column :my-geom :geometry :geometry :geometry-collection))
         ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(GEOMETRYCOLLECTION))"]))
 
 (deftest test-create-table-line-string
   (sql= (sql/create-table db :my-table
-          (sql/column :my-geom :line-string))
+          (sql/column :my-geom :geometry :geometry :line-string))
         ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(LINESTRING))"]))
 
 (deftest test-create-table-multi-line-string
   (sql= (sql/create-table db :my-table
-          (sql/column :my-geom :multi-line-string))
+          (sql/column :my-geom :geometry :geometry :multi-line-string))
         ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(MULTILINESTRING))"]))
 
 (deftest test-create-table-multi-polygon
   (sql= (sql/create-table db :my-table
-          (sql/column :my-geom :multi-polygon))
+          (sql/column :my-geom :geometry :geometry :multi-polygon))
         ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(MULTIPOLYGON))"]))
 
 (deftest test-create-table-multi-point
   (sql= (sql/create-table db :my-table
-          (sql/column :my-geom :multi-point))
+          (sql/column :my-geom :geometry :geometry :multi-point))
         ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(MULTIPOINT))"]))
 
 (deftest test-create-table-point
   (sql= (sql/create-table db :my-table
-          (sql/column :my-geom :point))
+          (sql/column :my-geom :geometry :geometry :point))
         ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(POINT))"]))
 
 (deftest test-create-table-point-srid
   (sql= (sql/create-table db :my-table
-          (sql/column :my-geom :point :srid 4326))
+          (sql/column :my-geom :geometry :geometry :point :srid 4326))
         ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(POINT, 4326))"]))
