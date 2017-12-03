@@ -14,8 +14,8 @@
 (deftest test-sql-type
   (are [type expected] (= (util/sql-type-name type) expected)
     nil nil
-    :smallint "smallint"
-    :double-precision "double precision"))
+    :smallint "SMALLINT"
+    :double-precision "DOUBLE PRECISION"))
 
 (deftest test-sql-quote-backtick
   (are [x expected]

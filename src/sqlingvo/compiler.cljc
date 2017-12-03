@@ -332,41 +332,31 @@
      (when (:table column)
        (concat-sql " (" (sql-quote db (:name column)) ")")))))
 
+(defn- compile-geo-type
+  "Compile a GEOMETRY or GEOGRAPHY column type."
+  [db column]
+  (concat-sql
+   (util/sql-type-name (:type column))
+   (when-let [geometry (:geometry column)]
+     (str "(" (some-> column :geometry name
+                      str/upper-case
+                      (str/replace "-" ""))
+          (when-let [srid (:srid column)]
+            (str ", " (:srid column)))
+          ")"))))
+
 (defmulti compile-column-type
   "Compile the column type."
   (fn [db column] (:type column)))
 
-(defn- compile-geometry-type
-  "Compile a GEOMETRY or GEOGRAPHY column type."
-  [db column]
-  (concat-sql
-   (if (:geography? column)
-     "GEOGRAPHY" "GEOMETRY")
-   "(" (-> column :type name str/upper-case (str/replace #"-" ""))
-   (when-let [srid (:srid column)]
-     (str ", " (:srid column)))
-   ")"))
+(defmethod compile-column-type :geometry [db column]
+  (compile-geo-type db column))
 
-(defmethod compile-column-type :geometry-collection [db column]
-  (compile-geometry-type db column))
-
-(defmethod compile-column-type :line-string [db column]
-  (compile-geometry-type db column))
-
-(defmethod compile-column-type :multi-line-string [db column]
-  (compile-geometry-type db column))
-
-(defmethod compile-column-type :multi-point [db column]
-  (compile-geometry-type db column))
-
-(defmethod compile-column-type :multi-polygon [db column]
-  (compile-geometry-type db column))
-
-(defmethod compile-column-type :point [db column]
-  (compile-geometry-type db column))
+(defmethod compile-column-type :geography [db column]
+  (compile-geo-type db column))
 
 (defmethod compile-column-type :default [db column]
-  (str/replace (str/upper-case (name (:type column))) "-" " "))
+  (util/sql-type-name (:type column)))
 
 (defn compile-column [db column]
   (when (:length column)

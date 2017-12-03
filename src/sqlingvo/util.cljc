@@ -94,7 +94,7 @@
 (defn sql-type-name
   "Return the SQL name for the `type` keyword."
   [type]
-  (some-> type name (str/replace "-" " ")))
+  (some-> type name str/upper-case (str/replace "-" " ")))
 
 (defn- split-sql-name [x]
   (if x (split (name x) #"\.")))

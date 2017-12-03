@@ -2,6 +2,7 @@
   (:require #?(:clj [sqlingvo.test :refer [db sql=]]
                :cljs [sqlingvo.test :refer [db] :refer-macros [sql=]])
             [clojure.pprint :refer [pprint]]
+            [clojure.string :as str]
             [clojure.test :refer [are deftest is]]
             [sqlingvo.core :as sql]
             [sqlingvo.util :as util]))
@@ -107,19 +108,19 @@
 
 (deftest test-cast-int-as-double-precision
   (sql= (sql/select db [`(cast 1 :double-precision)])
-        ["SELECT CAST(1 AS double precision)"]))
+        ["SELECT CAST(1 AS DOUBLE PRECISION)"]))
 
 (deftest test-cast-int-as-text
   (sql= (sql/select db [`(cast 1 :text)])
-        ["SELECT CAST(1 AS text)"]))
+        ["SELECT CAST(1 AS TEXT)"]))
 
 (deftest test-cast-text-as-int
   (sql= (sql/select db [`(cast "1" :int)])
-        ["SELECT CAST(? AS int)" "1"]))
+        ["SELECT CAST(? AS INT)" "1"]))
 
 (deftest test-cast-with-alias
   (sql= (sql/select db [(sql/as `(cast "1" :int) :numeric-id)])
-        ["SELECT CAST(? AS int) AS \"numeric-id\"" "1"]))
+        ["SELECT CAST(? AS INT) AS \"numeric-id\"" "1"]))
 
 (deftest test-sql-placeholder-constant
   (let [db (assoc db :sql-placeholder util/sql-placeholder-constant)]

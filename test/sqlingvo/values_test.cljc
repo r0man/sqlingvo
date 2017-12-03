@@ -40,7 +40,7 @@
   (sql= (sql/values db [['(cast "192.168.0.1" :inet)
                          "192.168.0.10"
                          "192.168.1.43"]])
-        ["VALUES (CAST(? AS inet), ?, ?)"
+        ["VALUES (CAST(? AS INET), ?, ?)"
          "192.168.0.1"
          "192.168.0.10"
          "192.168.1.43"]))
@@ -53,7 +53,7 @@
                                         ["192.168.0.10"]
                                         ["192.168.1.43"]]))))
         [(str "SELECT * FROM \"machines\" WHERE \"ip-address\" "
-              "IN (VALUES (CAST(? AS inet)), (?), (?))")
+              "IN (VALUES (CAST(? AS INET)), (?), (?))")
          "192.168.0.1"
          "192.168.0.10"
          "192.168.1.43"]))
