@@ -125,3 +125,48 @@
   (sql= (sql/create-table db :ratings
           (sql/column :x :text :array? true))
         ["CREATE TABLE \"ratings\" (\"x\" TEXT[])"]))
+
+(deftest test-create-table-geometry
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :geometry))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY)"]))
+
+(deftest test-create-table-geography
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :geography))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOGRAPHY)"]))
+
+(deftest test-create-table-geometry-collection
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :geometry-collection))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(GEOMETRYCOLLECTION))"]))
+
+(deftest test-create-table-line-string
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :line-string))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(LINESTRING))"]))
+
+(deftest test-create-table-multi-line-string
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :multi-line-string))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(MULTILINESTRING))"]))
+
+(deftest test-create-table-multi-polygon
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :multi-polygon))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(MULTIPOLYGON))"]))
+
+(deftest test-create-table-multi-point
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :multi-point))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(MULTIPOINT))"]))
+
+(deftest test-create-table-point
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :point))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(POINT))"]))
+
+(deftest test-create-table-point-srid
+  (sql= (sql/create-table db :my-table
+          (sql/column :my-geom :point :srid 4326))
+        ["CREATE TABLE \"my-table\" (\"my-geom\" GEOMETRY(POINT, 4326))"]))

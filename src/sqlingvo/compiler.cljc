@@ -332,12 +332,48 @@
      (when (:table column)
        (concat-sql " (" (sql-quote db (:name column)) ")")))))
 
+(defmulti compile-column-type
+  "Compile the column type."
+  (fn [db column] (:type column)))
+
+(defn- compile-geometry-type
+  "Compile a GEOMETRY or GEOGRAPHY column type."
+  [db column]
+  (concat-sql
+   (if (:geography? column)
+     "GEOGRAPHY" "GEOMETRY")
+   "(" (-> column :type name str/upper-case (str/replace #"-" ""))
+   (when-let [srid (:srid column)]
+     (str ", " (:srid column)))
+   ")"))
+
+(defmethod compile-column-type :geometry-collection [db column]
+  (compile-geometry-type db column))
+
+(defmethod compile-column-type :line-string [db column]
+  (compile-geometry-type db column))
+
+(defmethod compile-column-type :multi-line-string [db column]
+  (compile-geometry-type db column))
+
+(defmethod compile-column-type :multi-point [db column]
+  (compile-geometry-type db column))
+
+(defmethod compile-column-type :multi-polygon [db column]
+  (compile-geometry-type db column))
+
+(defmethod compile-column-type :point [db column]
+  (compile-geometry-type db column))
+
+(defmethod compile-column-type :default [db column]
+  (str/replace (str/upper-case (name (:type column))) "-" " "))
+
 (defn compile-column [db column]
   (when (:length column)
     (println "Column :length is deprecated, use :size instead!"))
   (concat-sql
    (sql-quote db (:name column))
-   " " (str/replace (str/upper-case (name (:type column))) "-" " ")
+   " " (compile-column-type db column)
    (when (:array? column) "[]")
    (when-let [size (or (:size column) (:size column))]
      (str "(" size ")"))

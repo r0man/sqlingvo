@@ -6,7 +6,7 @@
   :min-lein-version "2.5.2"
   :deploy-repositories [["releases" :clojars]]
   :dependencies [[noencore "0.3.3"]
-                 [org.clojure/clojure "1.9.0-RC1"]]
+                 [org.clojure/clojure "1.9.0-RC2"]]
   :plugins [[jonase/eastwood "0.2.5"]
             [lein-cljsbuild "1.1.7"]
             [lein-difftest "2.0.0"]
