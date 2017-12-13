@@ -6,12 +6,13 @@
   :min-lein-version "2.5.2"
   :deploy-repositories [["releases" :clojars]]
   :dependencies [[noencore "0.3.3"]
-                 [org.clojure/clojure "1.9.0-RC2"]]
+                 [org.clojure/clojure "1.9.0"]]
   :plugins [[jonase/eastwood "0.2.5"]
             [lein-cljsbuild "1.1.7"]
             [lein-difftest "2.0.0"]
             [lein-doo "0.1.8"]]
-  :eastwood {:exclude-linters [:local-shadows-var]}
+  :eastwood {:config-files ["test-resources/eastwood.clj"]
+             :exclude-linters [:local-shadows-var]}
   :profiles
   {:dev
    {:dependencies [[org.clojure/test.check "0.9.0"]]}

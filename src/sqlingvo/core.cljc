@@ -1,7 +1,8 @@
 (ns sqlingvo.core
   (:refer-clojure :exclude [distinct group-by replace update])
-  (:require [clojure.string :as str]
-            [#?(:clj clojure.pprint :cljs cljs.pprint) :refer [simple-dispatch]]
+  (:require [#?(:clj clojure.pprint :cljs cljs.pprint) :refer [simple-dispatch]]
+            [clojure.spec.alpha :as s]
+            [clojure.string :as str]
             [sqlingvo.compiler :as compiler]
             [sqlingvo.db :as db]
             [sqlingvo.expr :as expr]
@@ -73,6 +74,22 @@
                                         :table (:name stmt))))]
         [column column]))))
 
+(s/def ::not-null boolean?)
+(s/def ::primary-key keyword?)
+
+(s/def ::column-opts
+  (s/keys* :opt-un [::not-null ::primary-key]))
+
+(s/fdef column
+  :args (s/cat :name :sqlingvo.column/name
+               :type keyword?
+               :opts ::column-opts))
+
+(defn columns
+  "Returns the columns of `table`."
+  [table]
+  (map (:column table) (:columns table)))
+
 (defn continue-identity
   "Add a CONTINUE IDENTITY clause to an SQL statement."
   [condition]
@@ -137,10 +154,16 @@
   [delimiter]
   (util/set-val :delimiter delimiter))
 
+(s/fdef delimiter
+  :args (s/cat :delimiter string?))
+
 (defn encoding
   "Add a ENCODING clause to an SQL statement."
   [encoding]
   (util/set-val :encoding encoding))
+
+(s/fdef encoding
+  :args (s/cat :encoding string?))
 
 (defn explain
   "Return an EXPLAIN statement for `stmt`. `opts` can be a map with
@@ -583,6 +606,21 @@
               :select (assoc stmt :exprs (:exprs select))
               select)
             (repeat 2))))))
+
+(defn table
+  "Make a new table and return it's AST."
+  {:style/indent 1}
+  [name & body]
+  (ast (fn [table]
+         [nil (merge
+               table
+               (second
+                ((chain-state body)
+                 (expr/parse-table name))))])))
+
+(s/fdef table
+  :args (s/cat :name :sqlingvo.table/name :body (s/* any?))
+  :ret :sqlingvo/table)
 
 (defn temporary
   "Add a TEMPORARY clause to an SQL statement."

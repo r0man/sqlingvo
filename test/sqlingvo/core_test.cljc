@@ -5,7 +5,10 @@
             [clojure.string :as str]
             [clojure.test :refer [are deftest is]]
             [sqlingvo.core :as sql]
-            [sqlingvo.util :as util]))
+            [sqlingvo.util :as util]
+            [clojure.spec.test.alpha :as stest]))
+
+(stest/instrument)
 
 (deftest test-column
   (are [column expected]
@@ -151,3 +154,36 @@
 (deftest test-pprint
   (is (= (with-out-str (pprint (sql/select db [1])))
          "[\"SELECT 1\"]\n")))
+
+(deftest test-table
+  (is (= (sql/table :my-table
+           (sql/column :a :serial :primary-key? true)
+           (sql/column :b :text))
+         {:children [:name],
+          :columns [:a :b],
+          :name :my-table,
+          :val :my-table,
+          :op :table,
+          :column
+          {:a
+           {:schema nil,
+            :children [:name],
+            :table :my-table,
+            :primary-key? true,
+            :default nil,
+            :name :a,
+            :val :a,
+            :type :serial,
+            :op :column,
+            :form :a},
+           :b
+           {:children [:name],
+            :name :b,
+            :val :b,
+            :op :column,
+            :form :b,
+            :type :text,
+            :default nil,
+            :schema nil,
+            :table :my-table}},
+          :form :my-table})))
