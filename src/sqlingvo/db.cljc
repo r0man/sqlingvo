@@ -56,7 +56,7 @@
   (merge (-db spec) opts))
 
 (s/fdef db
-  :args (s/cat :spec any? :opts (s/? map?))
+  :args (s/cat :spec any? :opts (s/? (s/nilable map?)))
   :ret ::db)
 
 (extend-protocol IDatabase
