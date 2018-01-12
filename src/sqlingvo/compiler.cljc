@@ -299,6 +299,11 @@
 (defmethod compile-fn :desc [db node]
   (compile-direction db node))
 
+(defmethod compile-fn :raw [db node]
+  (-> (:children node)
+      (second)
+      (:val)))
+
 (defmethod compile-fn :default [db node]
   (let [[name & args] (:children node) ]
     (concat-sql (sql-quote-fn db (:val name)) "("

@@ -432,6 +432,10 @@
           (sql/order-by :sum))
         ["SELECT (\"a\" + \"b\") AS \"sum\", \"c\" FROM \"table-1\" ORDER BY \"sum\""]))
 
+(deftest test-select-raw
+  (sql= (sql/select db ['(raw "NOW() AT DATE TIME ZONE 'utc'")])
+        ["SELECT NOW() AT DATE TIME ZONE 'utc'"]))
+
 (deftest test-select-setval
   (sql= (sql/select db [`(setval
                           :continent-id-seq
