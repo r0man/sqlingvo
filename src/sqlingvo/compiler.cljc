@@ -463,13 +463,14 @@
        " IF NOT EXISTS")
      (concat-sql " " (compile-sql db table))
      " ("
-     (cond
-       (not (empty? columns))
-       (join-sql ", " (map #(compile-column db %1) columns))
-       like
-       (compile-sql db like))
-     (when (not-empty checks)
-       (compile-sql-join db ", " checks))
+     (->> [(cond
+             (not (empty? columns))
+             (join-sql ", " (map #(compile-column db %1) columns))
+             like
+             (compile-sql db like))
+           (when (not-empty checks)
+             (compile-sql-join db ", " checks))]
+          (join-sql ", ") )
      (when (not-empty primary-key)
        (concat-sql ", PRIMARY KEY(" (str/join ", " (map #(sql-quote db %1) primary-key)) ")"))
      ")"

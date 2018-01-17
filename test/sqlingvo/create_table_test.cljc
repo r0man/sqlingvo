@@ -27,10 +27,23 @@
 
 (deftest test-create-table-inherits-check-multiple
   (sql= (sql/create-table db :measurement-y2006m02
+          (sql/check '(and (>= :logdate (cast "2006-02-01" :date))
+                           (< :logdate (cast "2006-03-01" :date))))
+          (sql/inherits :measurement))
+        [(str "CREATE TABLE \"measurement-y2006m02\" ("
+              "CHECK ((\"logdate\" >= CAST(? AS DATE)) and "
+              "(\"logdate\" < CAST(? AS DATE)))) "
+              "INHERITS (\"measurement\")")
+         "2006-02-01" "2006-03-01"]))
+
+(deftest test-create-table-inherits-check-like
+  (sql= (sql/create-table db :measurement-y2006m02
+          (sql/like :measurements :including [:all])
           (sql/check '(>= :logdate (cast "2006-02-01" :date)))
           (sql/check '(< :logdate (cast "2006-03-01" :date)))
           (sql/inherits :measurement))
         [(str "CREATE TABLE \"measurement-y2006m02\" ("
+              "LIKE \"measurements\" INCLUDING ALL, "
               "CHECK (\"logdate\" >= CAST(? AS DATE)), "
               "CHECK (\"logdate\" < CAST(? AS DATE))) "
               "INHERITS (\"measurement\")")
