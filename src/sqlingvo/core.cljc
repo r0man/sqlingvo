@@ -235,6 +235,28 @@
          :children [:table]
          :table table))))))
 
+(defn create-type
+  "Build a CREATE TYPE sql statement."
+  {:style/indent 2}
+  [db type-name & body]
+  (expr/stmt
+   (fn [_]
+     ((chain-state body)
+      (expr/make-node
+       :op :create-type
+       :db (db/db db)
+       :children [:name]
+       :name (name type-name))))))
+
+(defn enum
+  "Returns the enum ast."
+  [labels]
+  (util/assoc-op
+   :enum :labels (for [label labels]
+                   {:op :enum-label
+                    :children [:name]
+                    :name (name label)})))
+
 (defn delete
   "Build a DELETE statement.
 

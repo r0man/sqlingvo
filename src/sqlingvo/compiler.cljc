@@ -477,6 +477,24 @@
      (if inherits
        (concat-sql " INHERITS (" (compile-sql-join db ", " inherits) ")")))))
 
+(defmethod compile-sql :enum-label
+  [db {:keys [name] :as node}]
+  (str "'" name "'"))
+
+(defmethod compile-sql :create-type
+  [db {:keys [enum name] :as node}]
+  (let [columns (map (:column node) (:columns node))]
+    (concat-sql
+     "CREATE TYPE "
+     name
+     (when enum
+       (concat-sql
+        " AS ENUM ("
+        (->> (for [label (:labels enum)]
+               (compile-sql db label))
+             (join-sql ", "))
+        ")")))))
+
 (defmethod compile-sql :delete [db node]
   (let [{:keys [where table returning]} node]
     (concat-sql
