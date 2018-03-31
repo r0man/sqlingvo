@@ -1018,3 +1018,7 @@
 (deftest test-cast-array
   (sql= (sql/select db ['(cast [] [:uuid])])
         ["SELECT CAST(ARRAY[] AS UUID[])"]))
+
+(deftest test-cast-schema-type
+  (sql= (sql/select db ['(cast "x" :my-schema.my-type)])
+        ["SELECT CAST(? AS \"my-schema\".\"my-type\")" "x"]))

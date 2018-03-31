@@ -8,6 +8,54 @@
   "A set of reserved words that should not be quoted."
   #{"EXCLUDED" "DEFAULT"})
 
+(def sql-type-names
+  "Mapping from Clojure keywords to SQL type names."
+  {:bigint "BIGINT"
+   :bigserial "BIGSERIAL"
+   :bit "BIT"
+   :bit-varying "BIT VARYING"
+   :boolean "BOOLEAN"
+   :box "BOX"
+   :bytea "BYTEA"
+   :char "CHAR"
+   :character "CHARACTER"
+   :character-varying "CHARACTER VARYING"
+   :cidr "CIDR"
+   :circle "CIRCLE"
+   :date "DATE"
+   :document "DOCUMENT"
+   :double-precision "DOUBLE PRECISION"
+   :geography "GEOGRAPHY"
+   :geometry "GEOMETRY"
+   :inet "INET"
+   :int "INT"
+   :integer "INTEGER"
+   :interval "INTERVAL"
+   :json "JSON"
+   :jsonb "JSONB"
+   :line "LINE"
+   :lseg "LSEG"
+   :macaddr "MACADDR"
+   :money "MONEY"
+   :numeric "NUMERIC"
+   :path "PATH"
+   :point "POINT"
+   :polygon "POLYGON"
+   :real "REAL"
+   :serial "SERIAL"
+   :smallint "SMALLINT"
+   :text "TEXT"
+   :time-with-time-zone "TIME WITH TIME ZONE"
+   :time-without-time-zone "TIME WITHOUT TIME ZONE"
+   :timestamp-with-time-zone "TIMESTAMP WITH TIME ZONE"
+   :timestamp-without-time-zone "TIMESTAMP WITHOUT TIME ZONE"
+   :tsquery "TSQUERY"
+   :tsvector "TSVECTOR"
+   :txid-snapshot "TXID_SNAPSHOT"
+   :uuid "UUID"
+   :varchar "VARCHAR"
+   :xml "XML"})
+
 (defn keyword-str
   "Return the qualified name of the keyword `k` as a string."
   [k]
@@ -94,7 +142,7 @@
 (defn sql-type-name
   "Return the SQL name for the `type` keyword."
   [type]
-  (some-> type name str/upper-case (str/replace "-" " ")))
+  (or (get sql-type-names type) (some-> type name)))
 
 (defn- split-sql-name [x]
   (if x (split (name x) #"\.")))

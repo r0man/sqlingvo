@@ -11,6 +11,10 @@
   "The regular expression used to parse a table identifier."
   #"(([^./]+)\.)?([^./]+)")
 
+(def ^:dynamic *type-regex*
+  "The regular expression used to parse a type."
+  #"(([^./]+)\.)?([^./]+)")
+
 (defprotocol IExpr
   (-parse-expr [x] "Parse `x` and return the AST of a SQL expression."))
 
@@ -172,6 +176,19 @@
 
 (s/fdef parse-constant
   :args (s/cat :type keyword? :constant any?)
+  :ret map?)
+
+(defn parse-type
+  "Parse the `type` of `type`."
+  [type]
+  (when-let [[_ _ schema name] (re-matches *type-regex* (name type))]
+    {:form type
+     :name name
+     :op :type
+     :schema schema}))
+
+(s/fdef parse-type
+  :args (s/cat :type keyword?)
   :ret map?)
 
 #?(:clj

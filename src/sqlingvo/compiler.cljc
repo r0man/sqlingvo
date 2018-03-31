@@ -196,16 +196,25 @@
                                  (concat-sql " ELSE " (compile-expr db else)))
                                [" END"])))))
 
+(defn- compile-sql-type
+  "Compile an SQL type."
+  [db {:keys [op] :as type}]
+  (cond
+    ;; Array type
+    (= op :array)
+    (concat-sql
+     (util/sql-type-name
+      (-> type :children first :name)) "[]")
+    ;; Type in schema
+    (and (= op :column) (:table type) (:name type))
+    (compile-sql db type)
+    :else
+    (util/sql-type-name (:name type))))
+
 (defmethod compile-fn :cast [db node]
   (let [[_ & [expr type]] (:children node)]
-    (concat-sql "CAST(" (compile-expr db expr) " AS "
-                (case (:op type)
-                  :array
-                  (concat-sql
-                   (util/sql-type-name
-                    (-> type :children first :name)) "[]")
-                  :column
-                  (util/sql-type-name (:name type))) ")")))
+    (concat-sql "CAST(" (compile-expr db expr)
+                " AS " (compile-sql-type db type) ")")))
 
 (defmethod compile-fn :count [db node]
   (let [[name & args] (:children node)]
@@ -360,8 +369,10 @@
 (defmethod compile-column-type :geography [db column]
   (compile-geo-type db column))
 
-(defmethod compile-column-type :default [db column]
-  (util/sql-type-name (:type column)))
+(defmethod compile-column-type :default [db {:keys [type]}]
+  (if (str/index-of (name type) ".")
+    (compile-sql db (expr/parse-type type))
+    (util/sql-type-name type)))
 
 (defn compile-column [db column]
   (when (:length column)
@@ -482,11 +493,11 @@
   (str "'" name "'"))
 
 (defmethod compile-sql :create-type
-  [db {:keys [enum name] :as node}]
+  [db {:keys [enum type] :as node}]
   (let [columns (map (:column node) (:columns node))]
     (concat-sql
      "CREATE TYPE "
-     name
+     (compile-sql db type)
      (when enum
        (concat-sql
         " AS ENUM ("
@@ -522,6 +533,13 @@
   (join-sql " " ["DROP TABLE"
                  (compile-sql db if-exists)
                  (compile-sql-join db ", " tables)
+                 (compile-sql db cascade)
+                 (compile-sql db restrict)]))
+
+(defmethod compile-sql :drop-type [db {:keys [cascade if-exists restrict types]}]
+  (join-sql " " ["DROP TYPE"
+                 (compile-sql db if-exists)
+                 (compile-sql-join db ", " types)
                  (compile-sql db cascade)
                  (compile-sql db restrict)]))
 
@@ -703,6 +721,11 @@
 
 (defmethod compile-sql :table [db {:keys [schema name]}]
   [(str (str/join "." (map #(sql-quote db %1) (remove nil? [schema name]))))])
+
+(defmethod compile-sql :type [db {:keys [schema name]}]
+  (concat-sql
+   (when schema (str (sql-quote db schema) "."))
+   (sql-quote db name)))
 
 (defmethod compile-sql :drop-materialized-view [db node]
   (let [{:keys [cascade if-exists restrict view]} node]

@@ -14,8 +14,15 @@
 (deftest test-sql-type
   (are [type expected] (= (util/sql-type-name type) expected)
     nil nil
+    :bit-varying "BIT VARYING"
+    :character-varying "CHARACTER VARYING"
+    :double-precision "DOUBLE PRECISION"
+    :json "JSON"
+    :jsonb "JSONB"
+    :my-type "my-type"
     :smallint "SMALLINT"
-    :double-precision "DOUBLE PRECISION"))
+    :time-with-time-zone "TIME WITH TIME ZONE"
+    :timestamp-with-time-zone "TIMESTAMP WITH TIME ZONE"))
 
 (deftest test-sql-quote-backtick
   (are [x expected]
