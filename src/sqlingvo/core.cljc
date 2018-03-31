@@ -238,15 +238,15 @@
 (defn create-type
   "Build a CREATE TYPE sql statement."
   {:style/indent 2}
-  [db type-name & body]
+  [db type & body]
   (expr/stmt
    (fn [_]
      ((chain-state body)
       (expr/make-node
-       :op :create-type
-       :db (db/db db)
        :children [:name]
-       :name (name type-name))))))
+       :db (db/db db)
+       :op :create-type
+       :type (expr/parse-type type))))))
 
 (defn enum
   "Returns the enum ast."
@@ -297,6 +297,25 @@
          :db (db/db db)
          :children [:tables]
          :tables tables))))))
+
+(defn drop-type
+  "Build a DROP TYPE statement.
+
+  Examples:
+
+  (drop-type db [:mood])
+
+  (drop-table db [:my-schema.mood])"
+  {:style/indent 2}
+  [db types & body]
+  (expr/stmt
+   (fn [_]
+     ((chain-state body)
+      (expr/make-node
+       :children [:name]
+       :db (db/db db)
+       :op :drop-type
+       :types (map expr/parse-type types))))))
 
 (defn- make-set-op
   [op args]

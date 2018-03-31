@@ -309,3 +309,17 @@
     `a "a"
     `a "a"
     "a/b" "a/b"))
+
+(deftest test-parse-type
+  (are [k expected]
+      (= (expr/parse-type k) expected)
+    :mood
+    {:form :mood
+     :name "mood"
+     :op :type
+     :schema nil}
+    :my-schema.mood
+    {:form :my-schema.mood
+     :name "mood"
+     :op :type
+     :schema "my-schema"}))
