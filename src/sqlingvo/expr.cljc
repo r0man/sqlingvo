@@ -179,7 +179,7 @@
   :ret map?)
 
 (defn parse-type
-  "Parse the `type` of `type`."
+  "Parse the `type`."
   [type]
   (when-let [[_ _ schema name] (re-matches *type-regex* (name type))]
     {:form type
@@ -189,6 +189,17 @@
 
 (s/fdef parse-type
   :args (s/cat :type keyword?)
+  :ret map?)
+
+(defn parse-schema
+  "Parse the `schema`."
+  [schema]
+  {:form schema
+   :op :schema
+   :name (name schema)})
+
+(s/fdef parse-schema
+  :args (s/cat :schema keyword?)
   :ret map?)
 
 #?(:clj

@@ -462,6 +462,14 @@
    (if delimiter
      [(str " DELIMITER " (placeholder db)) delimiter])))
 
+(defmethod compile-sql :create-schema
+  [db {:keys [schema if-not-exists]}]
+  (concat-sql
+   "CREATE SCHEMA"
+   (when if-not-exists
+     " IF NOT EXISTS")
+   " " (compile-sql db schema)))
+
 (defmethod compile-sql :create-table
   [db {:keys [checks table if-not-exists inherits like primary-key temporary] :as node}]
   (let [columns (map (:column node) (:columns node))]
@@ -528,6 +536,13 @@
    (case (:direction node)
      :asc " ASC"
      :desc " DESC")))
+
+(defmethod compile-sql :drop-schema [db {:keys [cascade if-exists restrict schemas]}]
+  (join-sql " " ["DROP SCHEMA"
+                 (compile-sql db if-exists)
+                 (compile-sql-join db ", " schemas)
+                 (compile-sql db cascade)
+                 (compile-sql db restrict)]))
 
 (defmethod compile-sql :drop-table [db {:keys [cascade if-exists restrict tables]}]
   (join-sql " " ["DROP TABLE"
@@ -718,6 +733,9 @@
 
 (defmethod compile-sql :offset [db {:keys [expr]}]
   (concat-sql "OFFSET " (compile-expr db expr)))
+
+(defmethod compile-sql :schema [db {:keys [name]}]
+  (sql-quote db name))
 
 (defmethod compile-sql :table [db {:keys [schema name]}]
   [(str (str/join "." (map #(sql-quote db %1) (remove nil? [schema name]))))])

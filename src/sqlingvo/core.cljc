@@ -221,6 +221,20 @@
          :table table
          :columns columns))))))
 
+(defn create-schema
+  "Build a CREATE SCHEMA statement."
+  {:style/indent 2}
+  [db schema & body]
+  (let [schema (expr/parse-schema schema)]
+    (expr/stmt
+     (fn [_]
+       ((chain-state body)
+        (expr/make-node
+         :op :create-schema
+         :db (db/db db)
+         :children [:schema]
+         :schema schema))))))
+
 (defn create-table
   "Build a CREATE TABLE statement."
   {:style/indent 2}
@@ -278,6 +292,24 @@
          :children [:table]
          :table table))))))
 
+(defn drop-schema
+  "Build a DROP SCHEMA statement.
+
+  Examples:
+
+  (drop-schema db [:my-schema])"
+  {:style/indent 2}
+  [db schemas & body]
+  (let [schemas (mapv expr/parse-schema schemas)]
+    (expr/stmt
+     (fn [_]
+       ((chain-state body)
+        (expr/make-node
+         :children [:name]
+         :db (db/db db)
+         :op :drop-schema
+         :schemas schemas))))))
+
 (defn drop-table
   "Build a DROP TABLE statement.
 
@@ -288,7 +320,7 @@
   (drop-table db [:continents :countries])"
   {:style/indent 2}
   [db tables & body]
-  (let [tables (map expr/parse-table tables)]
+  (let [tables (mapv expr/parse-table tables)]
     (expr/stmt
      (fn [stmt]
        ((chain-state body)
@@ -308,14 +340,15 @@
   (drop-table db [:my-schema.mood])"
   {:style/indent 2}
   [db types & body]
-  (expr/stmt
-   (fn [_]
-     ((chain-state body)
-      (expr/make-node
-       :children [:name]
-       :db (db/db db)
-       :op :drop-type
-       :types (map expr/parse-type types))))))
+  (let [types (mapv expr/parse-type types)]
+    (expr/stmt
+     (fn [_]
+       ((chain-state body)
+        (expr/make-node
+         :children [:name]
+         :db (db/db db)
+         :op :drop-type
+         :types types))))))
 
 (defn- make-set-op
   [op args]
