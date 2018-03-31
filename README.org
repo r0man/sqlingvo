@@ -26,13 +26,12 @@
 ** Usage
 
    /SQLingvo/ shadows some functions from the =clojure.core=
-   namespace. If you want to use or require all symbols from the
-   =sqlingvo.core= namespace you have to exclude the =distinct=,
-   =group-by= and =update= functions.
+   namespace, such as =distinct=, =group-by= and =update=
+   functions. It's recommended to require the =sqlingvo.core=
+   namespace via an alias, such as =sql=.
 
    #+BEGIN_SRC clojure :exports code :results silent
-     (refer-clojure :exclude '[distinct group-by update])
-     (require '[sqlingvo.core :refer :all])
+     (require '[sqlingvo.core :as sql])
    #+END_SRC
 
 ** Database specification
@@ -44,7 +43,7 @@
    /PostgreSQL/.
 
    #+BEGIN_SRC clojure :exports code :results silent
-     (def my-db (db :postgresql))
+     (def my-db (sql/db :postgresql))
    #+END_SRC
 
    Such a database specification is needed by all functions that
@@ -52,8 +51,8 @@
    specification =my-db= to build a simple /SELECT/ statement.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-     (sql (select my-db [:first-name]
-            (from :people)))
+     (sql/sql (sql/select my-db [:first-name]
+                (sql/from :people)))
    #+END_SRC
 
    #+RESULTS:
@@ -79,15 +78,15 @@
       (defn underscore [s]
         (str/replace (name s) "-" "_"))
 
-      (def my-db' (db :postgresql {:sql-name underscore}))
+      (def my-db' (sql/db :postgresql {:sql-name underscore}))
     #+END_SRC
 
     All the hyphens in column and table names are now translated to
     underscores.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (sql (select my-db' [:first-name]
-             (from :people)))
+      (sql/sql (sql/select my-db' [:first-name]
+                 (sql/from :people)))
     #+END_SRC
 
     #+RESULTS:
@@ -103,15 +102,15 @@
 
     #+BEGIN_SRC clojure :exports code :results silent
       (require '[sqlingvo.util :refer [sql-quote-backtick]])
-      (def my-db' (db :postgresql {:sql-quote sql-quote-backtick}))
+      (def my-db' (sql/db :postgresql {:sql-quote sql-quote-backtick}))
     #+END_SRC
 
     Now the column and table names are quoted with back ticks, instead
     of double quotes.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (sql (select my-db' [:first-name]
-             (from :people)))
+      (sql/sql (sql/select my-db' [:first-name]
+                 (sql/from :people)))
     #+END_SRC
 
     #+RESULTS:
@@ -130,7 +129,7 @@
 
     #+BEGIN_SRC clojure :exports code :results silent
       (require '[sqlingvo.util :refer [sql-placeholder-count]])
-      (def my-db' (db :postgresql {:sql-placeholder sql-placeholder-count}))
+      (def my-db' (sql/db :postgresql {:sql-placeholder sql-placeholder-count}))
     #+END_SRC
 
     Now, the placeholders for /SQL/ parameters will contain the index
@@ -138,10 +137,10 @@
     /SQLingvo/ with [[https://github.com/alaisi/postgres.async][postgres.async]].
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (sql (select my-db'  [:*]
-             (from :distributors)
-             (where '(and (= :dname "Anvil Distribution")
-                          (= :zipcode "21201")))))
+      (sql/sql (sql/select my-db'  [:*]
+                 (sql/from :distributors)
+                 (sql/where '(and (= :dname "Anvil Distribution")
+                                  (= :zipcode "21201")))))
     #+END_SRC
 
     #+RESULTS:
@@ -159,9 +158,9 @@
 
    #+BEGIN_SRC clojure :exports code :results silent
      (def commendy-films-stmt
-       (select my-db [:id :name]
-         (from :films)
-         (where '(= :kind "Comedy"))))
+       (sql/select my-db [:id :name]
+         (sql/from :films)
+         (sql/where '(= :kind "Comedy"))))
    #+END_SRC
 
    In the code above we select all the =id= and =name= columns of all
@@ -183,7 +182,7 @@
    prepared statement parameters.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-     (sql commendy-films-stmt)
+     (sql/sql commendy-films-stmt)
    #+END_SRC
 
    #+RESULTS:
@@ -201,9 +200,9 @@
    /REPL/, it prints out the compiled form of the statement.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-     (select my-db [:id :name]
-       (from :films)
-       (where '(= :kind "Comedy")))
+     (sql/select my-db [:id :name]
+       (sql/from :films)
+       (sql/where '(= :kind "Comedy")))
    #+END_SRC
 
    #+RESULTS:
@@ -226,7 +225,7 @@
    operators, such as =+=, =-=, =*=, =/= and many others.
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-     (select my-db [1 '(+ 2 (abs 3)) '(upper "Hello")])
+     (sql/select my-db [1 '(+ 2 (abs 3)) '(upper "Hello")])
    #+END_SRC
 
    #+RESULTS:
@@ -239,7 +238,7 @@
    compilation rule. Or even better, send a PR ...
 
    #+BEGIN_SRC clojure :exports both :results verbatim
-     (select my-db ['(substring "Fusion" from 2 for 3)])
+     (sql/select my-db ['(substring "Fusion" from 2 for 3)])
    #+END_SRC
 
    #+RESULTS:
@@ -254,9 +253,9 @@
 
    #+BEGIN_SRC clojure :exports code :results silent
      (defn films-by-kind [db kind]
-       (select db [:id :name]
-         (from :films)
-         (where `(= :kind ~kind))))
+       (sql/select db [:id :name]
+         (sql/from :films)
+         (sql/where `(= :kind ~kind))))
    #+END_SRC
 
    #+BEGIN_SRC clojure :exports both :results verbatim
@@ -278,8 +277,8 @@
     Copy from standard input.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (copy my-db :country []
-        (from :stdin))
+      (sql/copy my-db :country []
+        (sql/from :stdin))
     #+END_SRC
 
     #+RESULTS:
@@ -288,8 +287,8 @@
     Copy data from a file into the country table.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (copy my-db :country []
-        (from "/usr1/proj/bray/sql/country_data"))
+      (sql/copy my-db :country []
+        (sql/from "/usr1/proj/bray/sql/country_data"))
     #+END_SRC
 
     #+RESULTS:
@@ -298,8 +297,8 @@
     Copy data from a file into the country table with columns in the given order.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (copy my-db :country [:id :name]
-        (from "/usr1/proj/bray/sql/country_data"))
+      (sql/copy my-db :country [:id :name]
+        (sql/from "/usr1/proj/bray/sql/country_data"))
     #+END_SRC
 
     #+RESULTS:
@@ -310,26 +309,26 @@
     Define a new database table.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (create-table my-db :films
-        (column :code :char :length 5 :primary-key? true)
-        (column :title :varchar :length 40 :not-null? true)
-        (column :did :integer :not-null? true)
-        (column :date-prod :date)
-        (column :kind :varchar :length 10)
-        (column :len :interval)
-        (column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
-        (column :updated-at :timestamp-with-time-zone :not-null? true :default '(now)))
+      (sql/create-table my-db :films
+        (sql/column :code :char :length 5 :primary-key? true)
+        (sql/column :title :varchar :length 40 :not-null? true)
+        (sql/column :did :integer :not-null? true)
+        (sql/column :date-prod :date)
+        (sql/column :kind :varchar :length 10)
+        (sql/column :len :interval)
+        (sql/column :created-at :timestamp-with-time-zone :not-null? true :default '(now))
+        (sql/column :updated-at :timestamp-with-time-zone :not-null? true :default '(now)))
     #+END_SRC
 
     #+RESULTS:
-    : ["CREATE TABLE \"films\" (\"code\" CHAR(5) PRIMARY KEY, \"title\" VARCHAR(40) NOT NULL, \"did\" INTEGER NOT NULL, \"date-prod\" DATE, \"kind\" VARCHAR(10), \"len\" INTERVAL, \"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), \"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())"]
+    : ["CREATE TABLE \"films\" (\"code\" CHAR PRIMARY KEY, \"title\" VARCHAR NOT NULL, \"did\" INTEGER NOT NULL, \"date-prod\" DATE, \"kind\" VARCHAR, \"len\" INTERVAL, \"created-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), \"updated-at\" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now())"]
 
 *** Delete
 
     Clear the table films.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (delete my-db :films)
+      (sql/delete my-db :films)
     #+END_SRC
 
     #+RESULTS:
@@ -338,8 +337,8 @@
     Delete all films but musicals.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (delete my-db :films
-        (where '(<> :kind "Musical")))
+      (sql/delete my-db :films
+        (sql/where '(<> :kind "Musical")))
     #+END_SRC
 
     #+RESULTS:
@@ -348,9 +347,9 @@
     Delete completed tasks, returning full details of the deleted rows.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (delete my-db :tasks
-        (where '(= :status "DONE"))
-        (returning :*))
+      (sql/delete my-db :tasks
+        (sql/where '(= :status "DONE"))
+        (sql/returning :*))
     #+END_SRC
 
     #+RESULTS:
@@ -363,8 +362,8 @@
      Insert expressions into the =films= table.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-       (insert my-db :films [:code :title :did :date-prod :kind]
-         (values [['(upper "t_601") "Yojimbo" 106 "1961-06-16" "Drama"]]))
+       (sql/insert my-db :films [:code :title :did :date-prod :kind]
+         (sql/values [['(upper "t_601") "Yojimbo" 106 "1961-06-16" "Drama"]]))
      #+END_SRC
 
      #+RESULTS:
@@ -373,9 +372,9 @@
      Insert expressions and default values into the =films= table.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-       (insert my-db :films []
-         (values [["UA502" "Bananas" 105 :DEFAULT "Comedy" "82 minutes"]
-                  ["T_601" "Yojimbo" 106 :DEFAULT "Drama" :DEFAULT]]))
+       (sql/insert my-db :films []
+         (sql/values [["UA502" "Bananas" 105 :DEFAULT "Comedy" "82 minutes"]
+                      ["T_601" "Yojimbo" 106 :DEFAULT "Drama" :DEFAULT]]))
      #+END_SRC
 
      #+RESULTS:
@@ -386,34 +385,34 @@
      Insert records into the =films= table.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db :films []
-        (values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
-                 {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10" :kind "Comedy"}]))
+       (sql/insert my-db :films []
+         (sql/values [{:code "B6717" :title "Tampopo" :did 110 :date-prod "1985-02-10" :kind "Comedy"},
+                      {:code "HG120" :title "The Dinner Game" :did 140 :date-prod "1985-02-10" :kind "Comedy"}]))
      #+END_SRC
 
      #+RESULTS:
-     : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "B6717" "Tampopo" "1985-02-10" "Comedy" "HG120" "The Dinner Game" "1985-02-10" "Comedy"]
+     : ["INSERT INTO \"films\" (\"code\", \"date-prod\", \"did\", \"kind\", \"title\") VALUES (?, ?, 110, ?, ?), (?, ?, 140, ?, ?)" "B6717" "1985-02-10" "Comedy" "Tampopo" "HG120" "1985-02-10" "Comedy" "The Dinner Game"]
 
 **** Insert returning records
 
      Insert a row into the =films= table and return the inserted records.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-       (insert my-db :films []
-         (values [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}])
-         (returning :*))
+       (sql/insert my-db :films []
+         (sql/values [{:code "T_601" :title "Yojimbo" :did 106 :date-prod "1961-06-16" :kind "Drama"}])
+         (sql/returning :*))
      #+END_SRC
 
      #+RESULTS:
-     : ["INSERT INTO \"films\" (\"code\", \"title\", \"did\", \"date-prod\", \"kind\") VALUES (?, ?, 106, ?, ?) RETURNING *" "T_601" "Yojimbo" "1961-06-16" "Drama"]
+     : ["INSERT INTO \"films\" (\"code\", \"date-prod\", \"did\", \"kind\", \"title\") VALUES (?, ?, 106, ?, ?) RETURNING *" "T_601" "1961-06-16" "Drama" "Yojimbo"]
 
 **** Insert default values
 
      Insert a row consisting entirely of default values.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db :films []
-        (values :default))
+       (sql/insert my-db :films []
+         (sql/values :default))
      #+END_SRC
 
      #+RESULTS:
@@ -425,10 +424,10 @@
      with the same column layout as films.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db :films []
-        (select my-db [:*]
-          (from :tmp-films)
-          (where '(< :date-prod "2004-05-07"))))
+      (sql/insert my-db :films []
+        (sql/select my-db [:*]
+          (sql/from :tmp-films)
+          (sql/where '(< :date-prod "2004-05-07"))))
      #+END_SRC
 
      #+RESULTS:
@@ -442,11 +441,11 @@
      values originally proposed for insertion:
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db :distributors [:did :dname]
-        (values [{:did 5 :dname "Gizmo Transglobal"}
-                 {:did 6 :dname "Associated Computing, Inc"}])
-        (on-conflict [:did]
-          (do-update {:dname :EXCLUDED.dname})))
+       (sql/insert my-db :distributors [:did :dname]
+         (sql/values [{:did 5 :dname "Gizmo Transglobal"}
+                      {:did 6 :dname "Associated Computing, Inc"}])
+         (sql/on-conflict [:did]
+           (sql/do-update {:dname :EXCLUDED.dname})))
      #+END_SRC
 
      #+RESULTS:
@@ -461,10 +460,10 @@
      constrains values appearing in the did column:
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db :distributors [:did :dname]
-        (values [{:did 7 :dname "Redline GmbH"}])
-        (on-conflict [:did]
-          (do-nothing)))
+       (sql/insert my-db :distributors [:did :dname]
+         (sql/values [{:did 7 :dname "Redline GmbH"}])
+         (sql/on-conflict [:did]
+           (sql/do-nothing)))
      #+END_SRC
 
      #+RESULTS:
@@ -475,11 +474,11 @@
      Don't update existing distributors based in a certain ZIP code.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db (as :distributors :d) [:did :dname]
-        (values [{:did 8 :dname "Anvil Distribution"}])
-        (on-conflict [:did]
-          (do-update {:dname '(:|| :EXCLUDED.dname " (formerly " :d.dname ")")})
-          (where '(:<> :d.zipcode "21201"))))
+       (sql/insert my-db (as :distributors :d) [:did :dname]
+         (sql/values [{:did 8 :dname "Anvil Distribution"}])
+         (sql/on-conflict [:did]
+           (sql/do-update {:dname '(:|| :EXCLUDED.dname " (formerly " :d.dname ")")})
+           (sql/where '(:<> :d.zipcode "21201"))))
      #+END_SRC
 
      #+RESULTS:
@@ -491,10 +490,10 @@
      to arbitrate taking the /DO NOTHING/ action.
 
      #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db :distributors [:did :dname]
-        (values [{:did 9 :dname "Antwerp Design"}])
-        (on-conflict-on-constraint :distributors_pkey
-          (do-nothing)))
+       (sql/insert my-db :distributors [:did :dname]
+         (sql/values [{:did 9 :dname "Antwerp Design"}])
+         (sql/on-conflict-on-constraint :distributors_pkey
+           (sql/do-nothing)))
      #+END_SRC
 
      #+RESULTS:
@@ -505,9 +504,9 @@
     Join the =weathers= table with the =cities= table.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:*]
-        (from :weather)
-        (join :cities.name :weather.city))
+      (sql/select my-db [:*]
+        (sql/from :weather)
+        (sql/join :cities.name :weather.city))
     #+END_SRC
 
     #+RESULTS:
@@ -518,9 +517,9 @@
     SQL expression.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:*]
-        (from :weather)
-        (join :cities '(on (= :cities.name :weather.city))))
+      (sql/select my-db [:*]
+        (sql/from :weather)
+        (sql/join :cities '(on (= :cities.name :weather.city))))
     #+END_SRC
 
     #+RESULTS:
@@ -529,9 +528,9 @@
     The type of join can be given as a keyword argument.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:*]
-        (from :weather)
-        (join :cities '(on (= :cities.name :weather.city)) :type :inner))
+      (sql/select my-db [:*]
+        (sql/from :weather)
+        (sql/join :cities '(on (= :cities.name :weather.city)) :type :inner))
     #+END_SRC
 
     #+RESULTS:
@@ -542,7 +541,8 @@
     Select all films.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:*] (from :films))
+      (sql/select my-db [:*]
+        (sql/from :films))
     #+END_SRC
 
     #+RESULTS:
@@ -551,9 +551,9 @@
     Select all Comedy films.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:*]
-        (from :films)
-        (where '(= :kind "Comedy")))
+      (sql/select my-db [:*]
+        (sql/from :films)
+        (sql/where '(= :kind "Comedy")))
     #+END_SRC
 
     #+RESULTS:
@@ -562,9 +562,9 @@
     Retrieve the most recent weather report for each location.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db (distinct [:location :time :report] :on [:location])
-        (from :weather-reports)
-        (order-by :location (desc :time)))
+      (sql/select my-db (sql/distinct [:location :time :report] :on [:location])
+        (sql/from :weather-reports)
+        (sql/order-by :location (desc :time)))
     #+END_SRC
 
     #+RESULTS:
@@ -576,8 +576,8 @@
     =films= table.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (update my-db :films {:kind "Dramatic"}
-        (where '(= :kind "Drama")))
+      (sql/update my-db :films {:kind "Dramatic"}
+        (sql/where '(= :kind "Drama")))
     #+END_SRC
 
     #+RESULTS:
@@ -587,7 +587,7 @@
     upper case.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (update my-db :films {:kind '(upper :kind)})
+      (sql/update my-db :films {:kind '(upper :kind)})
     #+END_SRC
 
     #+RESULTS:
@@ -598,9 +598,9 @@
     The sort expression(s) can be any expression that would be valid in the query's select list.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:a :b]
-        (from :table-1)
-        (order-by '(+ :a :b) :c))
+      (sql/select my-db [:a :b]
+        (sql/from :table-1)
+        (sql/order-by '(+ :a :b) :c))
     #+END_SRC
 
     #+RESULTS:
@@ -609,9 +609,9 @@
     A sort expression can also be the column label
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [(as '(+ :a :b) :sum) :c]
-        (from :table-1)
-        (order-by :sum))
+      (sql/select my-db [(sql/as '(+ :a :b) :sum) :c]
+        (sql/from :table-1)
+        (sql/order-by :sum))
     #+END_SRC
 
     #+RESULTS:
@@ -620,10 +620,10 @@
     or the number of an output column.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:a '(max :b)]
-        (from :table-1)
-        (group-by :a)
-        (order-by 1))
+      (sql/select my-db [:a '(max :b)]
+        (sql/from :table-1)
+        (sql/group-by :a)
+        (sql/order-by 1))
     #+END_SRC
 
     #+RESULTS:
@@ -634,10 +634,10 @@
     Groups can be restricted via a /HAVING/ clause.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:city '(max :temp-lo)]
-        (from :weather)
-        (group-by :city)
-        (having '(< (max :temp-lo) 40)))
+      (sql/select my-db [:city '(max :temp-lo)]
+        (sql/from :weather)
+        (sql/group-by :city)
+        (sql/having '(< (max :temp-lo) 40)))
     #+END_SRC
 
     #+RESULTS:
@@ -648,7 +648,7 @@
     A bare /VALUES/ command.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (values my-db [[1 "one"] [2 "two"] [3 "three"]])
+      (sql/values my-db [[1 "one"] [2 "two"] [3 "three"]])
     #+END_SRC
 
     #+RESULTS:
@@ -658,11 +658,11 @@
     effectively equivalent to.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (union
+      (sql/union
        {:all true}
-       (select my-db [(as 1 :column1) (as "one" :column2)])
-       (select my-db [(as 2 :column1) (as "two" :column2)])
-       (select my-db [(as 3 :column1) (as "three" :column2)]))
+       (sql/select my-db [(sql/as 1 :column1) (sql/as "one" :column2)])
+       (sql/select my-db [(sql/as 2 :column1) (sql/as "two" :column2)])
+       (sql/select my-db [(sql/as 3 :column1) (sql/as "three" :column2)]))
     #+END_SRC
 
     #+RESULTS:
@@ -672,12 +672,12 @@
     common use is in /INSERT/.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db :films []
-        (values [{:code "T-601"
-                  :title "Yojimbo"
-                  :did 106
-                  :date-prod "1961-06-16"
-                  :kind "Drama"}]))
+      (sql/insert my-db :films []
+        (sql/values [{:code "T-601"
+                      :title "Yojimbo"
+                      :did 106
+                      :date-prod "1961-06-16"
+                      :kind "Drama"}]))
     #+END_SRC
 
     #+RESULTS:
@@ -688,9 +688,9 @@
     instead of specifying a value.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (insert my-db :films []
-        (values [["UA502" "Bananas" 105 :DEFAULT "Comedy" "82 minutes"]
-                 ["T_601" "Yojimbo" 106 :DEFAULT "Drama" :DEFAULT]]))
+      (sql/insert my-db :films []
+        (sql/values [["UA502" "Bananas" 105 :DEFAULT "Comedy" "82 minutes"]
+                     ["T_601" "Yojimbo" 106 :DEFAULT "Drama" :DEFAULT]]))
     #+END_SRC
 
     #+RESULTS:
@@ -700,12 +700,12 @@
     for example in a /FROM/ clause:
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:f.*]
-        (from (as :films :f)
-              (as (values [["MGM" "Horror"] ["UA" "Sci-Fi"]])
-                  :t [:studio :kind]))
-        (where '(and (= :f.studio :t.studio)
-                     (= :f.kind :t.kind))))
+      (sql/select my-db [:f.*]
+        (sql/from (sql/as :films :f)
+                  (sql/as (sql/values [["MGM" "Horror"] ["UA" "Sci-Fi"]])
+                          :t [:studio :kind]))
+        (sql/where '(and (= :f.studio :t.studio)
+                         (= :f.kind :t.kind))))
     #+END_SRC
 
     #+RESULTS:
@@ -719,12 +719,12 @@
     different in other database systems.)
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (update my-db :employees
+      (sql/update my-db :employees
         {:salary '(* :salary :v.increase)}
-        (from (as (values [[1 200000 1.2] [2 400000 1.4]])
-                  :v [:depno :target :increase]))
-        (where '(and (= :employees.depno :v.depno)
-                     (>= :employees.sales :v.target))))
+        (sql/from (sql/as (sql/values [[1 200000 1.2] [2 400000 1.4]])
+                          :v [:depno :target :increase]))
+        (sql/where '(and (= :employees.depno :v.depno)
+                         (>= :employees.sales :v.target))))
     #+END_SRC
 
     #+RESULTS:
@@ -738,16 +738,16 @@
     determine the assumed type for all:
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (select my-db [:*]
-        (from :machines)
-        (where `(in :ip-address
-                    ~(values [['(cast "192.168.0.1" :inet)]
-                              ["192.168.0.10"]
-                              ["192.168.1.43"]]))))
+      (sql/select my-db [:*]
+        (sql/from :machines)
+        (sql/where `(in :ip-address
+                        ~(sql/values [['(cast "192.168.0.1" :inet)]
+                                      ["192.168.0.10"]
+                                      ["192.168.1.43"]]))))
     #+END_SRC
 
     #+RESULTS:
-    : ["SELECT * FROM \"machines\" WHERE \"ip-address\" IN (VALUES (CAST(? AS inet)), (?), (?))" "192.168.0.1" "192.168.0.10" "192.168.1.43"]
+    : ["SELECT * FROM \"machines\" WHERE \"ip-address\" IN (VALUES (CAST(? AS INET)), (?), (?))" "192.168.0.1" "192.168.0.10" "192.168.1.43"]
 
 *** With Queries / Common table expressions
 
@@ -758,32 +758,32 @@
 
     #+BEGIN_SRC clojure :exports code :results silent
       (defn regional-sales [db]
-        (select db [:region (as '(sum :amount) :total-sales)]
-          (from :orders)
-          (group-by :region)))
+        (sql/select db [:region (sql/as '(sum :amount) :total-sales)]
+          (sql/from :orders)
+          (sql/group-by :region)))
     #+END_SRC
 
     #+BEGIN_SRC clojure :exports code :results silent
       (defn top-regions [db]
-        (select db [:region]
-          (from :regional-sales)
-          (where `(> :total-sales
-                     ~(select db ['(/ (sum :total-sales) 10)]
-                        (from :regional-sales))))))
+        (sql/select db [:region]
+          (sql/from :regional-sales)
+          (sql/where `(> :total-sales
+                         ~(sql/select db ['(/ (sum :total-sales) 10)]
+                            (sql/from :regional-sales))))))
     #+END_SRC
 
     And use them in a common table expression.
 
     #+BEGIN_SRC clojure :exports both :results verbatim
-      (with my-db [:regional-sales (regional-sales my-db)
-                   :top-regions (top-regions my-db)]
-        (select my-db [:region :product
-                    (as '(sum :quantity) :product-units)
-                    (as '(sum :amount) :product-sales)]
-          (from :orders)
-          (where `(in :region ~(select my-db [:region]
-                                 (from :top-regions))))
-          (group-by :region :product)))
+      (sql/with my-db [:regional-sales (regional-sales my-db)
+                       :top-regions (top-regions my-db)]
+        (sql/select my-db [:region :product
+                           (sql/as '(sum :quantity) :product-units)
+                           (sql/as '(sum :amount) :product-sales)]
+          (sql/from :orders)
+          (sql/where `(in :region ~(sql/select my-db [:region]
+                                     (sql/from :top-regions))))
+          (sql/group-by :region :product)))
     #+END_SRC
 
     #+RESULTS:
