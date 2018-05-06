@@ -26,6 +26,36 @@
   [stmt & body]
   (expr/stmt (chain-state (cons stmt body))))
 
+(defn excluded-keyword?
+  "Returns true if the keyword `k` is prefixed with \"EXCLUDED.\",
+  otherwise false."
+  [k]
+  (str/starts-with? (name k) "EXCLUDED."))
+
+(defn excluded-keyword
+  "Returns the keyword `k`, prefixed with \"EXCLUDED.\"."
+  [k]
+  (some->> k name (str "EXCLUDED.") keyword))
+
+(s/fdef excluded-keyword
+  :args (s/cat :k (s/nilable simple-keyword?))
+  :ret (s/nilable excluded-keyword?))
+
+(defn excluded-kw-map
+  "Returns a map of EXCLUDED `ks` indexed by `ks`."
+  [ks]
+  (cond
+    (map? ks)
+    (excluded-kw-map (keys ks))
+    (sequential? ks)
+    (zipmap ks (map excluded-keyword ks))))
+
+(s/fdef excluded-kw-map
+  :args (s/cat :ks (s/nilable
+                    (s/or :map (s/map-of keyword? any?)
+                          :seq (s/coll-of simple-keyword?))))
+  :ret (s/nilable (s/map-of simple-keyword? excluded-keyword?)))
+
 (defn ast
   "Returns the abstract syntax tree of `stmt`."
   [stmt]

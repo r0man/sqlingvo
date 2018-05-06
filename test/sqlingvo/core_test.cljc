@@ -10,6 +10,22 @@
 
 (stest/instrument)
 
+(deftest test-excluded-keyword
+  (are [arg expected]
+      (= (sql/excluded-keyword arg) expected)
+    nil nil
+    :a :EXCLUDED.a))
+
+(deftest test-excluded-kw-map
+  (are [arg expected]
+      (= (sql/excluded-kw-map arg) expected)
+    nil
+    nil
+    {:a 1}
+    {:a :EXCLUDED.a}
+    [:a]
+    {:a :EXCLUDED.a}))
+
 (deftest test-column
   (are [column expected]
       (= (sql/ast column) expected)
