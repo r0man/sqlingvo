@@ -324,6 +324,18 @@
           (sql/order-by (sql/nulls :created-at :first)))
         ["SELECT * FROM \"continents\" ORDER BY \"created-at\" NULLS FIRST"]))
 
+(deftest test-select-order-by-column-index-nulls-first
+  (sql= (sql/select db [:id :name]
+          (sql/from :continents)
+          (sql/order-by (sql/nulls 2 :first)))
+        ["SELECT \"id\", \"name\" FROM \"continents\" ORDER BY 2 NULLS FIRST"]))
+
+(deftest test-select-order-by-column-index-asc-nulls-first
+  (sql= (sql/select db [:id :name]
+          (sql/from :continents)
+          (sql/order-by (sql/nulls (sql/asc 2) :first)))
+        ["SELECT \"id\", \"name\" FROM \"continents\" ORDER BY 2 ASC NULLS FIRST"]))
+
 (deftest test-select-order-by-nulls-last
   (sql= (sql/select db [:*]
           (sql/from :continents)

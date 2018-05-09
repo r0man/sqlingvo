@@ -432,9 +432,7 @@
            (if table (sql-quote db table))
            (if name (if (= :* name) "*" (sql-quote db name)))]
           (remove nil?)
-          (str/join ".")))
-   (if direction (str " " (str/upper-case (core/name direction))))
-   (if nulls (str " NULLS " (keyword-sql nulls)))))
+          (str/join ".")))))
 
 (defmethod compile-sql :constant [db node]
   (compile-const db node))
@@ -771,6 +769,13 @@
 (defmethod compile-sql :restart-identity [db {:keys [op]}]
   ["RESTART IDENTITY"])
 
+(defn- compile-sort-expression
+  [db {:keys [direction nulls] :as node}]
+  (concat-sql
+   (compile-sql db node)
+   ;; (if direction (str " " (str/upper-case (core/name direction))))
+   (if nulls (str " NULLS " (keyword-sql nulls)))))
+
 (defmethod compile-sql :select [db node]
   (let [{:keys [exprs distinct joins from where group-by limit offset order-by set]} node]
     (concat-sql
@@ -790,7 +795,7 @@
      (when-let [window (:window node)]
        (concat-sql " " (compile-sql db window)))
      (when (not-empty order-by)
-       (concat-sql " ORDER BY " (compile-sql-join db ", " order-by)))
+       (concat-sql " ORDER BY " (join-sql ", " (map #(compile-sort-expression db %1) order-by))))
      (when-let [limit-sql (and limit (seq (compile-sql db limit)))]
        (concat-sql " " limit-sql))
      (if offset
