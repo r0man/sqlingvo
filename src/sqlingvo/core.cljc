@@ -385,13 +385,14 @@
   (let [[[opts] stmts] (split-with map? args)]
     (expr/stmt
      (fn [_]
-       [nil (merge
+       (->> (merge
              (expr/make-node
               :op op
               :db (-> stmts first ast :db)
               :children [:stmts]
               :stmts (map ast stmts))
-             opts)]))))
+             opts)
+            (repeat 2))))))
 
 (defn except
   "Build an EXCEPT statement.
