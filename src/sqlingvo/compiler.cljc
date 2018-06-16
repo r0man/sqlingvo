@@ -399,7 +399,7 @@
 (defmethod compile-sql :alias
   [db {:keys [columns expr name]}]
   (concat-sql
-   (if (contains? #{:select :values} (:op expr))
+   (if (contains? #{:except :intersect :select :values :union} (:op expr))
      (wrap-stmt (compile-sql db expr))
      (compile-sql db expr))
    (if (= :table (:op expr))

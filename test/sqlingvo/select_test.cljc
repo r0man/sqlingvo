@@ -1034,3 +1034,30 @@
 (deftest test-cast-schema-type
   (sql= (sql/select db ['(cast "x" :my-schema.my-type)])
         ["SELECT CAST(? AS \"my-schema\".\"my-type\")" "x"]))
+
+(deftest test-select-from-except
+  (sql= (sql/select db [:*]
+          (sql/from (sql/as (sql/except
+                             db
+                             (sql/select db [1])
+                             (sql/select db [2]))
+                            :x)))
+        ["SELECT * FROM (SELECT 1 EXCEPT SELECT 2) AS \"x\""]))
+
+(deftest test-select-from-intersect
+  (sql= (sql/select db [:*]
+          (sql/from (sql/as (sql/intersect
+                             db
+                             (sql/select db [1])
+                             (sql/select db [2]))
+                            :x)))
+        ["SELECT * FROM (SELECT 1 INTERSECT SELECT 2) AS \"x\""]))
+
+(deftest test-select-from-union
+  (sql= (sql/select db [:*]
+          (sql/from (sql/as (sql/union
+                             db
+                             (sql/select db [1])
+                             (sql/select db [2]))
+                            :x)))
+        ["SELECT * FROM (SELECT 1 UNION SELECT 2) AS \"x\""]))
