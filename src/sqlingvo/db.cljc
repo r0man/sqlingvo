@@ -26,10 +26,6 @@
   {:classname "com.mysql.cj.jdbc.Driver"
    :sql-quote util/sql-quote-backtick})
 
-(defmethod vendor :postgres [_]
-  {:classname "org.postgresql.Driver"
-   :sql-quote util/sql-quote-double-quote})
-
 (defmethod vendor :postgresql [_]
   {:classname "org.postgresql.Driver"
    :sql-quote util/sql-quote-double-quote})
