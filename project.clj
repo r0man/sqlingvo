@@ -5,23 +5,23 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :min-lein-version "2.5.2"
   :deploy-repositories [["releases" :clojars]]
-  :dependencies [[noencore "0.3.3"]
+  :dependencies [[noencore "0.3.4"]
                  [org.clojure/clojure "1.9.0"]]
-  :plugins [[jonase/eastwood "0.2.5"]
+  :plugins [[jonase/eastwood "0.3.3"]
             [lein-cljsbuild "1.1.7"]
             [lein-difftest "2.0.0"]
-            [lein-doo "0.1.8"]]
+            [lein-doo "0.1.10"]]
   :eastwood {:config-files ["test-resources/eastwood.clj"]
              :exclude-linters [:local-shadows-var]}
   :profiles
   {:dev
    {:dependencies [[org.clojure/test.check "0.9.0"]]}
    :provided
-   {:dependencies [[org.clojure/clojurescript "1.9.946"]]}
+   {:dependencies [[org.clojure/clojurescript "1.10.439"]]}
    :repl
    {:dependencies [[com.cemerick/piggieback "0.2.2"]
                    [reloaded.repl "0.2.4"]]
-    :plugins [[figwheel-sidecar "0.5.14"]]
+    :plugins [[figwheel-sidecar "0.5.17"]]
     :init-ns user
     :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
   :aliases
@@ -37,7 +37,7 @@
   {:builds
    [{:id "none"
      :compiler
-     {:main 'sqlingvo.test.runner
+     {:main sqlingvo.test.runner
       :optimizations :none
       :output-dir "target/none"
       :output-to "target/none.js"
@@ -47,7 +47,7 @@
      :source-paths ["src" "test"]}
     {:id "node"
      :compiler
-     {:main 'sqlingvo.test.runner
+     {:main sqlingvo.test.runner
       :optimizations :none
       :output-dir "target/node"
       :output-to "target/node.js"
@@ -58,7 +58,7 @@
      :source-paths ["src" "test"]}
     {:id "advanced"
      :compiler
-     {:main 'sqlingvo.test.runner
+     {:main sqlingvo.test.runner
       :optimizations :advanced
       :output-dir "target/advanced"
       :output-to "target/advanced.js"
