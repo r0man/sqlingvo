@@ -5,12 +5,12 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :min-lein-version "2.5.2"
   :deploy-repositories [["releases" :clojars]]
-  :dependencies [[noencore "0.3.4"]
-                 [org.clojure/clojure "1.9.0"]]
-  :plugins [[jonase/eastwood "0.3.3"]
+  :dependencies [[noencore "0.3.6"]
+                 [org.clojure/clojure "1.10.0"]]
+  :plugins [[jonase/eastwood "0.3.4"]
             [lein-cljsbuild "1.1.7"]
             [lein-difftest "2.0.0"]
-            [lein-doo "0.1.10"]]
+            [lein-doo "0.1.11"]]
   :eastwood {:config-files ["test-resources/eastwood.clj"]
              :exclude-linters [:local-shadows-var]}
   :profiles
@@ -21,7 +21,7 @@
    :repl
    {:dependencies [[com.cemerick/piggieback "0.2.2"]
                    [reloaded.repl "0.2.4"]]
-    :plugins [[figwheel-sidecar "0.5.17"]]
+    :plugins [[figwheel-sidecar "0.5.18"]]
     :init-ns user
     :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
   :aliases
