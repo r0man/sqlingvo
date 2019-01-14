@@ -5,7 +5,7 @@
   [[https://clojars.org/sqlingvo][https://img.shields.io/clojars/v/sqlingvo.svg]]
   [[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
   [[https://versions.deps.co/r0man/sqlingvo][https://versions.deps.co/r0man/sqlingvo/status.svg]]
-  [[https://versions.deps.co/r0man/sqlingvo][https://jarkeeper.com/r0man/sqlingvo/downloads.svg]]
+  [[https://versions.deps.co/r0man/sqlingvo][https://versions.deps.co/r0man/sqlingvo/downloads.svg]]
 
   /SQLingvo/ is an embedded [[https://clojure.org][Clojure]] and [[https://github.com/clojure/clojurescript][ClojureScript]] /DSL/ that
   allows you to build /SQL/ statements within your favorite
