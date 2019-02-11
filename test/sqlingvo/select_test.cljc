@@ -864,7 +864,7 @@
                              '(over (rank)
                                     (partition-by
                                      :depname
-                                     (sql/order-by (desc :salary) :empno)))
+                                     (order-by (desc :salary) :empno)))
                              :pos)]
               (sql/from :empsalary))
             :ss))
@@ -969,6 +969,11 @@
   (sql= (sql/select db ['(array_agg :a (order-by (desc :b)))]
           (sql/from :table))
         ["SELECT array_agg(\"a\" ORDER BY \"b\" DESC) FROM \"table\""]))
+
+(deftest test-select-array-agg-order-by-desc-nulls-last
+  (sql= (sql/select db ['(array_agg :a (order-by (nulls (desc :b) :last)))]
+          (sql/from :table))
+        ["SELECT array_agg(\"a\" ORDER BY \"b\" DESC NULLS LAST) FROM \"table\""]))
 
 (deftest test-select-string-agg-order-by
   (sql= (sql/select db ['(string_agg :a "," (order-by :a))]
