@@ -308,6 +308,11 @@
 (defmethod compile-fn :desc [db node]
   (compile-direction db node))
 
+(defmethod compile-fn :nulls [db node]
+  (let [[_ args direction] (:children node)]
+    (concat-sql (compile-sql db args) " NULLS "
+                (-> direction :val name str/upper-case))))
+
 (defmethod compile-fn :raw [db node]
   (-> (:children node)
       (second)
