@@ -96,3 +96,9 @@
         [(str "UPDATE \"films\" "
               "SET \"name\" = lower(\"name\") "
               "WHERE (\"id\" = 1)")]))
+
+(deftest test-update-cast-custom-type
+  (sql= (sql/update db :people
+          {:mood '(cast "happy" :mood-type)}
+          (sql/where {:name "Larry"}))
+        ["UPDATE \"people\" SET \"mood\" = CAST(? AS mood_type) WHERE " "happy"]))

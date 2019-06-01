@@ -12,14 +12,14 @@
     :x/y "x/y"))
 
 (deftest test-sql-type
-  (are [type expected] (= (util/sql-type-name type) expected)
+  (are [type expected] (= (util/sql-type-name db type) expected)
     nil nil
     :bit-varying "BIT VARYING"
     :character-varying "CHARACTER VARYING"
     :double-precision "DOUBLE PRECISION"
     :json "JSON"
     :jsonb "JSONB"
-    :my-type "my-type"
+    :my-type "my_type"
     :smallint "SMALLINT"
     :time-with-time-zone "TIME WITH TIME ZONE"
     :timestamp-with-time-zone "TIMESTAMP WITH TIME ZONE"))

@@ -139,11 +139,6 @@
     (assoc-op clause)
     (dissoc-op clause)))
 
-(defn sql-type-name
-  "Return the SQL name for the `type` keyword."
-  [type]
-  (or (get sql-type-names type) (some-> type name)))
-
 (defn- split-sql-name [x]
   (if x (split (name x) #"\.")))
 
@@ -216,3 +211,10 @@
   (let [counter (atom 0)
         prefix (str (or prefix "$"))]
     #(str prefix (swap! counter inc))))
+
+(defmulti sql-type-name
+  "Return the SQL name for the `type` keyword."
+  (fn [db type] type))
+
+(defmethod sql-type-name :default [db type]
+  (or (get sql-type-names type) (some-> type sql-name-underscore)))

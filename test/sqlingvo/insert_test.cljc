@@ -211,3 +211,10 @@
               "(?, ?, 106, DEFAULT, ?, DEFAULT)")
          "UA502" "Bananas" "Comedy" "82 minutes"
          "T_601" "Yojimbo" "Drama"]))
+
+(deftest test-insert-cast-custom-type
+  (sql= (sql/insert db :people []
+          (sql/values [{:name "Larry"
+                        :mood '(cast "happy" :mood-type)}]))
+        ["INSERT INTO \"people\" (\"mood\", \"name\") VALUES (CAST(? AS mood_type), ?)"
+         "happy" "Larry"]))
