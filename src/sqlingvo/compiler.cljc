@@ -204,12 +204,12 @@
     (= op :array)
     (concat-sql
      (util/sql-type-name
-      (-> type :children first :name)) "[]")
+      db (-> type :children first :name)) "[]")
     ;; Type in schema
     (and (= op :column) (:table type) (:name type))
     (compile-sql db type)
     :else
-    (util/sql-type-name (:name type))))
+    (util/sql-type-name db (:name type))))
 
 (defmethod compile-fn :cast [db node]
   (let [[_ & [expr type]] (:children node)]
@@ -355,7 +355,7 @@
   "Compile a GEOMETRY or GEOGRAPHY column type."
   [db column]
   (concat-sql
-   (util/sql-type-name (:type column))
+   (util/sql-type-name db (:type column))
    (when-let [geometry (:geometry column)]
      (str "(" (some-> column :geometry name
                       str/upper-case
@@ -377,7 +377,7 @@
 (defmethod compile-column-type :default [db {:keys [type]}]
   (if (str/index-of (name type) ".")
     (compile-sql db (expr/parse-type type))
-    (util/sql-type-name type)))
+    (util/sql-type-name db type)))
 
 (defn compile-column [db column]
   (when (:length column)
