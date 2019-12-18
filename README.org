@@ -10,7 +10,7 @@
   /SQLingvo/ is an embedded [[https://clojure.org][Clojure]] and [[https://github.com/clojure/clojurescript][ClojureScript]] /DSL/ that
   allows you to build /SQL/ statements within your favorite
   /LISP/. The /SQL/ statements used by /SQLingvo/ are compatible with
-  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]], [[https://github.com/alaisi/postgres.async][postgres.async]] and
+  the [[https://github.com/funcool/clojure.jdbc][clojure.jdbc]], [[https://github.com/clojure/java.jdbc][clojure.java.jdbc]], [[https://github.com/seancorfield/next-jdbc][next.jdbc]],  [[https://github.com/alaisi/postgres.async][postgres.async]] and
   [[https://github.com/brianc/node-postgres][node-postgres]] libraries.
 
   If you want to execute /SQL/ statements on [[https://nodejs.org][Node.js]], take a look at
