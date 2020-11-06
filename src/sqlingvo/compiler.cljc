@@ -1,7 +1,6 @@
 (ns sqlingvo.compiler
   #?(:cljs (:require-macros [sqlingvo.compiler :refer [defarity]]))
   (:require [clojure.core :as core]
-            [clojure.set :as set]
             [clojure.string :as str]
             [sqlingvo.expr :as expr]
             [sqlingvo.util :as util :refer [sql-quote sql-quote-fn]]))
@@ -610,8 +609,8 @@
 (defmethod compile-sql :group-by [db {:keys [exprs]}]
   (concat-sql "GROUP BY" (compile-sql db exprs)))
 
-(defmethod compile-sql :if-exists [db {:keys [op]}]
-  ["IF EXISTS"])
+(defmethod compile-sql :if-exists [_ _] ["IF EXISTS"])
+(defmethod compile-sql :if-not-exists [_ _] ["IF NOT EXISTS"])
 
 (defn- compile-value [db columns value]
   (let [values (map #(or (get value %) {:op :nil}) (map :form columns))
@@ -747,6 +746,16 @@
   (concat-sql
    (when schema (str (sql-quote db schema) "."))
    (sql-quote db name)))
+
+(defmethod compile-sql :create-materialized-view [db node]
+  (let [{:keys [columns if-not-exists values view]} node]
+    (concat-sql "CREATE MATERIALIZED VIEW "
+                (when if-not-exists
+                  (concat-sql (compile-sql db if-not-exists) " "))
+                (compile-sql db view)
+                " (" (compile-sql-join db ", " columns) ")"
+                (when values
+                  (concat-sql " AS " (compile-sql db values))))))
 
 (defmethod compile-sql :drop-materialized-view [db node]
   (let [{:keys [cascade if-exists restrict view]} node]

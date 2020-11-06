@@ -4,6 +4,12 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
+(deftest test-create-materialized-view
+  (sql= (sql/create-materialized-view db :pseudo-source [:key :value]
+          (sql/values [["a" 1] ["a" 2] ["a" 3] ["a" 4] ["b" 5] ["c" 6] ["c" 7]]))
+        ["CREATE MATERIALIZED VIEW \"pseudo-source\" (\"key\", \"value\") AS VALUES (?, 1), (?, 2), (?, 3), (?, 4), (?, 5), (?, 6), (?, 7)"
+         "a" "a" "a" "a" "b" "c" "c"]))
+
 (deftest test-refresh-materialized-view
   (sql= (sql/refresh-materialized-view :postgresql :order-summary)
         ["REFRESH MATERIALIZED VIEW \"order-summary\""])

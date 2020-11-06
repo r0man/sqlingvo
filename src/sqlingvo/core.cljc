@@ -618,6 +618,27 @@
   (fn [stmt]
     [nil (assoc stmt :primary-key (vec keys))]))
 
+(defn create-materialized-view
+  "Build a CREATE MATERIALIZED VIEW statement.
+
+  Examples:
+
+  (sql/create-materialized-view db :pseudo-source [:key :value]
+    (sql/values [[\"a\" 1] [\"a\" 2] [\"a\" 3] [\"a\" 4] [\"b\" 5] [\"c\" 6] [\"c\" 7]]))
+  "
+  {:style/indent 3}
+  [db view columns & body]
+  (let [view (expr/parse-table view)]
+    (expr/stmt
+     (fn [_]
+       ((chain-state body)
+        (expr/make-node
+         :op :create-materialized-view
+         :db (db/db db)
+         :children [:view]
+         :columns (mapv expr/parse-column columns)
+         :view view))))))
+
 (defn drop-materialized-view
   "Build a DROP MATERIALIZED VIEW statement.
 
@@ -827,6 +848,7 @@
                     :type :exprs
                     :values (mapv expr/parse-exprs vals)})]
         (->> (case (:op stmt)
+               :create-materialized-view (assoc stmt :values node)
                :insert (assoc stmt :values node)
                node)
              (repeat 2)))))))
