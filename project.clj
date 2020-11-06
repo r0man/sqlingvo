@@ -7,21 +7,22 @@
   :deploy-repositories [["releases" :clojars]]
   :dependencies [[noencore "0.3.6"]
                  [org.clojure/clojure "1.10.1"]]
-  :plugins [[jonase/eastwood "0.3.6"]
-            [lein-cljsbuild "1.1.7"]
+  :plugins [[jonase/eastwood "0.3.11"]
+            [lein-cljsbuild "1.1.8"]
             [lein-difftest "2.0.0"]
             [lein-doo "0.1.11"]]
   :eastwood {:config-files ["test-resources/eastwood.clj"]
              :exclude-linters [:local-shadows-var]}
   :profiles
   {:dev
-   {:dependencies [[org.clojure/test.check "0.10.0"]]}
+   {:dependencies [[org.clojure/core.rrb-vector "0.1.2"]
+                   [org.clojure/test.check "1.1.0"]]}
    :provided
    {:dependencies [[org.clojure/clojurescript "1.10.597"]]}
    :repl
    {:dependencies [[com.cemerick/piggieback "0.2.2"]
                    [reloaded.repl "0.2.4"]]
-    :plugins [[figwheel-sidecar "0.5.19"]]
+    :plugins [[figwheel-sidecar "0.5.20"]]
     :init-ns user
     :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
   :aliases
