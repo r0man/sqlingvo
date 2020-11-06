@@ -793,6 +793,6 @@
 
 ** License
 
-   Copyright © 2012-2016 [[https://github.com/r0man][r0man]]
+   Copyright © 2012-2020 [[https://github.com/r0man][r0man]]
 
    Distributed under the Eclipse Public License, the same as Clojure.
