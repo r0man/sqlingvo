@@ -748,12 +748,14 @@
    (sql-quote db name)))
 
 (defmethod compile-sql :create-materialized-view [db node]
-  (let [{:keys [columns if-not-exists values view]} node]
+  (let [{:keys [columns if-not-exists select values view]} node]
     (concat-sql "CREATE MATERIALIZED VIEW "
                 (when if-not-exists
                   (concat-sql (compile-sql db if-not-exists) " "))
                 (compile-sql db view)
                 " (" (compile-sql-join db ", " columns) ")"
+                (when select
+                  (concat-sql " AS " (compile-sql db select)))
                 (when values
                   (concat-sql " AS " (compile-sql db values))))))
 

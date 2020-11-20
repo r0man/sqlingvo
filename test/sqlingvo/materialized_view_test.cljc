@@ -4,11 +4,18 @@
             [clojure.test :refer [deftest is]]
             [sqlingvo.core :as sql]))
 
-(deftest test-create-materialized-view
+(deftest test-create-materialized-view-as-values
   (sql= (sql/create-materialized-view db :pseudo-source [:key :value]
           (sql/values [["a" 1] ["a" 2] ["a" 3] ["a" 4] ["b" 5] ["c" 6] ["c" 7]]))
         ["CREATE MATERIALIZED VIEW \"pseudo-source\" (\"key\", \"value\") AS VALUES (?, 1), (?, 2), (?, 3), (?, 4), (?, 5), (?, 6), (?, 7)"
          "a" "a" "a" "a" "b" "c" "c"]))
+
+(deftest test-create-materialized-view-as-select
+  (sql= (sql/create-materialized-view db :key_sums []
+          (sql/select db [:key '(sum :value)]
+            (sql/from :pseudo_source)
+            (sql/group-by :key)))
+        ["CREATE MATERIALIZED VIEW \"key_sums\" () AS SELECT \"key\", sum(\"value\") FROM \"pseudo_source\" GROUP BY \"key\""]))
 
 (deftest test-refresh-materialized-view
   (sql= (sql/refresh-materialized-view :postgresql :order-summary)

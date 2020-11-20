@@ -728,6 +728,7 @@
     (expr/stmt
      (fn [stmt]
        (->> (case (:op stmt)
+              :create-materialized-view (assoc stmt :select select)
               :insert (assoc stmt :select select)
               :select (assoc stmt :exprs (:exprs select))
               select)
