@@ -17,6 +17,12 @@
             (sql/group-by :key)))
         ["CREATE MATERIALIZED VIEW \"key_sums\" AS SELECT \"key\", sum(\"value\") FROM \"pseudo_source\" GROUP BY \"key\""]))
 
+(deftest test-create-materialized-view-as-select-if-exists
+  (sql= (sql/create-materialized-view db :pseudo-source [:key :value]
+          (sql/values [["a" 1]])
+          (sql/if-not-exists true))
+        ["CREATE MATERIALIZED VIEW IF NOT EXISTS \"pseudo-source\" (\"key\", \"value\") AS VALUES (?, 1)" "a"]))
+
 (deftest test-refresh-materialized-view
   (sql= (sql/refresh-materialized-view :postgresql :order-summary)
         ["REFRESH MATERIALIZED VIEW \"order-summary\""])
