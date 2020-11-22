@@ -602,6 +602,11 @@
     (util/assoc-op :offset :expr (expr/parse-expr expr))
     (util/dissoc-op :offset)))
 
+(defn or-replace
+  "Add an OR REPLACE clause to an SQL statement."
+  [condition]
+  (util/conditional-clause :or-replace condition))
+
 (defn order-by
   "Add a ORDER BY clause to an SQL statement."
   [& exprs]

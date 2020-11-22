@@ -611,6 +611,7 @@
 
 (defmethod compile-sql :if-exists [_ _] ["IF EXISTS"])
 (defmethod compile-sql :if-not-exists [_ _] ["IF NOT EXISTS"])
+(defmethod compile-sql :or-replace [_ _] ["OR REPLACE"])
 
 (defn- compile-value [db columns value]
   (let [values (map #(or (get value %) {:op :nil}) (map :form columns))
@@ -748,8 +749,11 @@
    (sql-quote db name)))
 
 (defmethod compile-sql :create-materialized-view [db node]
-  (let [{:keys [columns if-not-exists select values view]} node]
-    (concat-sql "CREATE MATERIALIZED VIEW "
+  (let [{:keys [columns if-not-exists or-replace select values view]} node]
+    (concat-sql "CREATE "
+                (when or-replace
+                  (concat-sql (compile-sql db or-replace) " "))
+                "MATERIALIZED VIEW "
                 (when if-not-exists
                   (concat-sql (compile-sql db if-not-exists) " "))
                 (compile-sql db view)
