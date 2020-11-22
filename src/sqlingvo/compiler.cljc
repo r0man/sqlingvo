@@ -753,7 +753,8 @@
                 (when if-not-exists
                   (concat-sql (compile-sql db if-not-exists) " "))
                 (compile-sql db view)
-                " (" (compile-sql-join db ", " columns) ")"
+                (when (seq columns)
+                  (concat-sql " (" (compile-sql-join db ", " columns) ")"))
                 (when select
                   (concat-sql " AS " (compile-sql db select)))
                 (when values
@@ -762,6 +763,17 @@
 (defmethod compile-sql :drop-materialized-view [db node]
   (let [{:keys [cascade if-exists restrict view]} node]
     (concat-sql "DROP MATERIALIZED VIEW "
+                (if if-exists
+                  (concat-sql (compile-sql db if-exists) " "))
+                (compile-sql db view)
+                (if cascade
+                  (concat-sql " " (compile-sql db cascade)))
+                (if restrict
+                  (concat-sql " " (compile-sql db restrict))))))
+
+(defmethod compile-sql :drop-view [db node]
+  (let [{:keys [cascade if-exists restrict view]} node]
+    (concat-sql "DROP VIEW "
                 (if if-exists
                   (concat-sql (compile-sql db if-exists) " "))
                 (compile-sql db view)

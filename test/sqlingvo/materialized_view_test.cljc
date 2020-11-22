@@ -15,7 +15,7 @@
           (sql/select db [:key '(sum :value)]
             (sql/from :pseudo_source)
             (sql/group-by :key)))
-        ["CREATE MATERIALIZED VIEW \"key_sums\" () AS SELECT \"key\", sum(\"value\") FROM \"pseudo_source\" GROUP BY \"key\""]))
+        ["CREATE MATERIALIZED VIEW \"key_sums\" AS SELECT \"key\", sum(\"value\") FROM \"pseudo_source\" GROUP BY \"key\""]))
 
 (deftest test-refresh-materialized-view
   (sql= (sql/refresh-materialized-view :postgresql :order-summary)

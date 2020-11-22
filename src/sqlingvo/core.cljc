@@ -657,6 +657,24 @@
          :children [:view]
          :view view))))))
 
+(defn drop-view
+  "Build a DROP VIEW statement.
+
+  Examples:
+
+  (drop-view db :order-summary)"
+  {:style/indent 2}
+  [db view & body]
+  (let [view (expr/parse-table view)]
+    (expr/stmt
+     (fn [_]
+       ((chain-state body)
+        (expr/make-node
+         :op :drop-view
+         :db (db/db db)
+         :children [:view]
+         :view view))))))
+
 (defn refresh-materialized-view
   "Build a REFRESH MATERIALIZED VIEW statement.
 
