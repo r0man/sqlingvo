@@ -1066,3 +1066,7 @@
                              (sql/select db [2]))
                             :x)))
         ["SELECT * FROM (SELECT 1 UNION SELECT 2) AS \"x\""]))
+
+(deftest test-select-as-fn
+  (sql= (sql/select db [`(as (cast "1" :int) :result)])
+        ["SELECT CAST(? AS INT) AS \"result\"" "1"]))

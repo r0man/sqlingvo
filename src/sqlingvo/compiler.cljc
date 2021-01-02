@@ -183,6 +183,10 @@
     (concat-sql "(" (compile-sql db array) ")"
                 (str "[" (:val start) ":" (:val end) "]"))))
 
+(defmethod compile-fn :as [db node]
+  (let [[_ source target] (:children node)]
+    (concat-sql (compile-sql db source) " AS " (compile-sql db target))))
+
 (defmethod compile-fn :case [db node]
   (let [[_ & args] (:children node)
         parts (partition 2 2 nil args)]
