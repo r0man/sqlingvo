@@ -3,7 +3,7 @@
   #+LANGUAGE: en
 
   [[https://clojars.org/sqlingvo][https://img.shields.io/clojars/v/sqlingvo.svg]]
-  [[https://travis-ci.org/r0man/sqlingvo][https://travis-ci.org/r0man/sqlingvo.svg]]
+  [[https://github.com/r0man/sqlingvo/actions?query=workflow%3A%22Clojure+CI%22][https://github.com/r0man/sqlingvo/workflows/Clojure%20CI/badge.svg]]
   [[https://versions.deps.co/r0man/sqlingvo][https://versions.deps.co/r0man/sqlingvo/status.svg]]
   [[https://versions.deps.co/r0man/sqlingvo][https://versions.deps.co/r0man/sqlingvo/downloads.svg]]
 
