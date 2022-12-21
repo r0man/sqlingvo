@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :min-lein-version "2.5.2"
   :deploy-repositories [["releases" :clojars]]
-  :dependencies [[noencore "0.3.6"]
+  :dependencies [[noencore "0.3.7"]
                  [org.clojure/clojure "1.10.1"]]
   :plugins [[jonase/eastwood "0.3.11"]
             [lein-cljsbuild "1.1.8"]
