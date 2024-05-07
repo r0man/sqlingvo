@@ -29,8 +29,8 @@
          ["clean"]
          ["difftest"]
          ["doo" "node" "node" "once"]
-         ["doo" "phantom" "none" "once"]
-         ["doo" "phantom" "advanced" "once"]
+         ;; ["doo" "phantom" "none" "once"]
+         ["doo" "node" "advanced" "once"]
          ["lint"]]
    "lint" ["do"  ["eastwood"]]}
   :cljsbuild
@@ -64,5 +64,6 @@
       :output-to "target/advanced.js"
       :parallel-build true
       :pretty-print true
+      :target :nodejs
       :verbose false}
      :source-paths ["src" "test"]}]})
