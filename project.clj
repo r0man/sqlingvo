@@ -5,8 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :min-lein-version "2.5.2"
   :deploy-repositories [["releases" :clojars]]
-  :dependencies [[noencore "0.3.6"]
-                 [org.clojure/clojure "1.10.1"]]
+  :dependencies [[noencore "0.3.7"]
+                 [org.clojure/clojure "1.11.3"]]
   :plugins [[jonase/eastwood "0.3.11"]
             [lein-cljsbuild "1.1.8"]
             [lein-difftest "2.0.0"]
@@ -15,10 +15,9 @@
              :exclude-linters [:local-shadows-var]}
   :profiles
   {:dev
-   {:dependencies [[org.clojure/core.rrb-vector "0.1.2"]
-                   [org.clojure/test.check "1.1.0"]]}
+   {:dependencies [[org.clojure/test.check "1.1.1"]]}
    :provided
-   {:dependencies [[org.clojure/clojurescript "1.10.597"]]}
+   {:dependencies [[org.clojure/clojurescript "1.11.132"]]}
    :repl
    {:dependencies [[com.cemerick/piggieback "0.2.2"]
                    [reloaded.repl "0.2.4"]]
